@@ -55,9 +55,9 @@ pipelines:
                 - build:
                     source: build/reports/spotbugs
               tabs:
-                MainCodeQuality: spotbugs/main/spotbugs.html
-                TestCodeQuality: spotbugs/test/spotbugs.html
-                ITestCodeQuality: spotbugs/integrationTest/spotbugs.html
+                MainCodeQa: spotbugs/main/spotbugs.html
+                TestCodeQa: spotbugs/test/spotbugs.html
+                ITestCodeQa: spotbugs/integrationTest/spotbugs.html
               resources:
                 - docker
               tasks:
