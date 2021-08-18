@@ -2,6 +2,9 @@ plugins {
     id 'org.springframework.boot' version '2.5.3'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
+    id 'jacoco'
+    id 'com.github.spotbugs' version '4.6.0'
+    id 'org.owasp.dependencycheck' version '6.2.0'
 }
 
 group = 'uk.nhs.prm.deductions'
@@ -27,6 +30,78 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
-test {
+sourceSets {
+    integrationTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
+tasks.withType(Test) {
     useJUnitPlatform()
 }
+
+task integrationTest(type: Test) {
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter test
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    shouldRunAfter integrationTest
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0 //TODO increase to 0.7 once some code is written
+            }
+        }
+    }
+}
+
+spotbugsMain {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/main/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
+
+spotbugsTest {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/test/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
+
+spotbugsIntegrationTest {
+    reports {
+        html {
+            enabled = true
+            destination = file("$buildDir/reports/spotbugs/integrationTest/spotbugs.html")
+            stylesheet = 'fancy-hist.xsl'
+        }
+    }
+}
+
+dependencyCheck {
+    failBuildOnCVSS = 7
+    suppressionFile = './dependency-checks-suppression.xml'
+}
+
+check.dependsOn integrationTest
