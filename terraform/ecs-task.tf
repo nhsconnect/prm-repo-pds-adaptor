@@ -49,8 +49,8 @@ resource "aws_security_group" "ecs-tasks-sg" {
   ingress {
     description     = "Allow traffic from internal ALB of pds adaptor"
     protocol        = "tcp"
-    from_port       = "3000"
-    to_port         = "3000"
+    from_port       = var.port
+    to_port         = var.port
     security_groups = [
       aws_security_group.pds_adaptor_alb.id
     ]

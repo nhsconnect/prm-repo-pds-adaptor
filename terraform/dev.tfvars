@@ -5,7 +5,7 @@ repo_name      = "prm-deductions-pds-adaptor"
 
 task_cpu    = 256
 task_memory = 512
-port        = 3000
+port        = 8080
 
 service_desired_count = "1"
 

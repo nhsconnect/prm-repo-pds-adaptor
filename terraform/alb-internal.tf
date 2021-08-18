@@ -70,7 +70,7 @@ resource "aws_alb_listener" "int-alb-listener-https" {
 
 resource "aws_alb_target_group" "internal-alb-tg" {
   name        = "${var.environment}-${var.component_name}-int-tg"
-  port        = 3000
+  port        = 8080
   protocol    = "HTTP"
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
   target_type = "ip"
@@ -80,8 +80,8 @@ resource "aws_alb_target_group" "internal-alb-tg" {
     unhealthy_threshold = 5
     timeout             = 5
     interval            = 10
-    path                = "/health"
-    port                = 3000
+    path                = "/actuator/health"
+    port                = 8080
   }
 
   tags = {
