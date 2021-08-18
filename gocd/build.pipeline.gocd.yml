@@ -57,7 +57,7 @@ pipelines:
               tabs:
                 MainCodeQuality: spotbugs/main/spotbugs.html
                 TestCodeQuality: spotbugs/test/spotbugs.html
-                IntegrationTestCodeQuality: spotbugs/integrationTest/spotbugs.html
+                ITestCodeQuality: spotbugs/integrationTest/spotbugs.html
               resources:
                 - docker
               tasks:
