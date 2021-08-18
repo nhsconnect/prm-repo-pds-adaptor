@@ -1,0 +1,96 @@
+format_version: 4
+common:
+  deploy_job: &deploy_job
+    resources:
+      - docker
+    tasks:
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks tf_plan create
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks tf_apply
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks wait_ecs
+  common_stages: &common_stages
+    - promote_docker_image:
+        resources:
+          - docker
+        clean_workspace: true
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks promote_docker_image
+    - deploy:
+        clean_workspace: true
+        jobs:
+          deploy: *deploy_job
+pipelines:
+  'prm-deductions-pds-adaptor.dev':
+    group: deductions
+    label_template: '${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+        blacklist:
+          - docs/**/*.*
+      app:
+        pipeline: prm-deductions-pds-adaptor
+        stage: docker
+      base_infra:
+        pipeline: prm-deductions-infra
+        stage: wait_dns_dev
+    environment_variables:
+      NHS_ENVIRONMENT: dev
+    stages: *common_stages
+
+  'prm-deductions-pds-adaptor.test':
+    group: deductions
+    label_template: '${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+        blacklist:
+          - docs/**/*.*
+      app:
+        pipeline: prm-deductions-pds-adaptor
+        stage: docker
+      base_infra:
+        pipeline: prm-deductions-infra
+        stage: wait_dns_test
+      dev_env:
+        pipeline: prm-deductions-pds-adaptor.dev
+        stage: deploy
+    environment_variables:
+      NHS_ENVIRONMENT: test
+    stages: *common_stages
+
+  'prm-deductions-pds-adaptor.pre-prod':
+    group: deductions
+    label_template: '${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+        blacklist:
+          - docs/**/*.*
+      app:
+        pipeline: prm-deductions-pds-adaptor
+        stage: docker
+      base_infra:
+        pipeline: prm-deductions-infra
+        stage: wait_dns_pre_prod
+      test_env:
+        pipeline: prm-deductions-pds-adaptor.test
+        stage: deploy
+    environment_variables:
+      NHS_ENVIRONMENT: pre-prod
+    stages: *common_stages

@@ -1,0 +1,84 @@
+format_version: 4
+pipelines:
+  'prm-deductions-pds-adaptor':
+    group: deductions
+    label_template: '${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+        blacklist:
+          - docs/**/*.*
+    stages:
+      - build:
+          clean_workspace: true
+          jobs:
+            test_unit:
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: build
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_unit
+            test_integration:
+              resources:
+                - docker
+              artifacts:
+                - build:
+                    source: build
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_integration
+            test_coverage:
+              artifacts:
+                - build:
+                    source: build/reports/jacoco
+              tabs:
+                coverage: jacoco/test/html/index.html
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_coverage
+            code_quality:
+              artifacts:
+                - build:
+                    source: build/reports/spotbugs
+              tabs:
+                MainCodeQuality: spotbugs/main/spotbugs.html
+                TestCodeQuality: spotbugs/test/spotbugs.html
+                IntegrationTestCodeQuality: spotbugs/integrationTest/spotbugs.html
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks code_quality
+      - docker:
+          clean_workspace: true
+          jobs:
+            build:
+              resources:
+                - docker
+              tasks:
+                - fetch:
+                    stage: build
+                    job: test_unit
+                    source: build
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks build_docker
