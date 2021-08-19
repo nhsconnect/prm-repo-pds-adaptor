@@ -39,7 +39,8 @@ function get_aws_account_id {
 }
 
 function configure_local_envs {
-  export VALUE=not
+  export LOG_LEVEL=debug
+  export NHS_ENVIRONMENT=local
 }
 
 #######################
@@ -168,6 +169,10 @@ case "${command}" in
   test_all)
     configure_local_envs
     dojo -c Dojofile-itest "./tasks _test_all"
+    ;;
+  run_local)
+    configure_local_envs
+    ./gradlew bootRun
     ;;
   _dep)
       gradle dependencyCheckAnalyze
