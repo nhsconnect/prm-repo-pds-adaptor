@@ -1,4 +1,4 @@
-### prm-deductions-pds-adaptor
+# prm-deductions-pds-adaptor
 
 This component is a java webservice that interacts with pds fhir api.
 
@@ -7,17 +7,21 @@ This component is a java webservice that interacts with pds fhir api.
 - Java v11 LTS
 - Gradle 6.8.1
 
-# Set up
+### AWS helpers
 
-## Running the application
+This repository imports shared AWS helpers from [prm-deductions-support-infra](https://github.com/nhsconnect/prm-deductions-support-infra/).
+They can be found `utils` directory after running any task from `tasks` file.
+
+
+## Set up
+
+### Running the application
 
 ```
 ./tasks run_local
 ```
 
-
-
-## Running the tests and additional checks
+### Running the tests and additional checks
 
 Run the unit tests with dojo
 
