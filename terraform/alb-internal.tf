@@ -146,7 +146,7 @@ resource "aws_security_group" "alb_to_pds_adaptor_ecs" {
   }
 
   tags = {
-    Name = "${var.environment}-alb-to-${var.component_name}-ecr"
+    Name = "${var.environment}-alb-to-${var.component_name}-ecs"
     CreatedBy   = var.repo_name
     Environment = var.environment
   }
