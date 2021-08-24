@@ -133,7 +133,7 @@ case "${command}" in
       ;;
   _build)
       rm -rf build/
-      gradle build
+      gradle assemble
       ;;
   build)
       dojo "./tasks _build"
@@ -160,7 +160,7 @@ case "${command}" in
       dojo -c Dojofile-itest "./tasks _test_coverage"
       ;;
   _code_quality)
-      gradle check
+      gradle check -x test -x integrationTest
       ;;
   code_quality)
       configure_local_envs
