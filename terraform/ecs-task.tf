@@ -12,8 +12,8 @@ locals {
     { name = "JWT_KEY_ID", value = data.aws_ssm_parameter.jwt_key_id.value }
   ]
   secret_environment_variables = [
-    { name = "JWT_PRIVATE_KEY", value = data.aws_ssm_parameter.jwt_private_key.value },
-    { name = "JWT_API_KEY", value = data.aws_ssm_parameter.jwt_api_key.value }
+    { name = "JWT_PRIVATE_KEY", valueFrom =  data.aws_ssm_parameter.jwt_private_key.arn },
+    { name = "JWT_API_KEY", valueFrom = data.aws_ssm_parameter.jwt_api_key.arn }
   ]
 }
 
