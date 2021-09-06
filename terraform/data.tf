@@ -15,3 +15,23 @@ data "aws_ssm_parameter" "deductions_private_vpc_id" {
 data "aws_ssm_parameter" "deductions_private_db_subnets" {
   name = "/repo/${var.environment}/output/prm-deductions-infra/deductions-private-database-subnets"
 }
+
+data "aws_ssm_parameter" "jwt_private_key" {
+  name = "/repo/${var.environment}/user-input/external/pds-adaptor-jwt-private-key"
+}
+
+data "aws_ssm_parameter" "jwt_api_key" {
+  name = "/repo/${var.environment}/user-input/external/pds-adaptor-jwt-api-key"
+}
+
+data "aws_ssm_parameter" "jwt_key_id" {
+  name = "/repo/${var.environment}/user-input/external/pds-adaptor-jwt-key-id"
+}
+
+data "aws_ssm_parameter" "access_token_endpoint" {
+  name = "/repo/${var.environment}/user-input/external/pds-adaptor-access-token-endpoint"
+}
+
+data "aws_ssm_parameter" "pds_fhir_endpoint" {
+  name = "/repo/${var.environment}/user-input/external/pds-fhir-endpoint"
+}

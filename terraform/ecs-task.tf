@@ -6,9 +6,15 @@ locals {
   environment_variables = [
     { name = "NHS_ENVIRONMENT", value = var.environment },
     { name = "AWS_REGION", value = var.region },
-    { name = "LOG_LEVEL", value = var.log_level }
+    { name = "LOG_LEVEL", value = var.log_level },
+    { name = "PDS_FHIR_ENDPOINT", value = data.aws_ssm_parameter.pds_fhir_endpoint.value },
+    { name = "ACCESS_TOKEN_ENDPOINT", value = data.aws_ssm_parameter.access_token_endpoint.value },
+    { name = "JWT_KEY_ID", value = data.aws_ssm_parameter.jwt_key_id.value }
   ]
-  secret_environment_variables = []
+  secret_environment_variables = [
+    { name = "JWT_PRIVATE_KEY", value = data.aws_ssm_parameter.jwt_private_key.value },
+    { name = "JWT_API_KEY", value = data.aws_ssm_parameter.jwt_api_key.value }
+  ]
 }
 
 resource "aws_ecs_task_definition" "task" {
