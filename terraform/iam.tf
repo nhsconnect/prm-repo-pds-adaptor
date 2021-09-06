@@ -63,26 +63,31 @@ data "aws_iam_policy_document" "logs_policy_doc" {
   }
 }
 
-//TODO to be uncommented when have ssm values for this repo
-//data "aws_iam_policy_document" "ssm_policy_doc" {
-//  statement {
-//    actions = [
-//      "ssm:Get*"
-//    ]
-//
-//    resources = []
-//  }
-//}
+data "aws_iam_policy_document" "ssm_policy_doc" {
+  statement {
+    actions = [
+      "ssm:Get*"
+    ]
 
-//resource "aws_iam_policy" "ssm_policy" {
-//  name   = "${var.environment}-${var.component_name}-ssm"
-//  policy = data.aws_iam_policy_document.ssm_policy_doc.json
-//}
+    resources = [
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-jwt-private-key",
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-jwt-api-key",
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-jwt-key-id",
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-access-token-endpoint",
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-fhir-endpoint",
+    ]
+  }
+}
 
-//resource "aws_iam_role_policy_attachment" "ssm_policy_attach" {
-//  role       = aws_iam_role.component-ecs-role.name
-//  policy_arn = aws_iam_policy.ssm_policy.arn
-//}
+resource "aws_iam_policy" "ssm_policy" {
+  name   = "${var.environment}-${var.component_name}-ssm"
+  policy = data.aws_iam_policy_document.ssm_policy_doc.json
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_policy_attach" {
+  role       = aws_iam_role.component-ecs-role.name
+  policy_arn = aws_iam_policy.ssm_policy.arn
+}
 
 
 resource "aws_iam_policy" "ecr_policy" {
