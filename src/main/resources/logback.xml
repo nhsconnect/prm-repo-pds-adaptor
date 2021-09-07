@@ -12,7 +12,7 @@
 				<pattern>
 					<pattern>
 						{
-						"level": "${log_level}",
+						"level": "${logLevel}",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
 						"line": "%L",
