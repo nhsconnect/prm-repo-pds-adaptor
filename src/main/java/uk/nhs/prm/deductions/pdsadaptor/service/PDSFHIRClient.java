@@ -8,17 +8,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deductions.pdsadaptor.utlis.*;
+import uk.nhs.prm.deductions.pdsadaptor.utils.*;
+
 @Service
 public class PDSFHIRClient {
-
-
     private GenerateJWT generateJWT;
 
     public PDSFHIRClient (GenerateJWT generateJWT){
         this.generateJWT = generateJWT;
     }
-
 
     public ResponseEntity getAccessToken() throws Exception {
         RestTemplate restTemplate = new RestTemplate();

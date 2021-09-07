@@ -1,92 +1,79 @@
 package uk.nhs.prm.deductions.pdsadaptor.utils;
 
-import org.junit.jupiter.api.Test;
+import com.nimbusds.jose.JOSEException;
 import org.bouncycastle.openssl.PEMException;
-import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Value;
-import uk.nhs.prm.deductions.pdsadaptor.utlis.GenerateJWT;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.security.PrivateKey;
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mock;
 
 public class GenerateJWTTest {
+    String apiKey;
+    String accessTokenEndpoint;
+    String keyId;
+    String keyString;
 
-    @Value("jwtPrivateKey")
-    private String jwtPrivateKey;
-
-    @Value("jwtApiKey")
-    private String jwtApiKey;
-
-    @Value("accessTokenEndpoint")
-    private String accessTokenEndpoint;
-
-    @Value("jwtKeyId")
-    private String jwtKeyId;
-
-    @Test
-    public void testGetPrivateFromString() throws Exception {
-        String keyString = "-----BEGIN RSA PRIVATE KEY-----" + "\n" +
-                "MIICXQIBAAKBgQCgDNiws4VaxGcn0tyDyz17/7riG0iMvQ0dEcd3i/TNiKQzRwWG" + "\n" +
-                "pZ8V/EG4JestNhmII+zlhUVLXXWG2JhU4T5M7aobCzOOA5gsTOEFuZDejYWP+2u/" + "\n" +
-                "GWlwI8xQeKP9JxzSIhGsVsa5pPvlrsTLtvcrt9rberl5oado5PxPjwJhFwIDAQAB" + "\n" +
-                "AoGARS+IdEoGOYhxNyvVmzs+Jt4TQS6eHAiVJJ3M5gagGkEZCfmHj/8EWBKlrh7m" + "\n" +
-                "HLMoMkulWkpT/BI4fcQfhYGg1h0uJuwdM6sa/etJ6V3d9nRBvRVcFZhq8C6lfCaB" + "\n" +
-                "S5ouSmUJFzwkril1utlXD89okSXuWPJvNxJTGwCeDISKS8ECQQDUANChOfm9wadC" + "\n" +
-                "80KEgaExDRPhUBvcXrhPj3U/oszhy70Td1FbbC/qARj+xrts640Drnx7al0HbMcV" + "\n" +
-                "xbLYxPYRAkEAwUPm3fboCXy5pVsK1NixfpcWfL0AEs0VrzWxPWa8+Lm8c954EVlT" + "\n" +
-                "CoTILX1749KdEqA6MbZdmJnTvzD/1dwcpwJAf5YR+MWcUB/IWpltkbM14AA/05xT" + "\n" +
-                "eBclEvSCGo8OgGEN5DYtpzh/yXNpqILPbyh/UBTlY5zKadqEIc096gj3EQJBAKaI" + "\n" +
-                "dC9fyqIiL3Yk9ThjYM7MMjxaP+3zenP3uDpIhR1uLs1JLf0FE2FE+Zj5QAAYQ/EA" + "\n" +
-                "0CR2GECejK968Xi+qpECQQCK5+JuZkYKXHzll9QoW/APlR9/x4ZF6ARbKPS4jGQx" + "\n" +
-                "68DBR9bsYxcvKig+IT1HszHOFxq7y1hH4vQsoXKMKJkm" + "\n" +
-                "-----END RSA PRIVATE KEY-----";
-        GenerateJWT generateJWT = new GenerateJWT();
-
-        PrivateKey key =  generateJWT.getPrivateKey(keyString);
-        assertNotNull(key);
+    @BeforeEach
+    void setUp() {
+        this.apiKey = "api-key";
+        this.accessTokenEndpoint = "https://endpoint";
+        this.keyId = "key-id";
+        this.keyString = getTestKeyString();
     }
 
     @Test
-    public void testEmptyStringException() {
+    public void testShouldGetJWTWhenValidKey() throws IOException, JOSEException {
+        GenerateJWT generateJWT = new GenerateJWT(keyString, apiKey, accessTokenEndpoint, keyId);
+        String jwt = generateJWT.createSignedJWT();
+        assertNotNull(jwt);
+    }
+
+    @Test
+    public void testShouldThrowExceptionWhenEmptyPrivateKey() {
         assertThrows(PEMException.class, () -> {
-            GenerateJWT generateJWT = new GenerateJWT();
-            generateJWT.getPrivateKey("");
+            GenerateJWT generateJWT = new GenerateJWT("", apiKey, accessTokenEndpoint, keyId);
+            generateJWT.createSignedJWT();
         });
     }
 
     @Test
-    public void testMalformedStringException() {
+    public void testShouldThrowMalformedStringException() {
         assertThrows(PEMException.class, () -> {
-            GenerateJWT generateJWT = new GenerateJWT();
-            generateJWT.getPrivateKey("test");
+            GenerateJWT generateJWT = new GenerateJWT("malformed", apiKey, accessTokenEndpoint, keyId);
+            generateJWT.createSignedJWT();
         });
     }
 
-    @Test
-    public void testCreateSignedJWT() throws Exception {
-
-        String keyString = "-----BEGIN RSA PRIVATE KEY-----" + "\n" +
-                "MIICXQIBAAKBgQCgDNiws4VaxGcn0tyDyz17/7riG0iMvQ0dEcd3i/TNiKQzRwWG" + "\n" +
-                "pZ8V/EG4JestNhmII+zlhUVLXXWG2JhU4T5M7aobCzOOA5gsTOEFuZDejYWP+2u/" + "\n" +
-                "GWlwI8xQeKP9JxzSIhGsVsa5pPvlrsTLtvcrt9rberl5oado5PxPjwJhFwIDAQAB" + "\n" +
-                "AoGARS+IdEoGOYhxNyvVmzs+Jt4TQS6eHAiVJJ3M5gagGkEZCfmHj/8EWBKlrh7m" + "\n" +
-                "HLMoMkulWkpT/BI4fcQfhYGg1h0uJuwdM6sa/etJ6V3d9nRBvRVcFZhq8C6lfCaB" + "\n" +
-                "S5ouSmUJFzwkril1utlXD89okSXuWPJvNxJTGwCeDISKS8ECQQDUANChOfm9wadC" + "\n" +
-                "80KEgaExDRPhUBvcXrhPj3U/oszhy70Td1FbbC/qARj+xrts640Drnx7al0HbMcV" + "\n" +
-                "xbLYxPYRAkEAwUPm3fboCXy5pVsK1NixfpcWfL0AEs0VrzWxPWa8+Lm8c954EVlT" + "\n" +
-                "CoTILX1749KdEqA6MbZdmJnTvzD/1dwcpwJAf5YR+MWcUB/IWpltkbM14AA/05xT" + "\n" +
-                "eBclEvSCGo8OgGEN5DYtpzh/yXNpqILPbyh/UBTlY5zKadqEIc096gj3EQJBAKaI" + "\n" +
-                "dC9fyqIiL3Yk9ThjYM7MMjxaP+3zenP3uDpIhR1uLs1JLf0FE2FE+Zj5QAAYQ/EA" + "\n" +
-                "0CR2GECejK968Xi+qpECQQCK5+JuZkYKXHzll9QoW/APlR9/x4ZF6ARbKPS4jGQx" + "\n" +
-                "68DBR9bsYxcvKig+IT1HszHOFxq7y1hH4vQsoXKMKJkm" + "\n" +
+    private String getTestKeyString() {
+        return "-----BEGIN RSA PRIVATE KEY-----\n" +
+                "MIIEowIBAAKCAQEApwni+ErA4h6wyqAYz39pf3dOlvgRX8I1npz2Cx3Y1ASNl0zf\n" +
+                "hCK+9r48FisEuRb36iEz8OPk4O7hZIWb2cHg7wNXwUL09jO0rdSquGyPiJXNM/v0\n" +
+                "4CTZo61r5iZ1cLSnLSw0NU4BOedK2mZaFqJhFJDeu44TGmz/x+8l50JAgD3XGk/N\n" +
+                "lTyYgRGwqpu8TFcCT8XoxEYq2QScfxq+2FnGNFX6bVi1zDSj0yBv90uelsM226zw\n" +
+                "zdGO0MZnls4AqwfzayTL4zQlI/2CFajnf4noagjbkR8jdFk4je5kLa58smRKA+ce\n" +
+                "1cb6UHfPQJD6+lVgSLU2uHmoj2KGmPDHtCDEtwIDAQABAoIBABDyJyflUuLIa6Bt\n" +
+                "ftbeKDJu73bQEoMnzWTFVmNo/cGp90CtjdIhQZpVUPyMFLM/qfBYufpARHdar1xm\n" +
+                "qZmn2k1P24FBwl7lKU6mpUMx0EXyXJpff0eWCsuuIPonq1ZpyA6vI1odCxwiuNdQ\n" +
+                "oZHA8MmzVhqqSTSEcQE0OSDYTyQzTTrwX+3g41WRHH24uN479DWQfIVcPX7u3k8U\n" +
+                "jfgwtD3TYLQ2kiOawQ5WbxOPtLMPsa8GA8/PDNit9DSaDQuTv4mATnwuJMp2FeUa\n" +
+                "9m3M/bcaEgTiEHq77kJZ8srJF/r+OwKbrxPE3eeSPEfuP+wkg5AgOjhLnrdzwVRU\n" +
+                "DFGWvOECgYEAyIk7F0S0AGn2aryhw9CihDfimigCxEmtIO5q7mnItCfeQwYPsX72\n" +
+                "1fLpJNgfPc9DDfhAZ2hLSsBlAPLUOa0Cuny9PCBWVuxi1WjLVaeZCV2bF11mAgW2\n" +
+                "fjLkAXT34IX+HZl60VoetSWq9ibfkJHeCAPnh/yjdB3Vs+2wxNkU8m8CgYEA1Tzm\n" +
+                "mjJq7M6f+zMo7DpRwFazGMmrLKFmHiGBY6sEg7EmoeH2CkAQePIGQw/Rk16gWJR6\n" +
+                "DtUZ9666sjCH6/79rx2xg+9AB76XTFFzIxOk9cm49cIosDMk4mogSfK0Zg8nVbyW\n" +
+                "5nEb//9JCrZ18g4lD3IrT5VJoF4MhfdBUjAS1jkCgYB+RDIpv3+bNx0KLgWpFwgN\n" +
+                "Omb667B6SW2ya4x227KdBPFkwD9HYosnQZDdOxvIvmUZObPLqJan1aaDR2Krgi1S\n" +
+                "oNJCNpZGmwbMGvTU1Pd+Nys9NfjR0ykKIx7/b9fXzman2ojDovvs0W/pF6bzD3V/\n" +
+                "FH5HWKLOrS5u4X3JJGqVDwKBgQCd953FwW/gujld+EpqpdGGMTRAOrXqPC7QR3X5\n" +
+                "Beo0PPonlqOUeF07m9/zsjZJfCJBPM0nS8sO54w7ESTAOYhpQBAPcx/2HMUsrnIj\n" +
+                "HBxqUOQKe6l0zo6WhJQi8/+cU8GKDEmlsUlS3iWYIA9EICJoTOW08R04BjQ00jS7\n" +
+                "1A1AUQKBgHlHrV/6S/4hjvMp+30hX5DpZviUDiwcGOGasmIYXAgwXepJUq0xN6aa\n" +
+                "lnT+ykLGSMMY/LABQiNZALZQtwK35KTshnThK6zB4e9p8JUCVrFpssJ2NCrMY3SU\n" +
+                "qw87K1W6engeDrmunkJ/PmvSDLYeGiYWmEKQbLQchTxx1IEddXkK\n" +
                 "-----END RSA PRIVATE KEY-----";
-        GenerateJWT generateJWT = new GenerateJWT();
-
-        PrivateKey key =  generateJWT.getPrivateKey(keyString);
-        Mockito.when(generateJWT.getPrivateKey(Mockito.anyString())).thenReturn(key);
-        String token = generateJWT.createSignedJWT();
-        assertNotNull(token);
     }
 }
