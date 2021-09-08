@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.utils;
+package uk.nhs.prm.deductions.pdsadaptor.auth;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
@@ -20,13 +20,13 @@ import java.util.Date;
 import java.util.UUID;
 
 @Component
-public class GenerateJWT {
+public class SignedJWTGenerator {
     private final String jwtPrivateKey;
     private final String jwtApiKey;
     private final String accessTokenEndpoint;
     private final String jwtKeyId;
 
-    public GenerateJWT(@Value("jwtPrivateKey") String jwtPrivateKey, @Value("jwtApiKey") String jwtApiKey, @Value("accessTokenEndpoint") String accessTokenEndpoint, @Value("jwtKeyId") String jwtKeyId) {
+    public SignedJWTGenerator(@Value("${jwtPrivateKey}") String jwtPrivateKey, @Value("${jwtApiKey}") String jwtApiKey, @Value("${accessTokenEndpoint}") String accessTokenEndpoint, @Value("${jwtKeyId}") String jwtKeyId) {
         this.jwtPrivateKey = jwtPrivateKey;
         this.jwtApiKey = jwtApiKey;
         this.accessTokenEndpoint = accessTokenEndpoint;

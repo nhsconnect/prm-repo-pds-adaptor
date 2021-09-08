@@ -1,16 +1,17 @@
-package uk.nhs.prm.deductions.pdsadaptor.utils;
+package uk.nhs.prm.deductions.pdsadaptor.auth;
 
 import com.nimbusds.jose.JOSEException;
 import org.bouncycastle.openssl.PEMException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import uk.nhs.prm.deductions.pdsadaptor.auth.SignedJWTGenerator;
 
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class GenerateJWTTest {
+public class SignedJWTGeneratorTest {
     String apiKey;
     String accessTokenEndpoint;
     String keyId;
@@ -26,24 +27,24 @@ public class GenerateJWTTest {
 
     @Test
     public void testShouldGetJWTWhenValidKey() throws IOException, JOSEException {
-        GenerateJWT generateJWT = new GenerateJWT(keyString, apiKey, accessTokenEndpoint, keyId);
-        String jwt = generateJWT.createSignedJWT();
+        SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator(keyString, apiKey, accessTokenEndpoint, keyId);
+        String jwt = signedJWTGenerator.createSignedJWT();
         assertNotNull(jwt);
     }
 
     @Test
     public void testShouldThrowExceptionWhenEmptyPrivateKey() {
         assertThrows(PEMException.class, () -> {
-            GenerateJWT generateJWT = new GenerateJWT("", apiKey, accessTokenEndpoint, keyId);
-            generateJWT.createSignedJWT();
+            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("", apiKey, accessTokenEndpoint, keyId);
+            signedJWTGenerator.createSignedJWT();
         });
     }
 
     @Test
     public void testShouldThrowMalformedStringException() {
         assertThrows(PEMException.class, () -> {
-            GenerateJWT generateJWT = new GenerateJWT("malformed", apiKey, accessTokenEndpoint, keyId);
-            generateJWT.createSignedJWT();
+            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("malformed", apiKey, accessTokenEndpoint, keyId);
+            signedJWTGenerator.createSignedJWT();
         });
     }
 
