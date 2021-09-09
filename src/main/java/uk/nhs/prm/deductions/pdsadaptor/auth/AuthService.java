@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
@@ -30,15 +30,13 @@ public class AuthService {
         this.accessTokenEndpoint = accessTokenEndpoint;
     }
 
-    public String getAccessToken() throws Exception {
+    public String getAccessTokenFromResponse() throws IOException, JOSEException {
+        HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
         try {
-            HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
-
-            return getAccessToken(accessTokenResponse);
-
-        } catch (HttpClientErrorException e) {
-            throw new RuntimeException(e);
+            return getAccessTokenFromResponse(accessTokenResponse);
+        } catch (HttpStatusCodeException e) {
+            throw new AccessTokenRequestException(e);
         }
     }
 
@@ -46,16 +44,15 @@ public class AuthService {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("grant_type", "client_credentials");
-        map.add("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
-        map.add("client_assertion", signedJWTGenerator.createSignedJWT());
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("grant_type", "client_credentials");
+        requestBody.add("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
+        requestBody.add("client_assertion", signedJWTGenerator.createSignedJWT());
 
-        return new HttpEntity<>(map, headers);
+        return new HttpEntity<>(requestBody, headers);
     }
 
-    private String getAccessToken(ResponseEntity<String> accessTokenResponse) throws JsonProcessingException {
-
+    private String getAccessTokenFromResponse(ResponseEntity<String> accessTokenResponse) throws JsonProcessingException {
         JsonNode parent = new ObjectMapper().readTree(accessTokenResponse.getBody());
         return parent.get("access_token").asText();
     }

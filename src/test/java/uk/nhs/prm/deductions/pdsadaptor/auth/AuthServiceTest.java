@@ -1,65 +1,76 @@
 package uk.nhs.prm.deductions.pdsadaptor.auth;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
 
     @Mock
-    SignedJWTGenerator signedJWTGenerator;
+    private SignedJWTGenerator signedJWTGenerator;
 
     @Mock
-    RestTemplate restTemplate;
+    private RestTemplate restTemplate;
+
+    private AuthService authService;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
+        authService = new AuthService(signedJWTGenerator, restTemplate, "https://token-endpoint");
+    }
 
     @Test
     public void shouldRequestAccessTokenWithSignedJWT() throws Exception {
-
         String tokenResponse = "{\"access_token\": \"Sr5PGv19wTEHJdDr2wx2f7IGd0cw\",\n" +
-                " \"expires_in\": \"599\",\n" +
-                " \"token_type\": \"Bearer\"}";
+            " \"expires_in\": \"599\",\n" +
+            " \"token_type\": \"Bearer\"}";
 
-        Mockito.when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
-        AuthService authService = new AuthService(signedJWTGenerator, restTemplate, "https://token-endpoint");
+        HttpEntity<MultiValueMap<String, String>> request = createRequest();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenReturn(
+            new ResponseEntity<String>(tokenResponse, HttpStatus.OK));
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("grant_type", "client_credentials");
-        map.add("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
-        map.add("client_assertion", "Test");
+        String accessToken = authService.getAccessTokenFromResponse();
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-
-        Mockito.when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenReturn(new ResponseEntity<String>(tokenResponse, HttpStatus.OK));
-
-        String accessToken = authService.getAccessToken();
-
-        Mockito.verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
+        verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
         assertThat(accessToken).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
 
     }
 
     @Test
-    public void shouldHandleFailureFromTokenAccessRequestEndPoint() throws Exception {
+    public void shouldHandleFailureFromTokenAccessRequestEndPoint() {
+        HttpEntity<MultiValueMap<String, String>> request = createRequest();
 
-        String tokenResponse = "{\"error\": \"invalid_request\",\n" +
-                " \"error_description\": \"Error response\",\n" +
-                " \"message_id\": \"error\"}";
+        when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenThrow(
+            new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-        Mockito.when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
-        AuthService authService = new AuthService(signedJWTGenerator, restTemplate, "https://token-endpoint");
+        Exception exception = assertThrows(AccessTokenRequestException.class, authService::getAccessTokenFromResponse);
 
+        assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 400. reason 400 error");
+
+        verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
+
+    }
+
+    private HttpEntity<MultiValueMap<String, String>> createRequest() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -68,15 +79,6 @@ public class AuthServiceTest {
         map.add("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
         map.add("client_assertion", "Test");
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
-
-        Mockito.when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
-
-        String accessTokenResponse = authService.getAccessToken();
-
-        Mockito.verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
-//        assertThat(accessTokenResponse).isEqualTo(null);
-
+        return new HttpEntity<>(map, headers);
     }
-
 }
