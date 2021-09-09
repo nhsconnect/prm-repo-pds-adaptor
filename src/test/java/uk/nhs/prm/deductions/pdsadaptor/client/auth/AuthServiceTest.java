@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.auth;
+package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

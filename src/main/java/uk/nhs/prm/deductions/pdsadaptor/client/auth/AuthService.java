@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.auth;
+package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.auth;
+package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;

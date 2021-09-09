@@ -1,10 +1,9 @@
-package uk.nhs.prm.deductions.pdsadaptor.auth;
+package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 
 import com.nimbusds.jose.JOSEException;
 import org.bouncycastle.openssl.PEMException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import uk.nhs.prm.deductions.pdsadaptor.auth.SignedJWTGenerator;
 
 import java.io.IOException;
 
