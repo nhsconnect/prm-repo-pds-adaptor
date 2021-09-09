@@ -21,11 +21,14 @@ public class RequestResponseHandlerInterceptor implements ClientHttpRequestInter
     @Override
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         log.info("Checking for access token in request to pds fhir");
+        request.getHeaders().add(AUTHORIZATION, "Bearer " + authService.getCurrentToken());
         ClientHttpResponse response = execution.execute(request, body);
+
         if (HttpStatus.UNAUTHORIZED == response.getStatusCode()) {
             log.info("Request received 401 status. Requesting new access token");
             request.getHeaders().remove(AUTHORIZATION);
-            request.getHeaders().add(AUTHORIZATION, authService.getAccessToken());
+            request.getHeaders().remove(AUTHORIZATION);
+            request.getHeaders().add(AUTHORIZATION, "Bearer " + authService.getAccessToken());
             response = execution.execute(request, body);
         }
         return response;

@@ -52,7 +52,7 @@ public class AuthServiceTest {
 
         verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
         assertThat(accessToken).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
-
+        assertThat(authService.getCurrentToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
     }
 
     @Test

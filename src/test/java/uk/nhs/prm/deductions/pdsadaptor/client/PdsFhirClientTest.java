@@ -3,13 +3,20 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -22,6 +29,9 @@ class PdsFhirClientTest {
 
     private PdsFhirClient pdsFhirClient;
 
+    @Captor
+    ArgumentCaptor<HttpEntity> requestCapture;
+
     @BeforeEach
     void setUp() {
         pdsFhirClient = new PdsFhirClient(restTemplate, pdsFhirEndpoint);
@@ -30,11 +40,14 @@ class PdsFhirClientTest {
     @Test
     void shouldRequestPdsFhirEndpoint() {
         String nhsNumber = "1234";
-        when((restTemplate).getForEntity(pdsFhirEndpoint + "Patient/1234", String.class)).thenReturn(
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), any(),  eq(String.class))).thenReturn(
             new ResponseEntity<>("OK", HttpStatus.OK));
 
         String result = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
 
         assertThat(result).isEqualTo("OK");
+        verify(restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), requestCapture.capture(), eq(String.class));
+        HttpEntity value = requestCapture.getValue();
+        assertThat(value.getHeaders().get("X-Request-ID").get(0)).isNotNull();
     }
 }

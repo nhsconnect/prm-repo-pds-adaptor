@@ -16,7 +16,7 @@ import java.io.InputStream;
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
@@ -29,22 +29,23 @@ class RequestResponseHandlerInterceptorTest {
 
     @Test
     public void shouldSetHeaderForUnauthorisedStatusCode() throws Exception {
+        when(authService.getCurrentToken()).thenReturn("0987654321");
         when(authService.getAccessToken()).thenReturn("1234567890");
         Request request = new Request();
         new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
         HttpHeaders headers = request.getHeaders();
-        assertThat(headers.get(AUTHORIZATION).get(0)).isEqualTo("1234567890");
+        assertThat(headers.get(AUTHORIZATION).get(0)).isEqualTo("Bearer 1234567890");
     }
 
     @Test
     public void shouldNotCallAuthServiceIfResponseIsAuthorised() throws Exception {
+        when(authService.getCurrentToken()).thenReturn("0987654321");
         Request request = new Request();
         HttpHeaders headers = request.getHeaders();
-        headers.add(AUTHORIZATION, "0987654321");
         new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(HttpStatus.OK));
 
-        assertThat(headers.get("Authorization").get(0)).isEqualTo("0987654321");
-        verifyNoInteractions(authService);
+        assertThat(headers.get("Authorization").get(0)).isEqualTo("Bearer 0987654321");
+        verifyNoMoreInteractions(authService);
     }
 
     private static class Request implements HttpRequest {

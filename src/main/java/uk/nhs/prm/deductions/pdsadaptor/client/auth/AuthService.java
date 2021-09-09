@@ -3,7 +3,6 @@ package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.JOSEException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -25,6 +24,7 @@ public class AuthService {
     private final SignedJWTGenerator signedJWTGenerator;
     private final RestTemplate restTemplate;
     private final String accessTokenEndpoint;
+    private String accessToken = "";
 
     public AuthService(SignedJWTGenerator signedJWTGenerator, RestTemplate restTemplate, @Value("${accessTokenEndpoint}") String accessTokenEndpoint) {
         this.signedJWTGenerator = signedJWTGenerator;
@@ -37,10 +37,15 @@ public class AuthService {
         try {
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
             log.info("Successfully received new access token");
-            return getAccessTokenFromResponse(accessTokenResponse);
+            accessToken = getAccessTokenFromResponse(accessTokenResponse);
+            return accessToken;
         } catch (HttpStatusCodeException e) {
             throw new AccessTokenRequestException(e);
         }
+    }
+
+    public String getCurrentToken() {
+        return this.accessToken;
     }
 
     private HttpEntity<MultiValueMap<String, String>> createRequestEntity() throws IOException {
