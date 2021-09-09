@@ -33,20 +33,23 @@ public class SignedJWTGenerator {
         this.jwtKeyId = jwtKeyId;
     }
 
-    public String createSignedJWT() throws IOException, JOSEException {
+    public String createSignedJWT() throws IOException {
         PrivateKey rsaJWK = getPrivateKey(jwtPrivateKey);
-        // Create RSA-signer with the private key
         JWSSigner signer = new RSASSASigner(rsaJWK);
-        // Prepare JWT with claims set
         JWTClaimsSet claimsSet = getClaimsSet();
 
         SignedJWT signedJWT = new SignedJWT(
                 new JWSHeader.Builder(JWSAlgorithm.RS512).keyID(jwtKeyId).type(JOSEObjectType.JWT).build(), claimsSet);
-        // Compute the RSA signature
-        signedJWT.sign(signer);
-
-        // To serialize to compact form
+        signJwt(signer, signedJWT);
         return signedJWT.serialize();
+    }
+
+    private void signJwt(JWSSigner signer, SignedJWT signedJWT) {
+        try {
+            signedJWT.sign(signer);
+        } catch (JOSEException e) {
+            throw new SignedJwtException(e);
+        }
     }
 
     private JWTClaimsSet getClaimsSet() {

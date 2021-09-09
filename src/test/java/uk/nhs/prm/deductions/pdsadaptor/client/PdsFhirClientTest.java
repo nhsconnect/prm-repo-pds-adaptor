@@ -18,7 +18,7 @@ class PdsFhirClientTest {
     @Mock
     private RestTemplate restTemplate;
 
-    private final String pdsFhirEndpoint = "http://pds-fhir.com/";
+    private static final String pdsFhirEndpoint = "http://pds-fhir.com/";
 
     private PdsFhirClient pdsFhirClient;
 

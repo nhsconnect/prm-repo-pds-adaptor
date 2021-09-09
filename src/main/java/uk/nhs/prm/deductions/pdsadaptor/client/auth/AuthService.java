@@ -30,7 +30,7 @@ public class AuthService {
         this.accessTokenEndpoint = accessTokenEndpoint;
     }
 
-    public String getAccessTokenFromResponse() throws IOException, JOSEException {
+    public String getAccessToken() throws IOException {
         HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
         try {
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
@@ -40,7 +40,7 @@ public class AuthService {
         }
     }
 
-    private HttpEntity<MultiValueMap<String, String>> createRequestEntity() throws IOException, JOSEException {
+    private HttpEntity<MultiValueMap<String, String>> createRequestEntity() throws IOException {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 

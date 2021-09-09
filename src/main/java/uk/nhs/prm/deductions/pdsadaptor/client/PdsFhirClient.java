@@ -9,17 +9,17 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class PdsFhirClient {
 
-    private final RestTemplate restTemplate;
+    private final RestTemplate pdsFhirRestTemplate;
     private final String pdsFhirEndpoint;
 
-    public PdsFhirClient(RestTemplate restTemplate, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
-        this.restTemplate = restTemplate;
+    public PdsFhirClient(RestTemplate pdsFhirRestTemplate, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
+        this.pdsFhirRestTemplate = pdsFhirRestTemplate;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
     public String requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
-        restTemplate.getForEntity(pdsFhirEndpoint + path, String.class);
+        pdsFhirRestTemplate.getForEntity(pdsFhirEndpoint + path, String.class);
         log.info("Successfully request pds record for patient");
         return "OK";
     }
