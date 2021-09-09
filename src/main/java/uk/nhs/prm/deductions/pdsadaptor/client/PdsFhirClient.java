@@ -19,8 +19,9 @@ public class PdsFhirClient {
 
     public String requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
+        log.info("Sending request to pds for patient");
         pdsFhirRestTemplate.getForEntity(pdsFhirEndpoint + path, String.class);
-        log.info("Successfully request pds record for patient");
+        log.info("Successful request pds record for patient");
         return "OK";
     }
 }

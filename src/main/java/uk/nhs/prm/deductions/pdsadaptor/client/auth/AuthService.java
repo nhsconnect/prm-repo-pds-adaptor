@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.jose.JOSEException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 
 @Service
+@Slf4j
 public class AuthService {
 
     private final SignedJWTGenerator signedJWTGenerator;
@@ -34,6 +36,7 @@ public class AuthService {
         HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
         try {
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
+            log.info("Successfully received new access token");
             return getAccessTokenFromResponse(accessTokenResponse);
         } catch (HttpStatusCodeException e) {
             throw new AccessTokenRequestException(e);

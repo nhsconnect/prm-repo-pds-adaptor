@@ -1,6 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 @Controller
 @RequestMapping("patients")
 @AllArgsConstructor
+@Slf4j
 public class PdsController {
 
     private PdsService pdsService;
@@ -19,6 +21,7 @@ public class PdsController {
     @GetMapping("/{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
     public String getPatientGpStatus(@PathVariable("nhsNumber") String nhsNumber)  {
+        log.info("Request for pds record received");
         return pdsService.getPatientGpStatus(nhsNumber);
     }
 }
