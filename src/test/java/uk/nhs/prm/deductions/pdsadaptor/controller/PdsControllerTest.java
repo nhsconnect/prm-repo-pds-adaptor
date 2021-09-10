@@ -6,6 +6,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
@@ -28,7 +30,7 @@ class PdsControllerTest {
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
         String nhsNumber = "1234";
 
-        when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn("OK");
+        when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(new ResponseEntity(HttpStatus.OK));
 
         String result = mockMvc.perform(get("/patients/" + nhsNumber)).andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();

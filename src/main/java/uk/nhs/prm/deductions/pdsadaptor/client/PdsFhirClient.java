@@ -5,9 +5,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
 import java.util.UUID;
 
 @Component
@@ -22,13 +25,17 @@ public class PdsFhirClient {
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
-    public String requestPdsRecordByNhsNumber(String nhsNumber) {
+    public ResponseEntity requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
+
         log.info("Sending request to pds for patient");
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", UUID.randomUUID().toString());
-        pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET,  new HttpEntity<>(headers),  String.class);
+
+        ResponseEntity response = (ResponseEntity) pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET,  new HttpEntity<>(headers),  String.class);
         log.info("Successful request pds record for patient");
-        return "OK";
+
+        return response;
     }
 }

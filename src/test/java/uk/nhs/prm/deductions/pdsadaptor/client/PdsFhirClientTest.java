@@ -13,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,14 +40,14 @@ class PdsFhirClientTest {
     }
 
     @Test
-    void shouldRequestPdsFhirEndpoint() {
+    void shouldRequestPdsFhirEndpoint() throws IOException {
         String nhsNumber = "1234";
         when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), any(),  eq(String.class))).thenReturn(
             new ResponseEntity<>("OK", HttpStatus.OK));
 
-        String result = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+        ResponseEntity result = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
 
-        assertThat(result).isEqualTo("OK");
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), requestCapture.capture(), eq(String.class));
         HttpEntity value = requestCapture.getValue();
         assertThat(value.getHeaders().get("X-Request-ID").get(0)).isNotNull();
