@@ -28,7 +28,17 @@ class RequestResponseHandlerInterceptorTest {
     private AuthService authService;
 
     @Test
-    public void shouldSetHeaderForUnauthorisedStatusCode() throws Exception {
+    public void shouldAddAnAccessTokenToRequestOnFirstRequest() throws Exception {
+        when(authService.getCurrentToken()).thenReturn("");
+        when(authService.getAccessToken()).thenReturn("1234567890");
+        Request request = new Request();
+        new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
+        HttpHeaders headers = request.getHeaders();
+        assertThat(headers.get(AUTHORIZATION).get(0)).isEqualTo("Bearer 1234567890");
+    }
+
+    @Test
+    public void shouldSetToNewAccessTokenWhenCurrentAccessTokenExpires() throws Exception {
         when(authService.getCurrentToken()).thenReturn("0987654321");
         when(authService.getAccessToken()).thenReturn("1234567890");
         Request request = new Request();
