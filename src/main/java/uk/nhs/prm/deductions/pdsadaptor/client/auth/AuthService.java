@@ -14,6 +14,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.AccessTokenRequestException;
 
 import java.io.IOException;
 

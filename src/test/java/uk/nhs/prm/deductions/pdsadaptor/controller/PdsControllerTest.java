@@ -12,7 +12,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,11 +30,9 @@ class PdsControllerTest {
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
         String nhsNumber = "1234";
 
-        when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(new ResponseEntity(HttpStatus.OK));
-
-        String result = mockMvc.perform(get("/patients/" + nhsNumber)).andExpect(status().isOk())
+        mockMvc.perform(get("/patients/" + nhsNumber)).andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
 
-        assertThat(result).isEqualTo(result);
+        verify(pdsService,times(1)).getPatientGpStatus("1234");
     }
 }

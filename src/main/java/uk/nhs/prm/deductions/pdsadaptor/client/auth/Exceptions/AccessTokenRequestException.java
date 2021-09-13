@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.client.auth;
+package uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
