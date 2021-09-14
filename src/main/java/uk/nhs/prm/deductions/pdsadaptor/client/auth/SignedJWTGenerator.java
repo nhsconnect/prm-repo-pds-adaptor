@@ -4,6 +4,7 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMKeyPair;
 import org.bouncycastle.openssl.PEMParser;
@@ -20,6 +21,7 @@ import java.security.Security;
 import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class SignedJWTGenerator {
     private final String jwtPrivateKey;
@@ -46,6 +48,7 @@ public class SignedJWTGenerator {
     }
 
     private void signJwt(JWSSigner signer, SignedJWT signedJWT) {
+        log.info("Signing JWT Token");
         try {
             signedJWT.sign(signer);
         } catch (JOSEException e) {
@@ -64,6 +67,7 @@ public class SignedJWTGenerator {
     }
 
     private PrivateKey getPrivateKey(String privateKeyString) throws IOException {
+        log.info("Parsing RSA Private key");
         PEMParser pemParser = new PEMParser(new StringReader(privateKeyString));
         Security.addProvider(new BouncyCastleProvider());
         JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");

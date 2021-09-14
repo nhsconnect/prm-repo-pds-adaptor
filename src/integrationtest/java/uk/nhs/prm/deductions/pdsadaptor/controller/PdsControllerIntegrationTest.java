@@ -1,7 +1,5 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
@@ -13,19 +11,25 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import uk.nhs.prm.deductions.pdsadaptor.client.auth.AuthService;
 
 import java.io.IOException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -34,11 +38,9 @@ public class PdsControllerIntegrationTest {
 
     @Autowired
     private WireMockServer wireMockServer;
-    @MockBean
-    AuthService authService;
 
     @Autowired
-    TestRestTemplate restTemplate;
+    private TestRestTemplate restTemplate;
 
     @LocalServerPort
     private int port;
@@ -50,60 +52,60 @@ public class PdsControllerIntegrationTest {
 
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() throws IOException {
-        stubFor(get(urlMatching("/Patient/123")).willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
+        stubFor(get(urlMatching("/Patient/123"))
+            .inScenario("Get PDS Record")
+            .whenScenarioStateIs(STARTED)
+            .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet request = new HttpGet("http://localhost:8080/Patient/123");
-         httpClient.execute(request);
+        stubFor(post(urlMatching("/access-token"))
+            .inScenario("Get PDS Record")
+            .whenScenarioStateIs(STARTED)
+            .willReturn(
+                aResponse()
+                    .withBody("{\"access_token\": \"accessToken\",\n" +
+                        " \"expires_in\": \"599\",\n" +
+                        " \"token_type\": \"Bearer\"}"))
+            .willSetStateTo("Token Generated"));
 
-        ResponseEntity response =restTemplate.exchange(
-                createURLWithPort("/patients/123"), HttpMethod.GET, null, HttpEntity.class);
-        verify(authService,times(1)).getCurrentToken();
-        verify(authService,times(1)).getAccessToken();
-    }
+        stubFor(get(urlMatching("/Patient/123"))
+            .inScenario("Get PDS Record")
+            .whenScenarioStateIs("Token Generated")
+            .withHeader("Authorization", matching("Bearer accessToken"))
+            .willReturn(
+                aResponse().withBody(getString())));
 
-    @Test
-    public void shouldOnlyCallGetCurrentTokenWhenAuthorized() throws IOException {
-        String json = getString();
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode actualObj = mapper.readTree(json);
-
-        ResponseDefinitionBuilder responseDefinitionBuilder = new ResponseDefinitionBuilder();
-        responseDefinitionBuilder.withJsonBody(actualObj);
-        stubFor(get(urlMatching("/Patient/123")).willReturn(responseDefinitionBuilder));
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpGet request = new HttpGet("http://localhost:8080/Patient/123");
         httpClient.execute(request);
-        when(authService.getCurrentToken()).thenReturn("123");
 
-        ResponseEntity response =restTemplate.exchange(
-                createURLWithPort("/patients/123"), HttpMethod.GET, null, HttpEntity.class);
-        System.out.println(response.getBody());
-        verify(authService,times(1)).getCurrentToken();
-        verify(authService,times(0)).getAccessToken();
-        assertEquals(response.getStatusCode(),HttpStatus.OK);
+        ResponseEntity<HttpEntity> exchange = restTemplate.exchange(
+            createURLWithPort("/patients/123"), HttpMethod.GET, null, HttpEntity.class);
+
+        assertThat(exchange.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+
     }
 
 
     private String getString() {
         String json = "{\n" +
-                "  \"address\": [\n" +
-                "    {\n" +
-                "      \"extension\": [\n" +
-                "        {\n" +
-                "          \"extension\": [\n" +
-                "            {\n" +
-                "              \"url\": \"type\",\n" +
-                "              \"valueCoding\": {\n" +
-                "                \"code\": \"PAF\",\n" +
-                "                \"system\": \"https://fhir.hl7.org.uk/CodeSystem/UKCore-AddressKeyType\"\n" +
-                "              }\n" +
-                "            },\n" +
-                "            {\n" +
-                "              \"url\": \"value\",\n" +
-                "              \"valueString\": \"6292549\"\n" +
-                "            }\n" +
+            "  \"address\": [\n" +
+            "    {\n" +
+            "      \"extension\": [\n" +
+            "        {\n" +
+            "          \"extension\": [\n" +
+            "            {\n" +
+            "              \"url\": \"type\",\n" +
+            "              \"valueCoding\": {\n" +
+            "                \"code\": \"PAF\",\n" +
+            "                \"system\": \"https://fhir.hl7.org.uk/CodeSystem/UKCore-AddressKeyType\"\n" +
+            "              }\n" +
+            "            },\n" +
+            "            {\n" +
+            "              \"url\": \"value\",\n" +
+            "              \"valueString\": \"6292549\"\n" +
+            "            }\n" +
                 "          ],\n" +
                 "          \"url\": \"https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AddressKey\"\n" +
                 "        }\n" +
@@ -194,4 +196,4 @@ public class PdsControllerIntegrationTest {
         return "http://localhost:" + port + uri;
     }
 
-    }
+}
