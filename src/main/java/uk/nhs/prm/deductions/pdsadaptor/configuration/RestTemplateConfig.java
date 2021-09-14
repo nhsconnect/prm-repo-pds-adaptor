@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.client.auth.AuthService;
-import uk.nhs.prm.deductions.pdsadaptor.client.auth.RequestResponseHandlerInterceptor;
+import uk.nhs.prm.deductions.pdsadaptor.client.auth.OAuthRequestInterceptor;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate pdsFhirRestTemplate(AuthService authService) {
         RestTemplate restTemplate = new RestTemplate();
-        restTemplate.setInterceptors(List.of(new RequestResponseHandlerInterceptor(authService)));
+        restTemplate.setInterceptors(List.of(new OAuthRequestInterceptor(authService)));
         return restTemplate;
     }
 }

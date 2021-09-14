@@ -7,7 +7,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.PdsFhirRequestException;
 
 import java.util.UUID;
 
@@ -31,9 +33,13 @@ public class PdsFhirClient {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", UUID.randomUUID().toString());
 
-        ResponseEntity response = (ResponseEntity) pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET,  new HttpEntity<>(headers),  String.class);
-        log.info("Successful request pds record for patient");
-
-        return response;
+        try {
+            ResponseEntity<String> response =
+                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            log.info("Successful request of pds record for patient");
+            return response;
+        } catch (HttpStatusCodeException e) {
+            throw new PdsFhirRequestException(e);
+        }
     }
 }

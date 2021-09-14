@@ -49,11 +49,11 @@ public class AuthServiceTest {
         when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenReturn(
             new ResponseEntity<String>(tokenResponse, HttpStatus.OK));
 
-        String accessToken = authService.getAccessToken();
+        String accessToken = authService.getNewAccessToken();
 
         verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
         assertThat(accessToken).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
-        assertThat(authService.getCurrentToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
+        assertThat(authService.getCurrentAccessToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
     }
 
     @Test
@@ -63,7 +63,7 @@ public class AuthServiceTest {
         when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenThrow(
             new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-        Exception exception = assertThrows(AccessTokenRequestException.class, authService::getAccessToken);
+        Exception exception = assertThrows(AccessTokenRequestException.class, authService::getNewAccessToken);
 
         assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 400. reason 400 error");
 

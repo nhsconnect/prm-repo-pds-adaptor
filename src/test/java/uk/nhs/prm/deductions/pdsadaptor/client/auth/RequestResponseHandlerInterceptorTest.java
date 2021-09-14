@@ -29,30 +29,30 @@ class RequestResponseHandlerInterceptorTest {
 
     @Test
     public void shouldAddAnAccessTokenToRequestOnFirstRequest() throws Exception {
-        when(authService.getCurrentToken()).thenReturn("");
-        when(authService.getAccessToken()).thenReturn("1234567890");
+        when(authService.getCurrentAccessToken()).thenReturn("");
+        when(authService.getNewAccessToken()).thenReturn("1234567890");
         Request request = new Request();
-        new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
+        new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
         HttpHeaders headers = request.getHeaders();
         assertThat(headers.get(AUTHORIZATION).get(0)).isEqualTo("Bearer 1234567890");
     }
 
     @Test
     public void shouldSetToNewAccessTokenWhenCurrentAccessTokenExpires() throws Exception {
-        when(authService.getCurrentToken()).thenReturn("0987654321");
-        when(authService.getAccessToken()).thenReturn("1234567890");
+        when(authService.getCurrentAccessToken()).thenReturn("0987654321");
+        when(authService.getNewAccessToken()).thenReturn("1234567890");
         Request request = new Request();
-        new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
+        new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
         HttpHeaders headers = request.getHeaders();
         assertThat(headers.get(AUTHORIZATION).get(0)).isEqualTo("Bearer 1234567890");
     }
 
     @Test
     public void shouldNotCallAuthServiceIfResponseIsAuthorised() throws Exception {
-        when(authService.getCurrentToken()).thenReturn("0987654321");
+        when(authService.getCurrentAccessToken()).thenReturn("0987654321");
         Request request = new Request();
         HttpHeaders headers = request.getHeaders();
-        new RequestResponseHandlerInterceptor(authService).intercept(request, new byte[0], new RequestExecution(HttpStatus.OK));
+        new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(HttpStatus.OK));
 
         assertThat(headers.get("Authorization").get(0)).isEqualTo("Bearer 0987654321");
         verifyNoMoreInteractions(authService);

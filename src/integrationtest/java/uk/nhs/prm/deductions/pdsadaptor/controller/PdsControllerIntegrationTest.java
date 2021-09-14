@@ -71,8 +71,7 @@ public class PdsControllerIntegrationTest {
             .inScenario("Get PDS Record")
             .whenScenarioStateIs("Token Generated")
             .withHeader("Authorization", matching("Bearer accessToken"))
-            .willReturn(
-                aResponse().withBody(getString())));
+            .willReturn(aResponse().withBody(getString())));
 
 
         CloseableHttpClient httpClient = HttpClients.createDefault();
@@ -83,8 +82,6 @@ public class PdsControllerIntegrationTest {
             createURLWithPort("/patients/123"), HttpMethod.GET, null, HttpEntity.class);
 
         assertThat(exchange.getStatusCode()).isEqualTo(HttpStatus.OK);
-
-
     }
 
 

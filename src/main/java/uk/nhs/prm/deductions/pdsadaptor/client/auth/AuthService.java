@@ -33,19 +33,19 @@ public class AuthService {
         this.accessTokenEndpoint = accessTokenEndpoint;
     }
 
-    public String getAccessToken() throws IOException {
+    public String getNewAccessToken() throws IOException {
         HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
         try {
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
-            log.info("Successfully received new access token");
             accessToken = getAccessTokenFromResponse(accessTokenResponse);
+            log.info("Successfully generated new access token");
             return accessToken;
         } catch (HttpStatusCodeException e) {
             throw new AccessTokenRequestException(e);
         }
     }
 
-    public String getCurrentToken() {
+    public String getCurrentAccessToken() {
         return this.accessToken;
     }
 
