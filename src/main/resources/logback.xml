@@ -12,12 +12,12 @@
 				<pattern>
 					<pattern>
 						{
-						"level": "${logLevel}",
+						"level": "${LOG_LEVEL:-debug}",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
 						"line": "%L",
 						"message": "%message",
-						"environment": "${environment}"
+						"environment": "${NHS_ENVIRONMENT:-local}"
 						}
 					</pattern>
 				</pattern>
