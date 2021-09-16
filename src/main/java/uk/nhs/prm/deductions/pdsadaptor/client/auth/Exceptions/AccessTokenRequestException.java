@@ -10,7 +10,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 public class AccessTokenRequestException extends RuntimeException {
     public AccessTokenRequestException(HttpStatusCodeException e) {
         super(String.format("Access token request failed status code: %s. reason %s", e.getStatusCode().value(), e.getMessage()));
-        log.info("Access token request failed - status code: {}, error: {}", e.getStatusCode().value(), e.getResponseBodyAsString());
+        log.info("Access token request failed - status code: {}, error: {}", e.getStatusCode().value(), e.getMessage());
     }
 
 }

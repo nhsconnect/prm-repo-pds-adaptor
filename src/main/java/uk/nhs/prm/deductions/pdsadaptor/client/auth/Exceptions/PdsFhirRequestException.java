@@ -10,7 +10,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 public class PdsFhirRequestException extends RuntimeException {
     public PdsFhirRequestException(HttpStatusCodeException e) {
         super(String.format("PDS FHIR request failed status code: %s. reason %s", e.getStatusCode().value(), e.getMessage()));
-        log.info("PDS FHIR request failed - status code: {}, error: {}", e.getStatusCode().value(), e.getResponseBodyAsString());
+        log.info("PDS FHIR request failed - status code: {}, error: {}", e.getStatusCode().value(), e.getMessage());
     }
 
 }
