@@ -10,8 +10,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
 @Slf4j
@@ -25,21 +28,24 @@ public class PdsFhirClient {
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
-    public ResponseEntity requestPdsRecordByNhsNumber(String nhsNumber) {
+    public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
-
         log.info("Sending request to pds for patient");
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Request-ID", UUID.randomUUID().toString());
-
         try {
-            ResponseEntity<String> response =
-                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+            ResponseEntity<PdsResponse> response =
+                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsResponse.class);
             log.info("Successful request of pds record for patient");
-            return response;
+            return response.getBody();
         } catch (HttpStatusCodeException e) {
             throw new PdsFhirRequestException(e);
         }
+    }
+
+    private HttpHeaders createHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Request-ID", UUID.randomUUID().toString());
+        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON.toString());
+        return headers;
     }
 }

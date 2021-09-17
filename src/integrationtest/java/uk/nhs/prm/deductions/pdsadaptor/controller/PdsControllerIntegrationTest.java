@@ -13,12 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.io.IOException;
 
@@ -71,17 +71,17 @@ public class PdsControllerIntegrationTest {
             .inScenario("Get PDS Record")
             .whenScenarioStateIs("Token Generated")
             .withHeader("Authorization", matching("Bearer accessToken"))
-            .willReturn(aResponse().withBody(getString())));
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBody(getString())));
 
+        ResponseEntity<PdsResponse> response = restTemplate.exchange(
+            createURLWithPort("/patients/123"), HttpMethod.GET, null, PdsResponse.class);
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpGet request = new HttpGet("http://localhost:8080/Patient/123");
-        httpClient.execute(request);
+        PdsResponse body = response.getBody();
 
-        ResponseEntity<HttpEntity> exchange = restTemplate.exchange(
-            createURLWithPort("/patients/123"), HttpMethod.GET, null, HttpEntity.class);
-
-        assertThat(exchange.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(body.getId()).isEqualTo("9691927179");
     }
 
 

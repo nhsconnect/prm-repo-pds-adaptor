@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -22,6 +25,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PdsFhirClientTest {
@@ -33,8 +37,12 @@ class PdsFhirClientTest {
 
     private PdsFhirClient pdsFhirClient;
 
+    private final String nhsNumber = "123456789";
+
+    private final String urlPath = pdsFhirEndpoint + "Patient/123456789";
+
     @Captor
-    ArgumentCaptor<HttpEntity> requestCapture;
+    private ArgumentCaptor<HttpEntity> requestCapture;
 
     @BeforeEach
     void setUp() {
@@ -42,23 +50,36 @@ class PdsFhirClientTest {
     }
 
     @Test
-    void shouldRequestPdsFhirEndpoint() {
-        String nhsNumber = "1234";
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), any(),  eq(String.class))).thenReturn(
-            new ResponseEntity<>("OK", HttpStatus.OK));
+    void shouldSetHeaderOnRequest() {
+        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null);
 
-        ResponseEntity result = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
+            new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
-        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-        verify(restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), requestCapture.capture(), eq(String.class));
+        pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+
+        verify(restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), requestCapture.capture(), eq(PdsResponse.class));
         HttpEntity value = requestCapture.getValue();
         assertThat(value.getHeaders().get("X-Request-ID").get(0)).isNotNull();
     }
 
     @Test
+    void shouldReturnPdsResponse() {
+        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null);
+
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
+            new ResponseEntity<>(pdsResponse, HttpStatus.OK));
+
+        PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+
+        assertThat(expected).isEqualTo(pdsResponse);
+
+    }
+
+    @Test
     void shouldThrowExceptionIfErrorRequestingPds() {
-        String nhsNumber = "1234";
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/1234"), eq(HttpMethod.GET), any(),  eq(String.class))).thenThrow(
+        when(
+            (restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
             new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
         Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));

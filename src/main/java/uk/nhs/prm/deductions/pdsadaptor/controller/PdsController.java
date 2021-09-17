@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
 @Controller
@@ -21,8 +22,8 @@ public class PdsController {
 
     @GetMapping("/{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity getPatientGpStatus(@PathVariable("nhsNumber") String nhsNumber) {
+    public ResponseEntity<PdsResponse> getPatientGpStatus(@PathVariable("nhsNumber") String nhsNumber) {
         log.info("Request for pds record received");
-        return pdsService.getPatientGpStatus(nhsNumber);
+        return new ResponseEntity<>(pdsService.getPatientGpStatus(nhsNumber), HttpStatus.OK);
     }
 }
