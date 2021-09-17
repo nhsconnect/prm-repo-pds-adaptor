@@ -18,7 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.SuspendedPatientStatus;
 
 import java.io.IOException;
 
@@ -75,13 +75,14 @@ public class PdsControllerIntegrationTest {
                 .withHeader("Content-Type", "application/json")
                 .withBody(getString())));
 
-        ResponseEntity<PdsResponse> response = restTemplate.exchange(
-            createURLWithPort("/patients/123"), HttpMethod.GET, null, PdsResponse.class);
+        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+            createURLWithPort("/patients/123"), HttpMethod.GET, null, SuspendedPatientStatus.class);
 
-        PdsResponse body = response.getBody();
+        SuspendedPatientStatus body = response.getBody();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(body.getId()).isEqualTo("9691927179");
+        assertThat(body.getCurrentOdsCode()).isEqualTo("A20047");
+        assertThat(body.getIsSuspended()).isEqualTo(false);
     }
 
 
