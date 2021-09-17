@@ -2,14 +2,12 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
@@ -38,6 +36,9 @@ public class PdsFhirClient {
             log.info("Successful request of pds record for patient");
             return response.getBody();
         } catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                throw new NotFoundException("PDS FHIR Request failed - Patient not found");
+            }
             throw new PdsFhirRequestException(e);
         }
     }

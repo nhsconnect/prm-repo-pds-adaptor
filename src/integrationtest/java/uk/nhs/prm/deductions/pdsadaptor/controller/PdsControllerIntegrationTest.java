@@ -3,9 +3,6 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.SuspendedPatientStatus;
+import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
 import java.io.IOException;
 
@@ -51,7 +48,7 @@ public class PdsControllerIntegrationTest {
     }
 
     @Test
-    public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() throws IOException {
+    public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() {
         stubFor(get(urlMatching("/Patient/123"))
             .inScenario("Get PDS Record")
             .whenScenarioStateIs(STARTED)

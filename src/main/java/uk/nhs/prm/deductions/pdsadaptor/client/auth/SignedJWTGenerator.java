@@ -11,7 +11,7 @@ import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.SignedJwtException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.SignedJwtException;
 
 import java.io.IOException;
 import java.io.StringReader;

@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse;
+package uk.nhs.prm.deductions.pdsadaptor.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -14,7 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deductions.pdsadaptor.client.auth.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
@@ -78,12 +79,21 @@ class PdsFhirClientTest {
 
     @Test
     void shouldThrowExceptionIfErrorRequestingPds() {
-        when(
-            (restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
             new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
         Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
 
         Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 400. reason 400 error");
+    }
+
+    @Test
+    void shouldThrowExceptionIfPatientNotFound() {
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+                new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
+
+        Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+
+        Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
     }
 }
