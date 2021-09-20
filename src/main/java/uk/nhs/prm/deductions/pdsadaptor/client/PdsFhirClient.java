@@ -31,23 +31,26 @@ public class PdsFhirClient {
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
         log.info("Sending request to pds for patient");
-
         try {
             ResponseEntity<PdsResponse> response =
                 pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsResponse.class);
             log.info("Successful request of pds record for patient");
             return response.getBody();
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                throw new NotFoundException("PDS FHIR Request failed - Patient not found");
-            }
-            if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
-                throw new TooManyRequestsException();
-            }
-            if (e.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
-                throw new ServiceUnavailableException();
-            }
+            handleExceptions(e);
             throw new PdsFhirRequestException(e);
+        }
+    }
+
+    private void handleExceptions(HttpStatusCodeException e) {
+        if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            throw new NotFoundException("PDS FHIR Request failed - Patient not found");
+        }
+        if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
+            throw new TooManyRequestsException();
+        }
+        if (e.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
+            throw new ServiceUnavailableException();
         }
     }
 

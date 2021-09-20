@@ -80,18 +80,29 @@ class PdsFhirClientTest {
     }
 
     @Test
-    void shouldThrowExceptionIfErrorRequestingPds() {
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+    void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
+        String invalidNhsNumber = "1234";
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/" + invalidNhsNumber), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
             new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-        Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+        Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
         Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 400. reason 400 error");
     }
 
     @Test
+    void shouldThrowPdsFhirExceptionWhenPdsReturnsInternalServerError() {
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+                new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
+
+        Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+
+        Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 500. reason 500 error");
+    }
+
+    @Test
     void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
         Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
@@ -101,7 +112,7 @@ class PdsFhirClientTest {
 
     @Test
     void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
         Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
@@ -111,7 +122,7 @@ class PdsFhirClientTest {
 
     @Test
     void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
-        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+        when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
         Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
