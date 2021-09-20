@@ -16,6 +16,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
@@ -106,5 +107,15 @@ class PdsFhirClientTest {
         Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
 
         Assertions.assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
+    }
+
+    @Test
+    void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+                new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+        Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+
+        Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Unavailable");
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
@@ -42,6 +43,9 @@ public class PdsFhirClient {
             }
             if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
                 throw new TooManyRequestsException();
+            }
+            if (e.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
+                throw new ServiceUnavailableException();
             }
             throw new PdsFhirRequestException(e);
         }
