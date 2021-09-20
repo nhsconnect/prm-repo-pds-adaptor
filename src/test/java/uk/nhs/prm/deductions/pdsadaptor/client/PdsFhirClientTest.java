@@ -38,9 +38,9 @@ class PdsFhirClientTest {
 
     private PdsFhirClient pdsFhirClient;
 
-    private final String nhsNumber = "123456789";
+    private static final String nhsNumber = "123456789";
 
-    private final String urlPath = pdsFhirEndpoint + "Patient/123456789";
+    private static final String urlPath = pdsFhirEndpoint + "Patient/" + nhsNumber;
 
     @Captor
     private ArgumentCaptor<HttpEntity> requestCapture;
@@ -88,12 +88,22 @@ class PdsFhirClientTest {
     }
 
     @Test
-    void shouldThrowExceptionIfPatientNotFound() {
+    void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
         when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
         Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
 
         Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
+    }
+
+    @Test
+    void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
+        when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+                new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
+
+        Exception exception = assertThrows(HttpClientErrorException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+
+        Assertions.assertThat(exception.getMessage()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.toString());
     }
 }

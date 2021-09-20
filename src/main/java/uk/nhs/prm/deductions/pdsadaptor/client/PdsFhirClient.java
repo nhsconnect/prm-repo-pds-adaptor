@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
@@ -38,6 +39,9 @@ public class PdsFhirClient {
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 throw new NotFoundException("PDS FHIR Request failed - Patient not found");
+            }
+            if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
+                throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
             }
             throw new PdsFhirRequestException(e);
         }
