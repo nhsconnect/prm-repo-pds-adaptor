@@ -4,11 +4,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
@@ -41,7 +41,7 @@ public class PdsFhirClient {
                 throw new NotFoundException("PDS FHIR Request failed - Patient not found");
             }
             if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
-                throw new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS);
+                throw new TooManyRequestsException();
             }
             throw new PdsFhirRequestException(e);
         }

@@ -16,6 +16,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
@@ -102,8 +103,8 @@ class PdsFhirClientTest {
         when((restTemplate).exchange(eq(pdsFhirEndpoint + "Patient/123456789"), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
-        Exception exception = assertThrows(HttpClientErrorException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
+        Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber));
 
-        Assertions.assertThat(exception.getMessage()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS.toString());
+        Assertions.assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
     }
 }
