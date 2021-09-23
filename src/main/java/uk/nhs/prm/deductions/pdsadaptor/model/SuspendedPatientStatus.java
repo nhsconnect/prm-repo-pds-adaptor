@@ -11,6 +11,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SuspendedPatientStatus {
     private Boolean isSuspended;
-    private String previousOdsCode;
     private String currentOdsCode;
+
+    public static SuspendedPatientStatus suspendedPatientStatus() {
+        SuspendedPatientStatus suspendedPatientStatus = new SuspendedPatientStatus();
+        suspendedPatientStatus.setIsSuspended(true);
+        return suspendedPatientStatus;
+    }
+
+    public static SuspendedPatientStatus nonSuspendedPatientStatus(String odsCode) {
+        SuspendedPatientStatus suspendedPatientStatus = new SuspendedPatientStatus();
+        suspendedPatientStatus.setCurrentOdsCode(odsCode);
+        suspendedPatientStatus.setIsSuspended(false);
+        return suspendedPatientStatus;
+    }
 }

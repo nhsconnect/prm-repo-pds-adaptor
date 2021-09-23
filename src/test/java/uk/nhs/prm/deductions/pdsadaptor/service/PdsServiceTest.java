@@ -33,7 +33,6 @@ class PdsServiceTest {
 
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
-        assertThat(expected.getPreviousOdsCode()).isNullOrEmpty();
     }
 
     @Test
