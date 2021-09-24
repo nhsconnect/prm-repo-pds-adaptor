@@ -28,7 +28,7 @@ class PdsControllerTest {
 
     @Test
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
-        String nhsNumber = "1234";
+        String nhsNumber = "1234567890";
         ObjectMapper objectMapper = new ObjectMapper();
 
         SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null);
@@ -38,7 +38,7 @@ class PdsControllerTest {
                 .andReturn().getResponse().getContentAsString();
         SuspendedPatientStatus suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
 
-        verify(pdsService,times(1)).getPatientGpStatus("1234");
+        verify(pdsService,times(1)).getPatientGpStatus(nhsNumber);
         assertThat(suspendedPatientStatus).isEqualTo(actualSuspendedPatientStatus);
     }
 }

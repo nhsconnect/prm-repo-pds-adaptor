@@ -7,6 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
 @RestController
 @RequestMapping("patients")
 @RequiredArgsConstructor
@@ -17,7 +20,7 @@ public class PdsController {
 
     @GetMapping("/{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
-    public SuspendedPatientStatus getPatientGpStatus(@PathVariable("nhsNumber") String nhsNumber) {
+    public SuspendedPatientStatus getPatientGpStatus(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber) {
         log.info("Request for pds record received");
         return pdsService.getPatientGpStatus(nhsNumber);
     }
