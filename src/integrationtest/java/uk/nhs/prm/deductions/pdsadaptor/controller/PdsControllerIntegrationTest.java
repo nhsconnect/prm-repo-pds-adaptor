@@ -17,8 +17,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
-import java.io.IOException;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.matching;
@@ -73,7 +71,7 @@ public class PdsControllerIntegrationTest {
                 .withBody(getString())));
 
         ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
-            createURLWithPort("/patients/123"), HttpMethod.GET, null, SuspendedPatientStatus.class);
+            createURLWithPort("/suspended-patient-status/123"), HttpMethod.GET, null, SuspendedPatientStatus.class);
 
         SuspendedPatientStatus body = response.getBody();
 

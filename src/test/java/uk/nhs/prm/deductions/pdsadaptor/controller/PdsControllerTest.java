@@ -34,7 +34,7 @@ class PdsControllerTest {
         SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null);
         when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(actualSuspendedPatientStatus);
 
-        String contentAsString = mockMvc.perform(get("/patients/" + nhsNumber)).andExpect(status().isOk())
+        String contentAsString = mockMvc.perform(get("/suspended-patient-status/" + nhsNumber)).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         SuspendedPatientStatus suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
 

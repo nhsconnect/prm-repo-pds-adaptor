@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @RestController
-@RequestMapping("patients")
+@RequestMapping("suspended-patient-status")
 @RequiredArgsConstructor
 @Slf4j
 public class PdsController {
