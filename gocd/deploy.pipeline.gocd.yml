@@ -36,7 +36,7 @@ common:
           deploy: *deploy_job
 pipelines:
   'prm-deductions-pds-adaptor.dev':
-    group: deductions
+    group: automatic-trigger
     label_template: '${git[:8]}'
     materials:
       git:
@@ -54,7 +54,7 @@ pipelines:
     stages: *common_stages
 
   'prm-deductions-pds-adaptor.test':
-    group: deductions
+    group: automatic-trigger
     label_template: '${git[:8]}'
     materials:
       git:
@@ -75,7 +75,7 @@ pipelines:
     stages: *common_stages
 
   'prm-deductions-pds-adaptor.pre-prod':
-    group: deductions
+    group: automatic-trigger
     label_template: '${git[:8]}'
     materials:
       git:
