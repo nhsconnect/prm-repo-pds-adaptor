@@ -75,6 +75,7 @@ data "aws_iam_policy_document" "ssm_policy_doc" {
       "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-jwt-key-id",
       "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-adaptor-access-token-endpoint",
       "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/external/pds-fhir-endpoint",
+      "arn:aws:ssm:${var.region}:${local.account_id}:parameter/repo/${var.environment}/user-input/api-keys/pds-adaptor/*"
     ]
   }
 }
