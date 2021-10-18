@@ -28,7 +28,6 @@ public class ReadSSMParameter {
 
 
     private Map<String, String> readParamsByPath(String paramName) {
-
         Region region = Region.EU_WEST_2;
         ssmClient = SsmClient.builder()
                 .region(region)
@@ -36,23 +35,17 @@ public class ReadSSMParameter {
 
         Map<String, String> apiKeyMap = new HashMap<>();
 
-        try {
-            GetParametersByPathRequest getParametersByPathRequest = GetParametersByPathRequest.builder()
-                    .withDecryption(Boolean.TRUE)
-                    .path(paramName)
-                    .build();
+        GetParametersByPathRequest getParametersByPathRequest = GetParametersByPathRequest.builder()
+                .withDecryption(Boolean.TRUE)
+                .path(paramName)
+                .build();
 
-            GetParametersByPathResponse parametersByPathResponse = ssmClient.getParametersByPath(getParametersByPathRequest);
+        GetParametersByPathResponse parametersByPathResponse = ssmClient.getParametersByPath(getParametersByPathRequest);
 
-            for(Parameter parameter : parametersByPathResponse.parameters()){
-                apiKeyMap.put(parameter.name(), parameter.value());
-            }
-
-        } catch (SsmException e) {
-            System.err.println(e.getMessage());
-            System.exit(1);
+        for(Parameter parameter : parametersByPathResponse.parameters()){
+            apiKeyMap.put(parameter.name(), parameter.value());
         }
-            return apiKeyMap;
+        return apiKeyMap;
     }
 
 }

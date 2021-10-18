@@ -16,8 +16,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
@@ -81,8 +81,8 @@ public class PdsControllerIntegrationTest {
         return new HttpHeaders() {{
             String auth = username + ":" + password;
             byte[] encodedAuth = Base64.encodeBase64(
-                    auth.getBytes(StandardCharsets.UTF_8.forName("US-ASCII")));
-            String authHeader = "Basic " + new String(encodedAuth);
+                    auth.getBytes(StandardCharsets.US_ASCII));
+            String authHeader = "Basic " + Arrays.toString(encodedAuth);
             set("Authorization", authHeader);
         }};
     }
