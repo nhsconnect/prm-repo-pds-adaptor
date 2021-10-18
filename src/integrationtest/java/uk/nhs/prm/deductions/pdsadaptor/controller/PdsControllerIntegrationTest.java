@@ -3,6 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
+import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -10,12 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
+
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
@@ -43,30 +45,30 @@ public class PdsControllerIntegrationTest {
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() {
         stubFor(get(urlMatching("/Patient/123"))
-            .inScenario("Get PDS Record")
-            .whenScenarioStateIs(STARTED)
-            .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
 
         stubFor(post(urlMatching("/access-token"))
-            .inScenario("Get PDS Record")
-            .whenScenarioStateIs(STARTED)
-            .willReturn(
-                aResponse()
-                    .withBody("{\"access_token\": \"accessToken\",\n" +
-                        " \"expires_in\": \"599\",\n" +
-                        " \"token_type\": \"Bearer\"}"))
-            .willSetStateTo("Token Generated"));
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(
+                        aResponse()
+                                .withBody("{\"access_token\": \"accessToken\",\n" +
+                                        " \"expires_in\": \"599\",\n" +
+                                        " \"token_type\": \"Bearer\"}"))
+                .willSetStateTo("Token Generated"));
 
         stubFor(get(urlMatching("/Patient/123"))
-            .inScenario("Get PDS Record")
-            .whenScenarioStateIs("Token Generated")
-            .withHeader("Authorization", matching("Bearer accessToken"))
-            .willReturn(aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(getString())));
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs("Token Generated")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(getString())));
 
         ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
-            createURLWithPort("/suspended-patient-status/123"), HttpMethod.GET, null, SuspendedPatientStatus.class);
+                createURLWithPort("/suspended-patient-status/123"), HttpMethod.GET, new HttpEntity<String>("parameters", createHeaders("admin", "admin")), SuspendedPatientStatus.class);
 
         SuspendedPatientStatus body = response.getBody();
 
@@ -75,25 +77,34 @@ public class PdsControllerIntegrationTest {
         assertThat(body.getIsSuspended()).isEqualTo(false);
     }
 
+    private HttpHeaders createHeaders(String username, String password) {
+        return new HttpHeaders() {{
+            String auth = username + ":" + password;
+            byte[] encodedAuth = Base64.encodeBase64(
+                    auth.getBytes(StandardCharsets.UTF_8.forName("US-ASCII")));
+            String authHeader = "Basic " + new String(encodedAuth);
+            set("Authorization", authHeader);
+        }};
+    }
 
     private String getString() {
-        String json = "{\n" +
-            "  \"address\": [\n" +
-            "    {\n" +
-            "      \"extension\": [\n" +
-            "        {\n" +
-            "          \"extension\": [\n" +
-            "            {\n" +
-            "              \"url\": \"type\",\n" +
-            "              \"valueCoding\": {\n" +
-            "                \"code\": \"PAF\",\n" +
-            "                \"system\": \"https://fhir.hl7.org.uk/CodeSystem/UKCore-AddressKeyType\"\n" +
-            "              }\n" +
-            "            },\n" +
-            "            {\n" +
-            "              \"url\": \"value\",\n" +
-            "              \"valueString\": \"6292549\"\n" +
-            "            }\n" +
+        return "{\n" +
+                "  \"address\": [\n" +
+                "    {\n" +
+                "      \"extension\": [\n" +
+                "        {\n" +
+                "          \"extension\": [\n" +
+                "            {\n" +
+                "              \"url\": \"type\",\n" +
+                "              \"valueCoding\": {\n" +
+                "                \"code\": \"PAF\",\n" +
+                "                \"system\": \"https://fhir.hl7.org.uk/CodeSystem/UKCore-AddressKeyType\"\n" +
+                "              }\n" +
+                "            },\n" +
+                "            {\n" +
+                "              \"url\": \"value\",\n" +
+                "              \"valueString\": \"6292549\"\n" +
+                "            }\n" +
                 "          ],\n" +
                 "          \"url\": \"https://fhir.hl7.org.uk/StructureDefinition/Extension-UKCore-AddressKey\"\n" +
                 "        }\n" +
@@ -177,7 +188,6 @@ public class PdsControllerIntegrationTest {
                 "  ],\n" +
                 "  \"resourceType\": \"Patient\"\n" +
                 "}";
-        return json;
     }
 
     private String createURLWithPort(String uri) {

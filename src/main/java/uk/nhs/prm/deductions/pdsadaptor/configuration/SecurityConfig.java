@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -17,7 +16,6 @@ import uk.nhs.prm.deductions.pdsadaptor.service.ReadSSMParameter;
 
 import java.util.Map;
 
-
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -25,8 +23,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Value("${environment}")
     private String environment;
-
-    private ReadSSMParameter ssmService;
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
@@ -42,7 +38,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 
         if (!environment.equals("local") && !environment.equals("int-test")) {
-            ssmService = new ReadSSMParameter();
+            ReadSSMParameter ssmService = new ReadSSMParameter();
             Map<String, String> userMap = ssmService.getApiKeys(environment);
 
             userMap.forEach((username, apiKey) -> {
@@ -84,10 +80,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable().
+                httpBasic().and().
                 authorizeRequests().
                 antMatchers(AUTH_WHITELIST).permitAll().
                 antMatchers("/**").authenticated();  // require authentication for any endpoint that's not whitelisted
     }
-
 
 }
