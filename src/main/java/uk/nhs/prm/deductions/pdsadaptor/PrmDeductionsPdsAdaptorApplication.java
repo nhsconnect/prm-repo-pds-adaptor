@@ -1,19 +1,22 @@
 package uk.nhs.prm.deductions.pdsadaptor;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class PrmDeductionsPdsAdaptorApplication {
 
+    private static Logger logger = LogManager.getLogger(PrmDeductionsPdsAdaptorApplication.class);
+
     public static void main(String[] args) {
 
         try{
-            System.out.println("---------About to run");
+            logger.info("about to start");
             SpringApplication.run(PrmDeductionsPdsAdaptorApplication.class, args);
         }catch (Exception e){
-
-            System.out.println(e.getMessage());
+            logger.error("something happened" + e.getMessage());
         }
 
     }
