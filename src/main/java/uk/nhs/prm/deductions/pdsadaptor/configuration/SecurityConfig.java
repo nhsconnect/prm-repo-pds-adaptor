@@ -12,6 +12,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ssm.SsmClient;
 import uk.nhs.prm.deductions.pdsadaptor.service.ReadSSMParameter;
 
 import java.util.Map;
@@ -36,9 +38,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-
+        Region region = Region.EU_WEST_2;
+        SsmClient ssmClient = SsmClient.builder()
+                .region(region)
+                .build();
         if (!environment.equals("local") && !environment.equals("int-test")) {
-            ReadSSMParameter ssmService = new ReadSSMParameter();
+
+            ReadSSMParameter ssmService = new ReadSSMParameter(ssmClient);
             Map<String, String> userMap = ssmService.getApiKeys(environment);
 
             userMap.forEach((username, apiKey) -> {

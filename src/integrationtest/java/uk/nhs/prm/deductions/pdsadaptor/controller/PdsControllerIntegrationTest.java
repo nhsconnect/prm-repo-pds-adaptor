@@ -3,7 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
-import org.apache.commons.codec.binary.Base64;
+import org.apache.tomcat.util.codec.binary.Base64;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +17,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
@@ -78,13 +77,15 @@ public class PdsControllerIntegrationTest {
     }
 
     private HttpHeaders createHeaders(String username, String password) {
-        return new HttpHeaders() {{
-            String auth = username + ":" + password;
-            byte[] encodedAuth = Base64.encodeBase64(
-                    auth.getBytes(StandardCharsets.US_ASCII));
-            String authHeader = "Basic " + Arrays.toString(encodedAuth);
-            set("Authorization", authHeader);
-        }};
+        String plainCreds = username.concat(":").concat(password);
+        byte[] plainCredsBytes = plainCreds.getBytes(StandardCharsets.UTF_8);
+        byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Basic " + new String(base64CredsBytes,
+                StandardCharsets.UTF_8));
+
+        return headers;
     }
 
     private String getString() {

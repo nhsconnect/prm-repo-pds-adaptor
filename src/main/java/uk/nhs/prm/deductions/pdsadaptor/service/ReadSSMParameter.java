@@ -1,16 +1,25 @@
 package uk.nhs.prm.deductions.pdsadaptor.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
-import software.amazon.awssdk.services.ssm.model.*;
+import software.amazon.awssdk.services.ssm.model.GetParametersByPathRequest;
+import software.amazon.awssdk.services.ssm.model.GetParametersByPathResponse;
+import software.amazon.awssdk.services.ssm.model.Parameter;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Service
+@AllArgsConstructor
 public class ReadSSMParameter {
 
-    private SsmClient ssmClient;
+//    Region region = Region.EU_WEST_2;
+    private final SsmClient ssmClient;
+
+
 
     public Map<String,String> getApiKeys(String environment) {
         String serviceParamName = "/repo/" + environment + "/user-input/api-keys/pds-adaptor/";
@@ -28,11 +37,6 @@ public class ReadSSMParameter {
 
 
     private Map<String, String> readParamsByPath(String paramName) {
-        Region region = Region.EU_WEST_2;
-        ssmClient = SsmClient.builder()
-                .region(region)
-                .build();
-
         Map<String, String> apiKeyMap = new HashMap<>();
 
         GetParametersByPathRequest getParametersByPathRequest = GetParametersByPathRequest.builder()
