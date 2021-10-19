@@ -32,7 +32,7 @@ public class AuthIntegrationTest {
     }
 
     @Test
-    void shouldPassWithSwaggeerCall(){
+    void shouldPassWithSwaggerCall(){
         ResponseEntity<String> response = restTemplate.exchange(
                 createURLWithPort("/swagger-ui/index.html?configUrl=/v3/api-docs/swagger-config"), HttpMethod.GET, null, String.class);
 
@@ -40,16 +40,14 @@ public class AuthIntegrationTest {
     }
 
     @Test
-    void shouldGetAnauthorizedIfHeaderMissingAuth(){
+    void shouldGetUnauthorizedIfHeaderMissingAuth(){
         ResponseEntity<String> response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/123"), HttpMethod.GET, null, String.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-
     }
 
     private String createURLWithPort(String uri) {
         return "http://localhost:" + port + uri;
     }
-
 }
