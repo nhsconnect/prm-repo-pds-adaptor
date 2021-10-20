@@ -2,8 +2,7 @@ package uk.nhs.prm.deductions.pdsadaptor.service;
 
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParametersByPathRequest;
-import software.amazon.awssdk.services.ssm.model.GetParametersByPathResponse;
-import software.amazon.awssdk.services.ssm.model.Parameter;
+import software.amazon.awssdk.services.ssm.paginators.GetParametersByPathIterable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,11 +38,10 @@ public class ReadSSMParameter {
                 .path(paramName)
                 .build();
 
-        GetParametersByPathResponse parametersByPathResponse = ssmClient.getParametersByPath(getParametersByPathRequest);
+        GetParametersByPathIterable parametersByPathIterable = ssmClient.getParametersByPathPaginator(getParametersByPathRequest);
 
-        for(Parameter parameter : parametersByPathResponse.parameters()){
-            apiKeyMap.put(parameter.name(), parameter.value());
-        }
+        parametersByPathIterable.stream().iterator().forEachRemaining(p -> p.parameters().forEach(s->apiKeyMap.put(s.name(),s.value())));
+
         return apiKeyMap;
     }
 
