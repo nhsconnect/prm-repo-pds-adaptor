@@ -43,12 +43,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .region(region)
                 .build();
         if (!environment.equals("local") && !environment.equals("int-test")) {
-
             ReadSSMParameter ssmService = new ReadSSMParameter(ssmClient);
             Map<String, String> userMap = ssmService.getApiKeys(environment);
 
-            userMap.forEach((username, apiKey) -> {
+            userMap.forEach((parameterName, apiKey) -> {
                 try {
+                    String username = getUsernameFromParameter(parameterName);
                     auth.inMemoryAuthentication()
                             .passwordEncoder(passwordEncoder())
                             .withUser(username)
@@ -66,6 +66,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .password(passwordEncoder().encode("admin"))
                     .roles("USER");
         }
+    }
+
+    private String getUsernameFromParameter(String parameterName) {
+        int indexOfSlashBeforeUsername = parameterName.lastIndexOf("/");
+        return parameterName.substring(indexOfSlashBeforeUsername + 1);
     }
 
     private static final String[] AUTH_WHITELIST = {

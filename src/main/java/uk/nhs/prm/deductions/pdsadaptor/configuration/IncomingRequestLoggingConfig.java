@@ -16,6 +16,5 @@ public class IncomingRequestLoggingConfig {
         loggingFilter.setIncludeHeaders(false);
 
         return loggingFilter;
-
     }
 }
