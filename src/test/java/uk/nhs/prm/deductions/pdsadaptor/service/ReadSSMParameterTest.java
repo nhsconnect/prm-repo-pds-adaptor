@@ -10,6 +10,7 @@ import software.amazon.awssdk.services.ssm.model.GetParametersByPathRequest;
 import software.amazon.awssdk.services.ssm.model.GetParametersByPathResponse;
 import software.amazon.awssdk.services.ssm.model.Parameter;
 import software.amazon.awssdk.services.ssm.model.ParameterType;
+import software.amazon.awssdk.services.ssm.paginators.GetParametersByPathIterable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,9 +57,13 @@ public class ReadSSMParameterTest {
         // setup
         GetParametersByPathResponse userApiKeyParameters = GetParametersByPathResponse.builder().parameters(Arrays.asList(user1, user2)).build();
         GetParametersByPathResponse serviceApiKeyParameters = GetParametersByPathResponse.builder().parameters(List.of(service1)).build();
+        GetParametersByPathIterable iterableService = new GetParametersByPathIterable(ssmClient, getParametersByPathRequestForService);
+        GetParametersByPathIterable iterableUser = new GetParametersByPathIterable(ssmClient, getParametersByPathRequestForUser);
 
         when(ssmClient.getParametersByPath(getParametersByPathRequestForService)).thenReturn(userApiKeyParameters);
         when(ssmClient.getParametersByPath(getParametersByPathRequestForUser)).thenReturn(serviceApiKeyParameters);
+        when(ssmClient.getParametersByPathPaginator(getParametersByPathRequestForService)).thenReturn(iterableService);
+        when(ssmClient.getParametersByPathPaginator(getParametersByPathRequestForUser)).thenReturn(iterableUser);
 
         // action
         Map<String, String> apiKeys = ssmParamService.getApiKeys("local");
