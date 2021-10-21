@@ -40,9 +40,9 @@ public class ReadSSMParameter {
 
         GetParametersByPathIterable parametersByPathIterable = ssmClient.getParametersByPathPaginator(getParametersByPathRequest);
 
-        parametersByPathIterable.stream().iterator().forEachRemaining(p -> {
-            p.parameters().forEach(s->apiKeyMap.put(s.name(),s.value()));
-        });
+        parametersByPathIterable.stream().iterator()
+                .forEachRemaining(parametersByPath -> parametersByPath.parameters()
+                    .forEach(parameter -> apiKeyMap.put(parameter.name(), parameter.value())));
 
         return apiKeyMap;
     }
