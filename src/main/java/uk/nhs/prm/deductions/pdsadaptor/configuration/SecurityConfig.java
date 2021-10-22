@@ -39,12 +39,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        Region region = Region.EU_WEST_2;
-        SsmClient ssmClient = SsmClient.builder()
-                .region(region)
-                .build();
         if (!environment.equals("local") && !environment.equals("int-test")) {
-            ReadSSMParameter ssmService = new ReadSSMParameter(ssmClient);
+            ReadSSMParameter ssmService = new ReadSSMParameter(createSsmClient());
             Map<String, String> userMap = ssmService.getApiKeys(environment);
 
             userMap.forEach((parameterName, apiKey) -> {
@@ -67,6 +63,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .password(passwordEncoder().encode("admin"))
                     .roles("USER");
         }
+    }
+
+    private SsmClient createSsmClient() {
+        Region region = Region.EU_WEST_2;
+        SsmClient ssmClient = SsmClient.builder()
+                .region(region)
+                .build();
+        return ssmClient;
     }
 
     private String getUsernameFromParameter(String parameterName) {
