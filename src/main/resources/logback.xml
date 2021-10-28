@@ -12,6 +12,7 @@
 				<pattern>
 					<pattern>
 						{
+						"traceId": "%X{traceId:-}",
 						"level": "${LOG_LEVEL:-debug}",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
