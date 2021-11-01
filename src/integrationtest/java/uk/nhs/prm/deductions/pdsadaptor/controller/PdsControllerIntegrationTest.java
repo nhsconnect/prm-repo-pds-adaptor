@@ -84,6 +84,7 @@ public class PdsControllerIntegrationTest {
         HttpHeaders headers = new HttpHeaders();
         headers.add("Authorization", "Basic " + new String(base64CredsBytes,
                 StandardCharsets.UTF_8));
+        headers.add("traceId", "test-trace-id");
 
         return headers;
     }
