@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
@@ -36,6 +37,8 @@ class PdsControllerTest {
 
     @MockBean
     private PdsService pdsService;
+    @MockBean
+    private Tracer tracer;
 
     @Test
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
@@ -45,6 +48,7 @@ class PdsControllerTest {
 
         SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null);
         when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(actualSuspendedPatientStatus);
+        doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
         String contentAsString = mockMvc.perform(get("/suspended-patient-status/" + nhsNumber).header("traceId", "fake-trace-id"))
                 .andExpect(status().isOk())

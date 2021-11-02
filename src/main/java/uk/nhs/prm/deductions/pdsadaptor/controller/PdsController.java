@@ -2,9 +2,9 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
@@ -18,11 +18,12 @@ import javax.validation.constraints.Size;
 public class PdsController {
 
     private final PdsService pdsService;
+    private final Tracer tracer;
 
     @GetMapping("/{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
     public SuspendedPatientStatus getPatientGpStatus(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber, @RequestHeader("traceId") String traceId) {
-        MDC.put("traceId", traceId);
+        tracer.setTraceId(traceId);
         log.info("Request for pds record received");
         return pdsService.getPatientGpStatus(nhsNumber);
     }
