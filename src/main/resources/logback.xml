@@ -10,9 +10,10 @@
 					<timeZone>UTC</timeZone>
 				</timestamp>
 				<pattern>
+					<omitEmptyFields>true</omitEmptyFields>
 					<pattern>
 						{
-						"traceId": "%X{traceId:-}",
+						"traceId": "%mdc{traceId}",
 						"level": "${LOG_LEVEL:-debug}",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
