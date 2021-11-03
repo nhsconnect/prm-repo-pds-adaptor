@@ -52,16 +52,16 @@ sourceSets {
     integrationTest {
         compileClasspath += sourceSets.main.output
         runtimeClasspath += sourceSets.main.output
+        if (System.getenv('PIPELINE_INTEGRATION_TEST') != null) {
+            java.srcDirs('./src/integrationtest/java')
+            resources.srcDirs('./src/integrationtest/resources')
+        }
     }
 }
 
 configurations {
     integrationTestImplementation.extendsFrom testImplementation
-    integrationTestRuntimeOnly.extendsFrom runtimeOnly
-}
-
-tasks.withType(Test) {
-    useJUnitPlatform()
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 test {
@@ -69,6 +69,7 @@ test {
 }
 
 task integrationTest(type: Test) {
+    useJUnitPlatform()
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter test
