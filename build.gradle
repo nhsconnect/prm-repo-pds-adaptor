@@ -68,8 +68,11 @@ test {
     testLogging.showStandardStreams = true
 }
 
-task integrationTest(type: Test) {
+tasks.withType(Test) {
     useJUnitPlatform()
+}
+
+task integrationTest(type: Test) {
     testClassesDirs = sourceSets.integrationTest.output.classesDirs
     classpath = sourceSets.integrationTest.runtimeClasspath
     shouldRunAfter test
