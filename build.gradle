@@ -1,5 +1,5 @@
 plugins {
-    id 'org.springframework.boot' version '2.5.3'
+    id 'org.springframework.boot' version '2.5.6'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
     id 'jacoco'
@@ -38,7 +38,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:20.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-security'
 
-    implementation platform('software.amazon.awssdk:bom:2.15.0')
+    implementation platform('software.amazon.awssdk:bom:2.17.73')
     implementation 'software.amazon.awssdk:ssm'
 
     compileOnly 'org.projectlombok:lombok:1.18.20'
