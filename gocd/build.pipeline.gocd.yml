@@ -1,7 +1,7 @@
 format_version: 4
 pipelines:
   'prm-deductions-pds-adaptor':
-    group: automatic-trigger
+    group: continuity-service
     label_template: '${git[:8]}'
     materials:
       git:
