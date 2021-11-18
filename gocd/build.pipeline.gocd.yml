@@ -25,8 +25,6 @@ pipelines:
                       - -c
                       - ./tasks test_unit
             test_integration:
-              environment_variables:
-                PIPELINE_INTEGRATION_TEST: true
               resources:
                 - docker
               artifacts:
@@ -59,7 +57,7 @@ pipelines:
               tabs:
                 MainCodeQa: spotbugs/main/spotbugs.html
                 TestCodeQa: spotbugs/test/spotbugs.html
-                ITestCodeQa: spotbugs/integrationTest/spotbugs.html
+                ITestCodeQa: spotbugs/integration/spotbugs.html
               resources:
                 - docker
               tasks:
