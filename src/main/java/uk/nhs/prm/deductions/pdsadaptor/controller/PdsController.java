@@ -25,7 +25,7 @@ public class PdsController {
     public SuspendedPatientStatus getPatientGpStatus(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber,
                                                      @RequestHeader(value = "traceId", required = false) String traceId) {
         tracer.setTraceId(traceId);
-        log.info("Request for pds record received");
+        log.error("Request for pds record received");
         return pdsService.getPatientGpStatus(nhsNumber);
     }
 }
