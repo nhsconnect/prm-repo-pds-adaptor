@@ -14,7 +14,7 @@
 					<pattern>
 						{
 						"traceId": "%mdc{traceId}",
-						"level": "${LOG_LEVEL:-debug}",
+						"level": "%level",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
 						"line": "%L",
@@ -38,7 +38,7 @@
 		</encoder>
 
 	</appender>
-	<root level="info">
+	<root level="INFO">
 		<appender-ref ref="stdout" />
 	</root>
 </configuration>
