@@ -23,12 +23,18 @@ resource "aws_cloudwatch_log_metric_filter" "log_metric_filter" {
 resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
   alarm_name                = "${var.environment}-${var.component_name}-error-logs"
   comparison_operator       = "GreaterThanThreshold"
+  threshold                 = "0"
   evaluation_periods        = "1"
   period                    = "60"
   metric_name               = aws_cloudwatch_log_metric_filter.log_metric_filter.metric_transformation[0].name
   namespace                 = aws_cloudwatch_log_metric_filter.log_metric_filter.metric_transformation[0].namespace
   statistic                 = "Sum"
-  threshold                 = "0"
   alarm_description         = "This alarm monitors errors logs in ${var.component_name}"
   treat_missing_data        = "missing"
+  actions_enabled           = "true"
+  alarm_actions             = [data.aws_sns_topic.alarm_notifications.arn]
+}
+
+data "aws_sns_topic" "alarm_notifications" {
+  name = "${var.environment}-alarm-notifications-sns-topic"
 }
