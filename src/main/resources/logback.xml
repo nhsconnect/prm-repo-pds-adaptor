@@ -9,11 +9,11 @@
 				<timestamp>
 					<timeZone>UTC</timeZone>
 				</timestamp>
+				<mdc />
 				<pattern>
 					<omitEmptyFields>true</omitEmptyFields>
 					<pattern>
 						{
-						"traceId": "%mdc{traceId}",
 						"level": "%level",
 						"service": "pds-adaptor",
 						"class": "%C{0}",
