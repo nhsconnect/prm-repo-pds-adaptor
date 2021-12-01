@@ -8,7 +8,11 @@ import io.swagger.v3.oas.annotations.servers.Server;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@SecurityScheme(
+    name = "basicAuth",
+    type = SecuritySchemeType.HTTP,
+    scheme = "basic"
+)
 @OpenAPIDefinition(info = @Info(title = "PDS Adaptor", version = "v1"), servers = @Server(url = "/"))
-@SecurityScheme(name = "apiKey", type = SecuritySchemeType.APIKEY)
 public class SwaggerConfig {
 }
