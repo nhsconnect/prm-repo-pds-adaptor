@@ -1,5 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -10,6 +12,7 @@ import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.security.Principal;
 
 @RestController
 @RequestMapping("suspended-patient-status")
@@ -20,12 +23,13 @@ public class PdsController {
     private final PdsService pdsService;
     private final Tracer tracer;
 
+    @Operation(security = @SecurityRequirement(name = "basicAuth"))
     @GetMapping("/{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
     public SuspendedPatientStatus getPatientGpStatus(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber,
-                                                     @RequestHeader(value = "traceId", required = false) String traceId) {
+                                                     @RequestHeader(value = "traceId", required = false) String traceId, Principal principal) {
         tracer.setTraceId(traceId);
-        log.error("Request for pds record received");
+        log.info("Request for pds record received by {}", principal.getName());
         return pdsService.getPatientGpStatus(nhsNumber);
     }
 }
