@@ -1,7 +1,7 @@
 fileignoreconfig:
-- filename: pds-app-auth-spike/config.py
-  checksum: c2e8c9075acb384f4528ca5bf6e111259b19a7447b9dacd6c9f2b54f58f31829
 - filename: pds-app-auth-spike/create_headers.py
   checksum: be5781d0ae9a7e8d2580f453094a9fad7ac8454bb3735bad0034f56dbf9e9ff5
+- filename: pds-app-auth-spike/config.py
+  checksum: 23cba87f6ea4464be09b83b81aa00f1580a4b9ebd659f3a291a9cafcb470bd7e
 version: ""
 
