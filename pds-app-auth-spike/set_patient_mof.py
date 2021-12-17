@@ -14,8 +14,8 @@ def set_patient_mof(config):
     headers['If-Match'] = version
     headers['Content-Type'] = 'application/json-patch+json'
 
-    patches_json = json.dumps([{
-      "op": "add",
+    patches_json = json.dumps({"patches":[{
+      "op": "replace",
       "path": "/managingOrganization",
       "value": {
         "type": "Organization",
@@ -24,7 +24,7 @@ def set_patient_mof(config):
           "value": "M85019"
         }
       }
-    }])
+    }]})
     r = requests.patch(
         f"{config.pds_fhir_url}/Patient/{config.patient_nhs_number}",
         headers=headers,
