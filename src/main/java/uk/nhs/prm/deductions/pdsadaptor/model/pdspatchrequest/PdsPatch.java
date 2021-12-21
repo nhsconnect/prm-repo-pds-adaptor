@@ -5,12 +5,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Builder
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PdsPatchRequest {
-    List<PdsPatch> patches;
+public class PdsPatch {
+    private String op;
+    private String path;
+    private PdsPatchValue value;
 }

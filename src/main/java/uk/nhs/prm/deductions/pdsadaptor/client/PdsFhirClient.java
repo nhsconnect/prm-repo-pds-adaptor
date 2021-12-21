@@ -2,7 +2,11 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -11,6 +15,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchValue;
@@ -18,7 +23,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
 
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
@@ -51,10 +56,11 @@ public class PdsFhirClient {
         String path = "Patient/" + nhsNumber;
         log.info("Sending patch request to pds for patient");
         try {
-            PdsPatchRequest pdsPatchRequest = createPatchRequest(updateRequest.getPreviousGp());
+            PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
             ResponseEntity<PdsResponse> response =
-                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(pdsPatchRequest, requestHeaders), PdsResponse.class);
+                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(patchRequest, requestHeaders),
+                    PdsResponse.class);
             log.info("Successful request of pds record for patient");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
@@ -94,7 +100,8 @@ public class PdsFhirClient {
         PdsPatchIdentifier identifier =
             new PdsPatchIdentifier("https://fhir.nhs.uk/Id/ods-organization-code", managingOrganisation);
         PdsPatchValue patchValue = new PdsPatchValue("Organization", identifier);
-        return new PdsPatchRequest("replace", "/managingOrganization", patchValue);
+        PdsPatch patch = new PdsPatch("replace", "/managingOrganization", patchValue);
+        return new PdsPatchRequest(singletonList(patch));
     }
 
     private PdsResponse getPdsResponse(ResponseEntity<PdsResponse> response) {
