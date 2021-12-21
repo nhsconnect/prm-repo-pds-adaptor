@@ -10,6 +10,10 @@ import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
+import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchValue;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
@@ -42,6 +46,22 @@ public class PdsFhirClient {
         }
     }
 
+    public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
+        String path = "Patient/" + nhsNumber;
+        log.info("Sending patch request to pds for patient");
+        try {
+            PdsPatchRequest pdsPatchRequest = createPatchRequest(updateRequest.getManagingOrganisation());
+            HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
+            ResponseEntity<PdsResponse> response =
+                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(pdsPatchRequest, requestHeaders), PdsResponse.class);
+            log.info("Successful request of pds record for patient");
+            return getPdsResponse(response);
+        } catch (HttpStatusCodeException e) {
+            handleExceptions(e);
+            throw new PdsFhirRequestException(e);
+        }
+    }
+
     private void handleExceptions(HttpStatusCodeException e) {
         if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
             throw new NotFoundException("PDS FHIR Request failed - Patient not found");
@@ -59,6 +79,21 @@ public class PdsFhirClient {
         headers.set("X-Request-ID", UUID.randomUUID().toString());
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON.toString());
         return headers;
+    }
+
+    private HttpHeaders createUpdateHeaders(String recordETag) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Request-ID", UUID.randomUUID().toString());
+        headers.set(HttpHeaders.CONTENT_TYPE, "application/json-patch+json");
+        headers.setIfMatch(recordETag);
+        return headers;
+    }
+
+    private PdsPatchRequest createPatchRequest(String managingOrganisation) {
+        PdsPatchIdentifier identifier =
+            new PdsPatchIdentifier("https://fhir.nhs.uk/Id/ods-organization-code", managingOrganisation);
+        PdsPatchValue patchValue = new PdsPatchValue("Organization", identifier);
+        return new PdsPatchRequest("replace", "/managingOrganization", patchValue);
     }
 
     private PdsResponse getPdsResponse(ResponseEntity<PdsResponse> response) {
