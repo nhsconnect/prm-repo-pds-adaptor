@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PdsPatchIdentifier {
-    private String path = "https://fhir.nhs.uk/Id/ods-organization-code";
+    private String path;
     private String value;
 }

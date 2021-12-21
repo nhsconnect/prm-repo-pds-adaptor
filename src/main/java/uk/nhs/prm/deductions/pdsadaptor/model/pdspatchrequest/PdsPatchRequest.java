@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PdsPatchRequest {
-    private String op = "replace";
-    private String path = "/managingOrganization";
+    private String op;
+    private String path;
     private PdsPatchValue value;
 }

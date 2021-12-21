@@ -64,7 +64,7 @@ public class PdsControllerIntegrationTest {
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
-                        .withHeader("ETag", "W1")
+                        .withHeader("ETag", "W/\"6\"")
                         .withBody(getString())));
 
         ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
@@ -76,7 +76,7 @@ public class PdsControllerIntegrationTest {
         assertThat(body.getCurrentOdsCode()).isEqualTo("A20047");
         assertThat(body.getIsSuspended()).isEqualTo(false);
         assertThat(body.getManagingOrganisation()).isNull();
-        assertThat(body.getRecordETag()).isEqualTo("W1");
+        assertThat(body.getRecordETag()).isEqualTo("W/\"6\"");
     }
 
     private HttpHeaders createHeaders(String username, String password) {

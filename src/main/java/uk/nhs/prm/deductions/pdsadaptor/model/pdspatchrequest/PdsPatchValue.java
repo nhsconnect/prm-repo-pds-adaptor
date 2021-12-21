@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PdsPatchValue {
-    private String type = "Organization";
+    private String type;
     private PdsPatchIdentifier identifier;
 }

@@ -18,6 +18,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
 
+import static java.util.Arrays.asList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
@@ -99,7 +100,8 @@ public class PdsFhirClient {
     private PdsResponse getPdsResponse(ResponseEntity<PdsResponse> response) {
         PdsResponse pdsResponse = response.getBody();
         if (pdsResponse != null) {
-            pdsResponse.setETag(response.getHeaders().getETag());
+            String eTag = response.getHeaders().getETag();
+            pdsResponse.setETag(eTag != null ? eTag.replace("--gzip", "") : null);
             return pdsResponse;
         }
         return null;

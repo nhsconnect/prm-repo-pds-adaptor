@@ -84,8 +84,7 @@ class PdsFhirClientTest {
             PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
 
             HttpHeaders headers = new HttpHeaders();
-            String tagVersion = RECORD_E_TAG;
-            headers.setETag(tagVersion);
+            headers.setETag(RECORD_E_TAG);
 
             when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
                 new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
@@ -93,8 +92,24 @@ class PdsFhirClientTest {
             PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
 
             assertThat(expected).isEqualTo(pdsResponse);
-            assertThat(expected.getETag()).isEqualTo(tagVersion);
+            assertThat(expected.getETag()).isEqualTo(RECORD_E_TAG);
 
+        }
+
+        @Test
+        void shouldSetHeaderOnRequestForGetRemoveGzipFromETag() {
+            PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setETag("W/\"1--gzip\"");
+
+            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
+                new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
+
+            PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
+
+            assertThat(expected).isEqualTo(pdsResponse);
+            assertThat(expected.getETag()).isEqualTo(RECORD_E_TAG);
         }
 
         @Test
