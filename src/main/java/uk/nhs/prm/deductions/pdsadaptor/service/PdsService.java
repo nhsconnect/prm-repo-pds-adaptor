@@ -20,9 +20,9 @@ public class PdsService {
         PdsResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
 
         if (hasGeneralPractitioner(pdsResponse)) {
-            return nonSuspendedPatientStatus(getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse));
+            return nonSuspendedPatientStatus(getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
         }
-        return suspendedPatientStatus(getManagingOrganisation(pdsResponse));
+        return suspendedPatientStatus(getManagingOrganisation(pdsResponse), pdsResponse.getETag());
 
     }
 

@@ -49,7 +49,7 @@ class PdsControllerTest {
         String nhsNumber = "1234567890";
         ObjectMapper objectMapper = new ObjectMapper();
 
-        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null, null);
+        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null, null, "W1");
         when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 

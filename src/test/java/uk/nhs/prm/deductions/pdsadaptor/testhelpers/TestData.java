@@ -11,20 +11,20 @@ import java.util.List;
 
 public class TestData {
 
-    public static PdsResponse buildPdsResponse(String nhsNumber, String odsCode, LocalDate start, LocalDate end,
-                                               String managingOrganisationOdsCode) {
-        GeneralPractitioner generalPractitioner = createGeneralPractitioner(odsCode, start, end);
+    public static PdsResponse buildPdsResponse(String nhsNumber, String odsCode, LocalDate start,
+                                               String managingOrganisationOdsCode, String eTag) {
+        GeneralPractitioner generalPractitioner = createGeneralPractitioner(odsCode, start);
         ManagingOrganization managingOrganization = createManagingOrganization(managingOrganisationOdsCode);
-        return new PdsResponse(nhsNumber, List.of(generalPractitioner), managingOrganization);
+        return new PdsResponse(nhsNumber, List.of(generalPractitioner), managingOrganization, eTag);
     }
 
-    public static PdsResponse buildPdsSuspendedResponse(String nhsNumber, String managingOrganisationOdsCode) {
+    public static PdsResponse buildPdsSuspendedResponse(String nhsNumber, String managingOrganisationOdsCode, String eTag) {
         ManagingOrganization managingOrganization = createManagingOrganization(managingOrganisationOdsCode);
-        return new PdsResponse(nhsNumber, null, managingOrganization);
+        return new PdsResponse(nhsNumber, null, managingOrganization, eTag);
     }
 
-    private static GeneralPractitioner createGeneralPractitioner(String odsCode, LocalDate start, LocalDate end) {
-        IdentifierPeriod gpTimePeriod = new IdentifierPeriod(start, end);
+    private static GeneralPractitioner createGeneralPractitioner(String odsCode, LocalDate start) {
+        IdentifierPeriod gpTimePeriod = new IdentifierPeriod(start, null);
         Identifier identifier = new Identifier(odsCode, gpTimePeriod);
         return new GeneralPractitioner(identifier);
     }

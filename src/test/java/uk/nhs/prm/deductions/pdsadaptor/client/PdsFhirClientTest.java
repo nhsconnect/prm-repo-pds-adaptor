@@ -9,6 +9,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +55,7 @@ class PdsFhirClientTest {
 
     @Test
     void shouldSetHeaderOnRequest() {
-        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null, null);
+        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null, "W/\"1\"");
 
         when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
             new ResponseEntity<>(pdsResponse, HttpStatus.OK));
@@ -67,15 +68,20 @@ class PdsFhirClientTest {
     }
 
     @Test
-    void shouldReturnPdsResponse() {
+    void shouldReturnPdsResponseWithEtagFromHeaders() {
         PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null, null);
 
+        HttpHeaders headers = new HttpHeaders();
+        String tagVersion = "W/\"1\"";
+        headers.setETag(tagVersion);
+
         when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
-            new ResponseEntity<>(pdsResponse, HttpStatus.OK));
+            new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
         PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
 
         assertThat(expected).isEqualTo(pdsResponse);
+        assertThat(expected.getETag()).isEqualTo(tagVersion);
 
     }
 

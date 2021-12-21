@@ -35,7 +35,7 @@ public class PdsFhirClient {
             ResponseEntity<PdsResponse> response =
                 pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsResponse.class);
             log.info("Successful request of pds record for patient");
-            return response.getBody();
+            return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             handleExceptions(e);
             throw new PdsFhirRequestException(e);
@@ -59,5 +59,14 @@ public class PdsFhirClient {
         headers.set("X-Request-ID", UUID.randomUUID().toString());
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON.toString());
         return headers;
+    }
+
+    private PdsResponse getPdsResponse(ResponseEntity<PdsResponse> response) {
+        PdsResponse pdsResponse = response.getBody();
+        if (pdsResponse != null) {
+            pdsResponse.setETag(response.getHeaders().getETag());
+            return pdsResponse;
+        }
+        return null;
     }
 }

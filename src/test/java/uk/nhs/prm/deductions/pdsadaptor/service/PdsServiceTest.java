@@ -24,32 +24,35 @@ class PdsServiceTest {
     @InjectMocks
     private PdsService pdsService;
     public static final String NHS_NUMBER = "1234567890";
+    public static final String RECORD_E_TAG = "W/\"1\"";
 
     @Test
     void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatient() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, null);
+        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
         assertThat(expected.getManagingOrganisation()).isNull();
+        assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
     }
 
     @Test
     void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatientWithManagingOrganisationIfSet() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, "A9876");
+        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
         assertThat(expected.getManagingOrganisation()).isEqualTo("A9876");
+        assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
     }
 
     @Test
     void shouldReturnSuspendedPatientResponseWhenNoGpPractitionerField() {
-        PdsResponse pdsResponse = TestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234");
+        PdsResponse pdsResponse = TestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234", "W/\"1\"");
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
 
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
@@ -57,5 +60,6 @@ class PdsServiceTest {
         assertThat(expected.getIsSuspended()).isEqualTo(true);
         assertThat(expected.getCurrentOdsCode()).isNull();
         assertThat(expected.getManagingOrganisation()).isEqualTo("B1234");
+        assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
     }
 }

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Builder
+@Builder(toBuilder = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +17,5 @@ public class PdsResponse {
     private String id;
     private List<GeneralPractitioner> generalPractitioner;
     private ManagingOrganization managingOrganization;
+    private String eTag;
 }
