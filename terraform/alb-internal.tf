@@ -27,6 +27,16 @@ resource "aws_security_group" "pds_adaptor_alb" {
   description = "pds-adaptor ALB security group"
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
 
+  ingress {
+    description     = "Allow traffic from suspension service to ALB"
+    protocol        = "tcp"
+    from_port       = var.port
+    to_port         = var.port
+    security_groups = [
+      data.aws_ssm_parameter.suspension-service-ecs-sg-id.value
+    ]
+  }
+
   tags = {
     Name = "${var.environment}-alb-${var.component_name}"
     CreatedBy   = var.repo_name

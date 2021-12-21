@@ -35,3 +35,7 @@ data "aws_ssm_parameter" "access_token_endpoint" {
 data "aws_ssm_parameter" "pds_fhir_endpoint" {
   name = "/repo/${var.environment}/user-input/external/pds-fhir-endpoint"
 }
+
+data "aws_ssm_parameter" "suspension-service-ecs-sg-id" {
+  name = "/repo/${var.environment}/output/suspension-service/ecs-sg-id"
+}
