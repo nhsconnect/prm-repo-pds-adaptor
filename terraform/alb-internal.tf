@@ -30,8 +30,8 @@ resource "aws_security_group" "pds_adaptor_alb" {
   ingress {
     description     = "Allow traffic from suspension service to ALB"
     protocol        = "tcp"
-    from_port       = var.port
-    to_port         = var.port
+    from_port       = 0
+    to_port         = 65535
     security_groups = [
       data.aws_ssm_parameter.suspension-service-ecs-sg-id.value
     ]
