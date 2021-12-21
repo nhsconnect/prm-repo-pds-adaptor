@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GeneralPractitioner {
-    private Identifier identifier;
+public class Identifier {
+    private String value;
+    private IdentifierPeriod period;
 }

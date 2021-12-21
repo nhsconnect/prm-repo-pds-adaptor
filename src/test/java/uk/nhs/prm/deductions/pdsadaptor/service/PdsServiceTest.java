@@ -27,21 +27,35 @@ class PdsServiceTest {
 
     @Test
     void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatient() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null);
+        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, null);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
+        assertThat(expected.getManagingOrganisation()).isNull();
+    }
+
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatientWithManagingOrganisationIfSet() {
+        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, "A9876");
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
+        SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
+
+        assertThat(expected.getIsSuspended()).isEqualTo(false);
+        assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
+        assertThat(expected.getManagingOrganisation()).isEqualTo("A9876");
     }
 
     @Test
     void shouldReturnSuspendedPatientResponseWhenNoGpPractitionerField() {
-        PdsResponse pdsResponse = new PdsResponse(NHS_NUMBER, null);
+        PdsResponse pdsResponse = TestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234");
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
 
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
         assertThat(expected.getIsSuspended()).isEqualTo(true);
+        assertThat(expected.getCurrentOdsCode()).isNull();
+        assertThat(expected.getManagingOrganisation()).isEqualTo("B1234");
     }
 }

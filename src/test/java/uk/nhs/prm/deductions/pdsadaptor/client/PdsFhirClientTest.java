@@ -54,7 +54,7 @@ class PdsFhirClientTest {
 
     @Test
     void shouldSetHeaderOnRequest() {
-        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null);
+        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null, null);
 
         when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
             new ResponseEntity<>(pdsResponse, HttpStatus.OK));
@@ -68,7 +68,7 @@ class PdsFhirClientTest {
 
     @Test
     void shouldReturnPdsResponse() {
-        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null);
+        PdsResponse pdsResponse = buildPdsResponse(nhsNumber, "A1234", LocalDate.now().minusYears(1), null, null);
 
         when((restTemplate).exchange(eq(urlPath), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
             new ResponseEntity<>(pdsResponse, HttpStatus.OK));

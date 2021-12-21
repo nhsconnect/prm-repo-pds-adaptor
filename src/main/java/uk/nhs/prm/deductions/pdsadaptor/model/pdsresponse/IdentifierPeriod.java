@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class GpTimePeriod {
+public class IdentifierPeriod {
     private LocalDate start;
     private LocalDate end;
 }

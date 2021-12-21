@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class GpIdentifier {
-    private String value;
-    private GpTimePeriod period;
-
+public class ManagingOrganization {
+    private Identifier identifier;
 }

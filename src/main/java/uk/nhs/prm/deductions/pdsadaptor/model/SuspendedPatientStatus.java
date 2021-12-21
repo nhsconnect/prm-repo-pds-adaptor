@@ -12,17 +12,20 @@ import lombok.NoArgsConstructor;
 public class SuspendedPatientStatus {
     private Boolean isSuspended;
     private String currentOdsCode;
+    private String managingOrganisation;
 
-    public static SuspendedPatientStatus suspendedPatientStatus() {
-        SuspendedPatientStatus suspendedPatientStatus = new SuspendedPatientStatus();
-        suspendedPatientStatus.setIsSuspended(true);
-        return suspendedPatientStatus;
+    public static SuspendedPatientStatus suspendedPatientStatus(String managingOrganisation) {
+        return SuspendedPatientStatus.builder()
+            .isSuspended(true)
+            .managingOrganisation(managingOrganisation)
+            .build();
     }
 
-    public static SuspendedPatientStatus nonSuspendedPatientStatus(String odsCode) {
-        SuspendedPatientStatus suspendedPatientStatus = new SuspendedPatientStatus();
-        suspendedPatientStatus.setCurrentOdsCode(odsCode);
-        suspendedPatientStatus.setIsSuspended(false);
-        return suspendedPatientStatus;
+    public static SuspendedPatientStatus nonSuspendedPatientStatus(String currentOdsCode, String managingOrganisation) {
+        return SuspendedPatientStatus.builder()
+            .isSuspended(false)
+            .currentOdsCode(currentOdsCode)
+            .managingOrganisation(managingOrganisation)
+            .build();
     }
 }

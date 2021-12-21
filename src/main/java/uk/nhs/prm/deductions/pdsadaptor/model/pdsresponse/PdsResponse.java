@@ -16,4 +16,5 @@ import java.util.List;
 public class PdsResponse {
     private String id;
     private List<GeneralPractitioner> generalPractitioner;
+    private ManagingOrganization managingOrganization;
 }

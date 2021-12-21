@@ -74,6 +74,7 @@ public class PdsControllerIntegrationTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.getCurrentOdsCode()).isEqualTo("A20047");
         assertThat(body.getIsSuspended()).isEqualTo(false);
+        assertThat(body.getManagingOrganisation()).isNull();
     }
 
     private HttpHeaders createHeaders(String username, String password) {

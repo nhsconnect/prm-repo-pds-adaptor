@@ -20,9 +20,9 @@ public class PdsService {
         PdsResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
 
         if (hasGeneralPractitioner(pdsResponse)) {
-            return nonSuspendedPatientStatus(getOdsCode(pdsResponse));
+            return nonSuspendedPatientStatus(getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse));
         }
-        return suspendedPatientStatus();
+        return suspendedPatientStatus(getManagingOrganisation(pdsResponse));
 
     }
 
@@ -33,5 +33,12 @@ public class PdsService {
 
     private boolean hasGeneralPractitioner(PdsResponse pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
+    }
+
+    private String getManagingOrganisation(PdsResponse pdsResponse) {
+       if (pdsResponse.getManagingOrganization() != null) {
+           return pdsResponse.getManagingOrganization().getIdentifier().getValue();
+       }
+       return null;
     }
 }
