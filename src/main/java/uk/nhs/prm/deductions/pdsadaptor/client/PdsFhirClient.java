@@ -50,7 +50,7 @@ public class PdsFhirClient {
         String path = "Patient/" + nhsNumber;
         log.info("Sending patch request to pds for patient");
         try {
-            PdsPatchRequest pdsPatchRequest = createPatchRequest(updateRequest.getManagingOrganisation());
+            PdsPatchRequest pdsPatchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
             ResponseEntity<PdsResponse> response =
                 pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(pdsPatchRequest, requestHeaders), PdsResponse.class);

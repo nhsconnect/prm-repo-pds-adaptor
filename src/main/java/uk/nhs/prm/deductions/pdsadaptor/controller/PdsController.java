@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
+import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
 import javax.validation.constraints.NotBlank;
@@ -31,5 +32,16 @@ public class PdsController {
         tracer.setTraceId(traceId);
         log.info("Request for pds record received by {}", principal.getName());
         return pdsService.getPatientGpStatus(nhsNumber);
+    }
+
+    @Operation(security = @SecurityRequirement(name = "basicAuth"))
+    @PutMapping("/{nhsNumber}")
+    @ResponseStatus(HttpStatus.OK)
+    public SuspendedPatientStatus updatePatientManagingOrganisation(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber,
+                                                     @RequestBody UpdateManagingOrganisationRequest updateRequest,
+                                                     @RequestHeader(value = "traceId", required = false) String traceId, Principal principal) {
+        tracer.setTraceId(traceId);
+        log.info("Update request for pds record received by {}", principal.getName());
+        return pdsService.updatePatientManagingOrganisation(nhsNumber, updateRequest);
     }
 }
