@@ -150,6 +150,10 @@ case "${command}" in
       configure_local_envs
       dojo "./tasks _test_unit"
       ;;
+  test_unit_cached)
+      configure_local_envs
+      dojo -c Dojofile-cached "./tasks _test_unit"
+      ;;
   _test_integration)
       gradle --info integration
       ;;

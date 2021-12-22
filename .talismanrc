@@ -1,4 +1,6 @@
 fileignoreconfig:
+- filename: Dojofile-cached
+  checksum: e417f7f7cfcf49b128f72acb0ac196f8f3c1d1c2ada4300c552c24a07126b7dd
 - filename: Dojofile-itest
   checksum: 5a7e45a4da0566ac724d95cfca7ce133e5361f093d5572d3a6e7e3258dd0663a
 - filename: Dojofile
