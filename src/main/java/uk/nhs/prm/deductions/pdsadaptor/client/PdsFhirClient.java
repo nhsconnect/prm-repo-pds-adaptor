@@ -61,7 +61,7 @@ public class PdsFhirClient {
             ResponseEntity<PdsResponse> response =
                 pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(patchRequest, requestHeaders),
                     PdsResponse.class);
-            log.info("Successful request of pds record for patient");
+            log.info("Successful updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             handleExceptions(e);

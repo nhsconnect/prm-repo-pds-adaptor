@@ -27,7 +27,6 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -212,7 +211,7 @@ class PdsFhirClientTest {
             assertThat(pdsPatch.getOp()).isEqualTo("replace");
             assertThat(pdsPatch.getPath()).isEqualTo("/managingOrganization");
             assertThat(pdsPatch.getValue().getType()).isEqualTo("Organization");
-            assertThat(pdsPatch.getValue().getIdentifier().getPath()).isEqualTo("https://fhir.nhs.uk/Id/ods-organization-code");
+            assertThat(pdsPatch.getValue().getIdentifier().getSystem()).isEqualTo("https://fhir.nhs.uk/Id/ods-organization-code");
             assertThat(pdsPatch.getValue().getIdentifier().getValue()).isEqualTo(managingOrganisation);
 
 

@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PdsPatchIdentifier {
-    private String path;
+    private String system;
     private String value;
 }
