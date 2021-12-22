@@ -2,9 +2,7 @@ package uk.nhs.prm.deductions.pdsadaptor.configuration;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -27,15 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${environment}")
     private String environment;
 
-    @Bean
-    public static PropertySourcesPlaceholderConfigurer propertyConfigInDev() {
-        return new PropertySourcesPlaceholderConfigurer();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -47,9 +37,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 try {
                     String username = getUsernameFromParameter(parameterName);
                     auth.inMemoryAuthentication()
-                            .passwordEncoder(passwordEncoder())
-                            .withUser(username)
-                            .password(passwordEncoder().encode(apiKey))
+                        .passwordEncoder(passwordEncoder)
+                        .withUser(username)
+                        .password(passwordEncoder.encode(apiKey))
                             .roles("USER");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -58,9 +48,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         } else {
             //this for local usage only
             auth.inMemoryAuthentication()
-                    .passwordEncoder(passwordEncoder())
-                    .withUser("admin")
-                    .password(passwordEncoder().encode("admin"))
+                .passwordEncoder(passwordEncoder)
+                .withUser("admin")
+                .password(passwordEncoder.encode("admin"))
                     .roles("USER");
         }
     }
