@@ -37,6 +37,7 @@ dependencies {
     implementation 'org.jetbrains:annotations:20.1.0'
     implementation 'org.jetbrains:annotations:20.1.0'
     implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.json:json:20211205'
 
     implementation platform('software.amazon.awssdk:bom:2.17.73')
     implementation 'software.amazon.awssdk:ssm'
