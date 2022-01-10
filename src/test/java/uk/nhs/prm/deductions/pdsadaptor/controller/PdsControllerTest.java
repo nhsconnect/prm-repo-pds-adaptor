@@ -76,7 +76,7 @@ class PdsControllerTest {
         ILoggingEvent lastLoggedEvent = testLogAppender.getLastLoggedEvent();
         assertNotNull(lastLoggedEvent);
         assertTrue(lastLoggedEvent.getMDCPropertyMap().containsKey("traceId"));
-        assertThat(lastLoggedEvent.getFormattedMessage()).isEqualTo("Request for pds record received by fake-user");
+        assertThat(lastLoggedEvent.getFormattedMessage()).isEqualTo("Request for pds record received from fake-user");
     }
 
     @Test
