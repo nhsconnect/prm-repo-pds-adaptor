@@ -41,6 +41,7 @@ public class AuthService {
             log.info("Successfully generated new access token");
             return accessToken;
         } catch (HttpStatusCodeException e) {
+            log.error("Got a http exception when requesting new access token", e);
             throw new AccessTokenRequestException(e);
         }
     }
