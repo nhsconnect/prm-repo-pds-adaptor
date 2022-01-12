@@ -20,7 +20,7 @@ public class OAuthRequestInterceptor implements ClientHttpRequestInterceptor {
     private final AuthService authService;
 
     @Override
-    public @NotNull ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
+    public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         log.info("Intercepted request to pds fhir to add access token.");
         ClientHttpResponse response;
         String currentAccessToken = authService.getCurrentAccessToken();

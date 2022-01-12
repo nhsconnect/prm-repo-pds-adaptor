@@ -21,7 +21,6 @@ import java.io.IOException;
 
 @Service
 @Slf4j
-@ApplicationScope
 public class AuthService {
 
     private final SignedJWTGenerator signedJWTGenerator;
