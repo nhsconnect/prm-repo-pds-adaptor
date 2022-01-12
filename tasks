@@ -162,9 +162,7 @@ case "${command}" in
       dojo -c Dojofile-itest "./tasks _test_integration"
       ;;
   _test_performance)
-        pip3 install locust
-        PATH="$PATH:/home/dojo/.local/lib/python3.9/site-packages"
-        export PATH
+        pip install -r ./src/performance/requirements.txt
         ./src/performance/run
         ;;
   test_performance)
