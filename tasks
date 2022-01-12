@@ -161,6 +161,16 @@ case "${command}" in
       configure_local_envs
       dojo -c Dojofile-itest "./tasks _test_integration"
       ;;
+  _test_performance)
+        pip3 install locust
+        PATH="$PATH:/home/dojo/.local/lib/python3.9/site-packages"
+        export PATH
+        ./src/performance/run
+        ;;
+  test_performance)
+        check_env
+        dojo -c Dojofile-python "./tasks _test_performance"
+        ;;
   _test_coverage)
       gradle jacocoTestCoverageVerification
       ;;
