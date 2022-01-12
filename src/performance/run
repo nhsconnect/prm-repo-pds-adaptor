@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 virtualenv virtualenv_performance
 source virtualenv_performance/bin/activate
 
