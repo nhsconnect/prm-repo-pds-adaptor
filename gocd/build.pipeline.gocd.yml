@@ -11,13 +11,10 @@ pipelines:
     stages:
       - build:
           clean_workspace: true
-          environment_variables:
-            GRADLE_RO_DEP_CACHE: /godata/pipelines/gradle-cache/.gradle-readonly-cache
           jobs:
             test_unit:
               resources:
                 - docker
-                - gradle-cache
               artifacts:
                 - build:
                     source: build
@@ -26,7 +23,7 @@ pipelines:
                     command: /bin/bash
                     arguments:
                       - -c
-                      - ./tasks test_unit_cached
+                      - ./tasks test_unit
             test_integration:
               resources:
                 - docker
