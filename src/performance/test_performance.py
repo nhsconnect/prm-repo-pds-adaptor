@@ -7,8 +7,18 @@ class Sampletest(HttpUser):
 
     @task
     def suspended_patient_status(self):
+        patient_id = "9693797523"
         self.client.headers = {"Authorization": self.generate_api_key()}
-        self.client.get("/suspended-patient-status/9693797523")
+        self.client.get(f"/suspended-patient-status/{patient_id}")
+
+    @task
+    def organisation_field_update(self):
+        patient_id = "9693797523"
+        previous_gp = "Old GP"
+        record_e_tag = "An ETag"
+        self.client.headers = {"Authorization": self.generate_api_key()}
+        data = { "previousGp": previous_gp, "recordETag": record_e_tag }
+        self.client.put(url=f"/suspended-patient-status/{patient_id}", data=data)
 
     def generate_api_key(self):
         env = os.environ["NHS_ENVIRONMENT"]
