@@ -122,6 +122,25 @@ function build_docker_image() {
   echo Build completed on `date`
 }
 
+function test_performance() {
+  export AWS_DEFAULT_REGION
+  virtualenv virtualenv_performance
+  source virtualenv_performance/bin/activate
+
+  pip install -r ./src/performance/requirements.txt
+
+  locust --locustfile="./src/performance/test_performance.py" \
+      --users=1 \
+      --spawn-rate=5 \
+      --csv="./src/performance/results/report" \
+      --html="./src/performance/results/report.html" \
+      --headless \
+      --run-time=10s \
+      --host="https://pds-adaptor.dev.non-prod.patient-deductions.nhs.uk"
+
+  deactivate
+}
+
 ###########
 ## TASKS ##
 ###########
@@ -162,8 +181,7 @@ case "${command}" in
       dojo -c Dojofile-itest "./tasks _test_integration"
       ;;
   _test_performance)
-        pip install -r ./src/performance/requirements.txt
-        ./src/performance/run
+        test_performance
         ;;
   test_performance)
         check_env
