@@ -2,14 +2,16 @@ from base64 import b64encode
 from locust import HttpUser, task, between
 import boto3, os
 
-class Sampletest(HttpUser):
+class PDSAdaptorPerformanceTest(HttpUser):
     wait_time = between(0.5, 1)
 
     @task
     def suspended_patient_status(self):
         patient_id = "9693797523"
         self.client.headers = {"Authorization": self.generate_api_key()}
-        self.client.get(f"/suspended-patient-status/{patient_id}")
+        response = self.client.get(f"/suspended-patient-status/{patient_id}")
+        # TODO: use values for organisation_field_update call?
+        # print(response.json())
 
     @task
     def organisation_field_update(self):
