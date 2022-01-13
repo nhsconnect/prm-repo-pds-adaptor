@@ -21,7 +21,10 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate pdsFhirRestTemplate(AuthService authService) {
-        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(30000);
+        requestFactory.setReadTimeout(30000);
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         restTemplate.setInterceptors(List.of(new OAuthRequestInterceptor(authService)));
         return restTemplate;
     }
