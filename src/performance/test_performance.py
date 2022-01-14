@@ -24,8 +24,8 @@ class PDSAdaptorPerformanceTest(HttpUser):
 
     def generate_api_key(self):
         env = os.environ["NHS_ENVIRONMENT"]
-        ssm_parameter_name = f"/repo/{env}/user-input/api-keys/pds-adaptor/e2e-test"
+        ssm_parameter_name = f"/repo/{env}/user-input/api-keys/pds-adaptor/performance-test"
         boto_response = boto3.client('ssm').get_parameter(Name=ssm_parameter_name, WithDecryption=True)
-        username = "e2e-test"
+        username = "performance-test"
         password = boto_response["Parameter"]["Value"]
         return b64encode(f"{username}:{password}".encode("utf8")).decode("ascii")
