@@ -122,7 +122,7 @@ public class PdsFhirClient {
         PdsPatchIdentifier identifier =
             new PdsPatchIdentifier("https://fhir.nhs.uk/Id/ods-organization-code", managingOrganisation);
         PdsPatchValue patchValue = new PdsPatchValue("Organization", identifier);
-        PdsPatch patch = new PdsPatch("replace", "/managingOrganization", patchValue);
+        PdsPatch patch = new PdsPatch("add", "/managingOrganization", patchValue);
         return new PdsPatchRequest(singletonList(patch));
     }
 

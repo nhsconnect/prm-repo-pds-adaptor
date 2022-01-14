@@ -210,7 +210,7 @@ class PdsFhirClientTest {
             assertThat(requestBody.getPatches()).hasSize(1);
 
             PdsPatch pdsPatch = requestBody.getPatches().get(0);
-            assertThat(pdsPatch.getOp()).isEqualTo("replace");
+            assertThat(pdsPatch.getOp()).isEqualTo("add");
             assertThat(pdsPatch.getPath()).isEqualTo("/managingOrganization");
             assertThat(pdsPatch.getValue().getType()).isEqualTo("Organization");
             assertThat(pdsPatch.getValue().getIdentifier().getSystem()).isEqualTo("https://fhir.nhs.uk/Id/ods-organization-code");

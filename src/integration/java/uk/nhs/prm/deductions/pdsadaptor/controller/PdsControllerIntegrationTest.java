@@ -101,7 +101,7 @@ public class PdsControllerIntegrationTest {
         String pdsRequstBody = "{\n" +
             "  \"patches\": [\n" +
             "    {\n" +
-            "      \"op\": \"replace\",\n" +
+            "      \"op\": \"add\",\n" +
             "      \"path\": \"/managingOrganization\",\n" +
             "      \"value\": {\n" +
             "        \"type\": \"Organization\",\n" +
