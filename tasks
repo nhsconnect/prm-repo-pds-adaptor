@@ -129,14 +129,22 @@ function test_performance() {
 
   pip install -r ./src/performance/requirements.txt
 
+  mkdir -p build/test-results/performance/
+  mkdir -p build/reports/performance/
+
+  if [[ ! -z $TURN_ON_DEBUG ]]; then
+    echo Turning on noisy debug output
+    DEBUG_PARAM='--loglevel=DEBUG'
+  fi
+
   locust --locustfile="./src/performance/test_performance.py" \
       --users=1 \
-      --spawn-rate=5 \
-      --csv="./src/performance/results/report" \
-      --html="./src/performance/results/report.html" \
+      --csv="build/test-results/performance/perf" \
+      --html="build/reports/performance/report.html" \
       --headless \
-      --run-time=10s \
-      --host="https://pds-adaptor.dev.non-prod.patient-deductions.nhs.uk"
+      --run-time="${RUN_TIME:=30s}" \
+      $DEBUG_PARAM \
+      --host="https://pds-adaptor.$NHS_ENVIRONMENT.non-prod.patient-deductions.nhs.uk"
 
   deactivate
 }

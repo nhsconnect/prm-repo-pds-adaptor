@@ -1,15 +1,17 @@
 from base64 import b64encode
-from locust import HttpUser, task, between
+from locust import HttpUser, task, between, FastHttpUser
 import boto3, os
 
-class PDSAdaptorPerformanceTest(HttpUser):
+class PDSAdaptorPerformanceTest(FastHttpUser):
     wait_time = between(0.5, 1)
+    connection_timeout = 10
+    network_timeout = 10
 
     @task
     def suspended_patient_status(self):
         patient_id = "9693797523"
-        self.client.headers = { "Authorization" : self.generate_api_key() }
-        response = self.client.get(f"/suspended-patient-status/{patient_id}")
+        headers = { "Authorization" : self.generate_api_key() }
+        response = self.client.get(f"/suspended-patient-status/{patient_id}", headers=headers)
         # TODO: use values for organisation_field_update call?
         # print(response.json())
 
@@ -18,9 +20,9 @@ class PDSAdaptorPerformanceTest(HttpUser):
         patient_id = "9693797523"
         previous_gp = "OldGP"
         record_e_tag = "An ETag"
-        self.client.headers = { "Authorization" : self.generate_api_key() }
+        headers = { "Authorization" : self.generate_api_key() }
         data = { "previousGp": previous_gp, "recordETag": record_e_tag }
-        self.client.put(url=f"/suspended-patient-status/{patient_id}", json=data)
+        self.client.put(f"/suspended-patient-status/{patient_id}", json=data, headers=headers)
 
     def generate_api_key(self):
         api_key_ssm_parameter = self.get_api_key_from_ssm()
