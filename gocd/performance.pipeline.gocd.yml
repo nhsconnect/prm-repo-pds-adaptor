@@ -36,6 +36,8 @@ pipelines:
       spec: 0 0 22 ? * MON,TUE,WED,THU,FRI *
     environment_variables:
       NHS_ENVIRONMENT: dev
+      RUN_TIME: 30s
+      USERS: 2
   pds-adaptor-perf-test:
     <<: *pipeline-template
     timer:

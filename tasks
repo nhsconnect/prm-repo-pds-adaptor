@@ -150,6 +150,7 @@ function test_performance() {
       --headless \
       --run-time=$RESOLVED_RUN_TIME \
       $DEBUG_PARAM \
+      --only-summary \
       --host=$TARGET_HOST
 
   deactivate
