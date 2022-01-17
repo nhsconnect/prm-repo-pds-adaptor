@@ -34,6 +34,7 @@ class PdsServiceTest {
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
         assertThat(expected.getManagingOrganisation()).isNull();
@@ -46,6 +47,7 @@ class PdsServiceTest {
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
         assertThat(expected.getManagingOrganisation()).isEqualTo("A9876");
@@ -59,6 +61,7 @@ class PdsServiceTest {
 
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
         assertThat(expected.getIsSuspended()).isEqualTo(true);
         assertThat(expected.getCurrentOdsCode()).isNull();
         assertThat(expected.getManagingOrganisation()).isEqualTo("B1234");
@@ -76,6 +79,7 @@ class PdsServiceTest {
 
         SuspendedPatientStatus expected = pdsService.updatePatientManagingOrganisation(NHS_NUMBER, updateRequest);
 
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
         assertThat(expected.getIsSuspended()).isEqualTo(false);
         assertThat(expected.getCurrentOdsCode()).isEqualTo("B1234");
         assertThat(expected.getManagingOrganisation()).isEqualTo("A9876");
@@ -92,6 +96,7 @@ class PdsServiceTest {
 
         SuspendedPatientStatus expected = pdsService.updatePatientManagingOrganisation(NHS_NUMBER, updateRequest);
 
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
         assertThat(expected.getIsSuspended()).isEqualTo(true);
         assertThat(expected.getCurrentOdsCode()).isNull();
         assertThat(expected.getManagingOrganisation()).isEqualTo("B1234");

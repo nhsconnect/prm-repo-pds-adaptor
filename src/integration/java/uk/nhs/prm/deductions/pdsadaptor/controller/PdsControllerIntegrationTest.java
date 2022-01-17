@@ -153,6 +153,7 @@ public class PdsControllerIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body).isNotNull();
+        assertThat(body.getNhsNumber()).isEqualTo("9693797493");
         assertThat(body.getCurrentOdsCode()).isNull();
         assertThat(body.getIsSuspended()).isEqualTo(true);
         assertThat(body.getManagingOrganisation()).isEqualTo("A1234");

@@ -28,9 +28,9 @@ public class PdsService {
 
     private SuspendedPatientStatus setPatientStatus(PdsResponse pdsResponse) {
         if (hasGeneralPractitioner(pdsResponse)) {
-            return nonSuspendedPatientStatus(getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
+            return nonSuspendedPatientStatus(pdsResponse.getId(), getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
         }
-        return suspendedPatientStatus(getManagingOrganisation(pdsResponse), pdsResponse.getETag());
+        return suspendedPatientStatus(pdsResponse.getId(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
     }
 
     private String getOdsCode(PdsResponse pdsResponse) {

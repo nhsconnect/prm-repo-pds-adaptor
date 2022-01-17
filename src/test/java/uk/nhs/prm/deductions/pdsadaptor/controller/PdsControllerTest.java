@@ -40,6 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class PdsControllerTest {
 
+    private static final String NHS_NUMBER = "1234567890";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,17 +54,16 @@ class PdsControllerTest {
     @Test
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
         TestLogAppender testLogAppender = addTestLogAppender();
-        String nhsNumber = "1234567890";
         ObjectMapper objectMapper = new ObjectMapper();
 
-        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null, null, "W1");
-        when(pdsService.getPatientGpStatus(nhsNumber)).thenReturn(actualSuspendedPatientStatus);
+        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, null, "W1");
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
         Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
 
-        String contentAsString = mockMvc.perform(get("/suspended-patient-status/" + nhsNumber)
+        String contentAsString = mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                 .header("traceId", "fake-trace-id")
                 .principal(mockPrincipal))
                 .andExpect(status().isOk())
@@ -70,7 +71,7 @@ class PdsControllerTest {
 
         SuspendedPatientStatus suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
 
-        verify(pdsService,times(1)).getPatientGpStatus(nhsNumber);
+        verify(pdsService,times(1)).getPatientGpStatus(NHS_NUMBER);
         assertThat(suspendedPatientStatus).isEqualTo(actualSuspendedPatientStatus);
 
         ILoggingEvent lastLoggedEvent = testLogAppender.getLastLoggedEvent();
@@ -82,18 +83,17 @@ class PdsControllerTest {
     @Test
     void shouldCallPdsServiceWithNhsNumberAndUpdateRequest() throws Exception {
         TestLogAppender testLogAppender = addTestLogAppender();
-        String nhsNumber = "1234567890";
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"2\"");
         ObjectMapper objectMapper = new ObjectMapper();
 
-        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(true, null, "A1234", "W/\"3\"");
-        when(pdsService.updatePatientManagingOrganisation(nhsNumber, updateRequest)).thenReturn(actualSuspendedPatientStatus);
+        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, "A1234", "W/\"3\"");
+        when(pdsService.updatePatientManagingOrganisation(NHS_NUMBER, updateRequest)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
         Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
 
-        String contentAsString = mockMvc.perform(put("/suspended-patient-status/" + nhsNumber)
+        String contentAsString = mockMvc.perform(put("/suspended-patient-status/" + NHS_NUMBER)
                 .header("traceId", "fake-trace-id")
                 .principal(mockPrincipal)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +106,7 @@ class PdsControllerTest {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();
 
-        verify(pdsService).updatePatientManagingOrganisation(nhsNumber, updateRequest);
+        verify(pdsService).updatePatientManagingOrganisation(NHS_NUMBER, updateRequest);
         SuspendedPatientStatus suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
 
         assertThat(suspendedPatientStatus).isEqualTo(actualSuspendedPatientStatus);
