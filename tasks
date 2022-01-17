@@ -137,14 +137,19 @@ function test_performance() {
     DEBUG_PARAM='--loglevel=DEBUG'
   fi
 
+  RESOLVED_RUN_TIME="${RUN_TIME:=30s}"
+  TARGET_HOST="https://pds-adaptor.$NHS_ENVIRONMENT.non-prod.patient-deductions.nhs.uk"
+
+  echo Running perf tests for $RESOLVED_RUN_TIME against $TARGET_HOST
+
   locust --locustfile="./src/performance/test_performance.py" \
       --users=1 \
       --csv="build/test-results/performance/perf" \
       --html="build/reports/performance/report.html" \
       --headless \
-      --run-time="${RUN_TIME:=30s}" \
+      --run-time=$RESOLVED_RUN_TIME \
       $DEBUG_PARAM \
-      --host="https://pds-adaptor.$NHS_ENVIRONMENT.non-prod.patient-deductions.nhs.uk"
+      --host=$TARGET_HOST
 
   deactivate
 }
