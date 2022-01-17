@@ -189,6 +189,7 @@ case "${command}" in
       dojo -c Dojofile-itest "./tasks _test_integration"
       ;;
   _test_performance)
+        _assume_environment_role $NHS_ENVIRONMENT
         test_performance
         ;;
   test_performance)
