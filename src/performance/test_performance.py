@@ -1,11 +1,16 @@
+import os, random
 from base64 import b64encode
+
+import boto3
 from locust import task, between, FastHttpUser
-import boto3, os
 
 RECORD_ETAG_NAME='recordETag'
 
 def extract_etag(response_data):
     return response_data[RECORD_ETAG_NAME]
+
+def random_gp_ods_code():
+    return "PERF" + str(random.randint(10000, 99999))
 
 class PdsAdaptorUser(FastHttpUser):
     wait_time = between(0.5, 1)
@@ -26,7 +31,7 @@ class PdsAdaptorUser(FastHttpUser):
         status_data = self._get_suspended_patient_status(patient_id)
         last_etag = extract_etag(status_data)
 
-        previous_gp = "OldGP"
+        previous_gp = random_gp_ods_code()
         headers = { "Authorization" : self.generate_api_key() }
         data = { 
             "previousGp": previous_gp, 
