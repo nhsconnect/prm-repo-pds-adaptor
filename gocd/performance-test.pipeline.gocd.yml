@@ -18,9 +18,13 @@ pipelines:
             performance_test:
               artifacts:
                 - build:
-                    source: src/performance/results
+                    source: build/test-results/performance/
+                    destination: perf-data
+                - build:
+                    source: build/reports/performance/
+                    destination: perf-report
               tabs:
-                perf_report: src/performance/results/report.html
+                performance: perf-report/report.html
               resources:
                 - docker
               tasks:
