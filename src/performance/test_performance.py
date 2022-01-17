@@ -1,8 +1,8 @@
 from base64 import b64encode
-from locust import HttpUser, task, between, FastHttpUser
+from locust import task, between, FastHttpUser
 import boto3, os
 
-class PDSAdaptorPerformanceTest(FastHttpUser):
+class PdsAdaptorUser(FastHttpUser):
     wait_time = between(0.5, 1)
     connection_timeout = 10
     network_timeout = 10
