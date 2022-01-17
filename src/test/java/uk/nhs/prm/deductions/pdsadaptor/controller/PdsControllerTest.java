@@ -1,8 +1,10 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
 import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.filter.Filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -120,6 +122,10 @@ class PdsControllerTest {
     @NotNull
     private TestLogAppender addTestLogAppender() {
         TestLogAppender testLogAppender = new TestLogAppender();
+        ThresholdFilter filter = new ThresholdFilter();
+        filter.setLevel("INFO");
+        filter.start();
+        testLogAppender.addFilter(filter);
         Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         logger.addAppender(testLogAppender);
 
