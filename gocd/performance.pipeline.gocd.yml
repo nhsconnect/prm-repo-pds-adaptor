@@ -1,32 +1,33 @@
 format_version: 4
 
-pipeline-template: &pipeline-template
-  group: performance
-  label_template: '${COUNT}-${git[:8]}'
-  materials:
-    git:
-      type: configrepo
-  stages:
-    - performance:
-        clean_workspace: true
-        approval: manual
-        jobs:
-          performance_test:
-            artifacts:
-              - build:
-                  source: build/test-results/performance/
-              - build:
-                  source: build/reports/performance/
-            tabs:
-              performance: build/reports/performance/report.html
-            resources:
-              - docker
-            tasks:
-              - exec:
-                  command: /bin/bash
-                  arguments:
-                    - -c
-                    - ./tasks test_performance
+common:
+  pipeline-template: &pipeline-template
+    group: performance
+    label_template: '${COUNT}-${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+    stages:
+      - performance:
+          clean_workspace: true
+          approval: manual
+          jobs:
+            performance_test:
+              artifacts:
+                - build:
+                    source: build/test-results/performance/
+                - build:
+                    source: build/reports/performance/
+              tabs:
+                performance: build/reports/performance/report.html
+              resources:
+                - docker
+              tasks:
+                - exec:
+                    command: /bin/bash
+                    arguments:
+                      - -c
+                      - ./tasks test_performance
 
 pipelines:
   pds-adaptor-perf-dev:
