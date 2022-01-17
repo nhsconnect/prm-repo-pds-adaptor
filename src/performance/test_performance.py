@@ -13,22 +13,39 @@ def random_gp_ods_code():
     return "PERF" + str(random.randint(10000, 99999))
 
 class PdsAdaptorUser(FastHttpUser):
-    wait_time = between(0.5, 1)
+    wait_time = between(4, 5)
     connection_timeout = 10
     network_timeout = 10
+    test_patient_nhs_numbers = [
+        '9694180309',
+        '9694180317',
+        '9694180325',
+        '9694180333',
+        '9694180341',
+        '9694180368',
+        '9694180376',
+        '9694180384',
+        '9694180392',
+        '9694180406'
+    ]
+
+    @classmethod
+    def next_patient_id(cls):
+        if len(cls.test_patient_nhs_numbers) == 0:
+            raise SystemExit('Ran out of test patient nhs number ids, too many users spawned')
+        return cls.test_patient_nhs_numbers.pop()
+
+    def on_start(self):
+        self.patient_id = PdsAdaptorUser.next_patient_id()
 
     @task
     def suspended_patient_status(self):
-        patient_id = "9693797523"
-
-        status_data = self._get_suspended_patient_status(patient_id)
+        status_data = self._get_suspended_patient_status(self.patient_id)
         print('status_data', status_data)
 
     @task
     def organisation_field_update(self):
-        patient_id = "9693797523"
-
-        status_data = self._get_suspended_patient_status(patient_id)
+        status_data = self._get_suspended_patient_status(self.patient_id)
         last_etag = extract_etag(status_data)
 
         previous_gp = random_gp_ods_code()
@@ -37,7 +54,7 @@ class PdsAdaptorUser(FastHttpUser):
             "previousGp": previous_gp, 
             RECORD_ETAG_NAME: last_etag 
         }
-        self.client.put(f"/suspended-patient-status/{patient_id}", json=data, headers=headers)
+        self.client.put(f"/suspended-patient-status/{self.patient_id}", json=data, headers=headers)
 
 
     def _get_suspended_patient_status(self, patient_id):

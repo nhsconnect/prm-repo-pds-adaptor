@@ -137,13 +137,14 @@ function test_performance() {
     DEBUG_PARAM='--loglevel=DEBUG'
   fi
 
-  RESOLVED_RUN_TIME="${RUN_TIME:=30s}"
+  RESOLVED_USERS="${USERS:=10}"
+  RESOLVED_RUN_TIME="${RUN_TIME:=60s}"
   TARGET_HOST="https://pds-adaptor.$NHS_ENVIRONMENT.non-prod.patient-deductions.nhs.uk"
 
-  echo Running perf tests for $RESOLVED_RUN_TIME against $TARGET_HOST
+  echo Running perf tests with $RESOLVED_USERS users for $RESOLVED_RUN_TIME against $TARGET_HOST
 
   locust --locustfile="./src/performance/test_performance.py" \
-      --users=1 \
+      --users=$RESOLVED_USERS \
       --csv="build/test-results/performance/perf" \
       --html="build/reports/performance/report.html" \
       --headless \
