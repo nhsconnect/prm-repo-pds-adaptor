@@ -12,6 +12,8 @@ def extract_etag(response_data):
 def random_gp_ods_code():
     return "PERF" + str(random.randint(10000, 99999))
 
+trace_id_prefix = 'perf' + str(random.randint(1000, 9999))
+
 class PdsAdaptorUser(FastHttpUser):
     wait_time = between(4, 5)
     connection_timeout = 10
@@ -56,12 +58,22 @@ class PdsAdaptorUser(FastHttpUser):
             "previousGp": previous_gp, 
             RECORD_ETAG_NAME: last_etag 
         }
-        self.client.put(f"/suspended-patient-status/{self.patient_id}", json=data, headers=self.generate_auth_headers())
+        self.client.put(f"/suspended-patient-status/{self.patient_id}", json=data, headers=self.generate_headers())
 
 
     def _get_suspended_patient_status(self, patient_id):
-        response = self.client.get(f"/suspended-patient-status/{patient_id}", headers=self.generate_auth_headers())
+        response = self.client.get(f"/suspended-patient-status/{patient_id}", headers=self.generate_headers())
         return response.json()
+
+
+    def generate_headers(self):
+        headers = self.generate_auth_headers()
+        headers['traceId'] = self.generate_trace_id()
+        return headers
+
+
+    def generate_trace_id(self):
+        return trace_id_prefix + str(random.randint(100000, 999999))
 
 
     def generate_auth_headers(self):
