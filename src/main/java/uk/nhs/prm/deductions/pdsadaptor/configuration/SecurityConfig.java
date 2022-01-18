@@ -1,5 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.configuration;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
+@Slf4j
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -29,6 +31,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+        log.info("setting up client auth in configureGlobal");
         if (!environment.equals("local") && !environment.equals("int-test")) {
             ReadSSMParameter ssmService = new ReadSSMParameter(createSsmClient());
             Map<String, String> userMap = ssmService.getApiKeys(environment);
@@ -53,6 +56,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .password(passwordEncoder.encode("admin"))
                     .roles("USER");
         }
+        log.info("completed configureGlobal");
     }
 
     private SsmClient createSsmClient() {

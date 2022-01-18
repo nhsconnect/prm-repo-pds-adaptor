@@ -1,5 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.service;
 
+import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.services.ssm.SsmClient;
 import software.amazon.awssdk.services.ssm.model.GetParametersByPathRequest;
 import software.amazon.awssdk.services.ssm.paginators.GetParametersByPathIterable;
@@ -7,6 +8,7 @@ import software.amazon.awssdk.services.ssm.paginators.GetParametersByPathIterabl
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class ReadSSMParameter {
 
     private final SsmClient ssmClient;
@@ -16,16 +18,18 @@ public class ReadSSMParameter {
     }
 
     public Map<String,String> getApiKeys(String environment) {
+        log.info("getting api keys");
         String serviceParamName = "/repo/" + environment + "/user-input/api-keys/pds-adaptor/";
         String userParamName = "/repo/" + environment + "/user-input/api-keys/pds-adaptor/api-key-user";
 
-       Map<String, String> userAndServiceApiKeyMap= new HashMap<>();
+        Map<String, String> userAndServiceApiKeyMap= new HashMap<>();
 
         userAndServiceApiKeyMap.putAll(readParamsByPath(serviceParamName));
         userAndServiceApiKeyMap.putAll(readParamsByPath(userParamName));
 
         ssmClient.close();
 
+        log.info("got api keys");
         return userAndServiceApiKeyMap;
     }
 
