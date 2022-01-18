@@ -38,6 +38,7 @@ class PdsAdaptorUser(FastHttpUser):
 
     def on_start(self):
         self.patient_id = PdsAdaptorUser.next_patient_id()
+        self.api_key = self.get_api_key_from_ssm()["Parameter"]["Value"]
 
 
     @task
@@ -64,12 +65,9 @@ class PdsAdaptorUser(FastHttpUser):
 
 
     def generate_auth_headers(self):
-        api_key_ssm_parameter = self.get_api_key_from_ssm()
         username = "performance-test"
-        password = api_key_ssm_parameter["Parameter"]["Value"]
-        encoded_key = b64encode(f"{username}:{password}".encode("utf8")).decode("ascii")
+        encoded_key = b64encode(f"{username}:{self.api_key}".encode("utf8")).decode("ascii")
         return { "Authorization" : f"Basic {encoded_key}" }
-
 
     def get_api_key_from_ssm(self):
         env = os.environ["NHS_ENVIRONMENT"]
