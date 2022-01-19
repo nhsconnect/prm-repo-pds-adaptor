@@ -37,16 +37,26 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: dev
       RUN_TIME: 30s
-      USERS: 2
+      USERS: 10
+      MIN_WAIT_SECONDS: 4
+      MAX_WAIT_SECONDS: 5
   pds-adaptor-perf-test:
     <<: *pipeline-template
     timer:
       spec: 0 0 23 ? * MON,TUE,WED,THU,FRI *
     environment_variables:
       NHS_ENVIRONMENT: test
+      RUN_TIME: 60s
+      USERS: 10
+      MIN_WAIT_SECONDS: 4
+      MAX_WAIT_SECONDS: 5
   pds-adaptor-perf-pre-prod:
     <<: *pipeline-template
     timer:
       spec: 0 0 0 ? * MON,TUE,WED,THU,FRI *
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
+      RUN_TIME: 60s
+      USERS: 10
+      MIN_WAIT_SECONDS: 4
+      MAX_WAIT_SECONDS: 5

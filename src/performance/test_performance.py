@@ -14,8 +14,12 @@ def random_gp_ods_code():
 
 trace_id_prefix = 'perf' + str(random.randint(1000, 9999))
 
+min_wait_seconds = int(os.getenv(os.getenv("MIN_WAIT_SECONDS", "4")))
+
+max_wait_seconds = int(os.getenv(os.getenv("MAX_WAIT_SECONDS", "5")))
+
 class PdsAdaptorUser(FastHttpUser):
-    wait_time = between(4, 5)
+    wait_time = between(min_wait_seconds, max_wait_seconds)
     connection_timeout = 10
     network_timeout = 10
     test_patient_nhs_numbers = [
@@ -54,9 +58,9 @@ class PdsAdaptorUser(FastHttpUser):
         last_etag = extract_etag(status_data)
 
         previous_gp = random_gp_ods_code()
-        data = { 
-            "previousGp": previous_gp, 
-            RECORD_ETAG_NAME: last_etag 
+        data = {
+            "previousGp": previous_gp,
+            RECORD_ETAG_NAME: last_etag
         }
         self.client.put(f"/suspended-patient-status/{self.patient_id}", json=data, headers=self.generate_headers())
 
