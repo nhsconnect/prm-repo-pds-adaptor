@@ -29,11 +29,14 @@ public class OAuthRequestInterceptor implements ClientHttpRequestInterceptor {
             addNewAuthTokenToRequest(request);
             response = execution.execute(request, body);
         } else {
+
             log.info("Access token currently exists adding token to request");
             request.getHeaders().add(AUTHORIZATION, "Bearer " + currentAccessToken);
             response = execution.execute(request, body);
             log.info("Got a target service response, and the response code: " + response.getStatusCode());
+
             if (HttpStatus.UNAUTHORIZED == response.getStatusCode()) {
+                response.close();
                 log.info("Request received 401 status. Requesting new access token");
                 addNewAuthTokenToRequest(request);
                 response = execution.execute(request, body);
