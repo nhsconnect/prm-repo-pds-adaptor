@@ -27,7 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${environment}")
     private String environment;
 
-    public PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    public PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(7);
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {

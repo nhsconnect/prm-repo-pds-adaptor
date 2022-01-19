@@ -3,8 +3,8 @@ component_name = "pds-adaptor"
 dns_name       = "pds-adaptor"
 repo_name      = "prm-deductions-pds-adaptor"
 
-task_cpu    = 2048
-task_memory = 4096
+task_cpu    = 256
+task_memory = 512
 port        = 8080
 
 service_desired_count = "1"
