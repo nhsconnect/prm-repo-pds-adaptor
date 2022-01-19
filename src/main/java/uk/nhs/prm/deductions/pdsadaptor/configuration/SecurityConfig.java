@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.MessageDigestPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ssm.SsmClient;
@@ -27,7 +28,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${environment}")
     private String environment;
 
-    public PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(7);
+    public PasswordEncoder passwordEncoder = new MessageDigestPasswordEncoder("SHA-256");
 
     @Autowired
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
