@@ -15,12 +15,11 @@ import java.util.List;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate apacheBasedRestTemplate(HttpComponentsClientHttpRequestFactory apacheHttpClientRequestFactory) {
-        return new RestTemplate(apacheHttpClientRequestFactory);
+    public RestTemplate apacheBasedRestTemplate() {
+        return new RestTemplate(apacheHttpClientRequestFactory());
     }
 
-    @Bean
-    public HttpComponentsClientHttpRequestFactory apacheHttpClientRequestFactory() {
+    private HttpComponentsClientHttpRequestFactory apacheHttpClientRequestFactory() {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         requestFactory.setConnectTimeout(30000);
         requestFactory.setReadTimeout(30000);

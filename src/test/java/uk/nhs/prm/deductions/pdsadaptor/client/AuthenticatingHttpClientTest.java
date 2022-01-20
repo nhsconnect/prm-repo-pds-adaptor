@@ -1,5 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,10 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 @ExtendWith(MockitoExtension.class)
@@ -179,9 +177,56 @@ class AuthenticatingHttpClientTest {
     }
 
     @Test
-    void shouldThrowHttpStatusExceptionIfNonUnauthorisedStatusError() {
-        when((innerHttpClient).get(any(), any(), any())).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+    void shouldThrowHttpStatusExceptionIfGetReturnsAFailureOtherThanUnauthorized() {
+        when(innerHttpClient.get(any(), any(), any())).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
         assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.get("url", new HttpHeaders(), String.class));
+    }
+
+    @Test
+    void shouldThrowHttpStatusExceptionIfPatchReturnsAFailureOtherThanUnauthorized() {
+        when(innerHttpClient.patch(any(), any(), any(), any())).thenThrow(new HttpClientErrorException(HttpStatus.EXPECTATION_FAILED));
+
+        assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.patch("url", new HttpHeaders(), "boom", String.class));
+    }
+
+    @Test
+    void shouldStopTryingToRecoverAndThrowUnauthorizedErrorIfGetUnauthorizedAfterRefreshingTokenOnGet() {
+        when(innerHttpClient.get(any(), any(), any())).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.get("url", new HttpHeaders(), String.class));
+
+        verify(innerHttpClient, times(2)).get(any(), any(), any());
+    }
+
+    @Test
+    void shouldStopTryingToRecoverAndThrowUnauthorizedErrorIfGetUnauthorizedAfterRefreshingTokenOnPatch() {
+        when(innerHttpClient.patch(any(), any(), any(), any())).thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.patch("url", new HttpHeaders(), "boom and bust", String.class));
+
+        verify(innerHttpClient, times(2)).patch(any(), any(), any(), any());
+    }
+
+    @Test
+    void shouldThrowAClientErrorOnGetAfterRefreshedToken() {
+        when(innerHttpClient.get(any(), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.get("url", new HttpHeaders(), String.class));
+
+        verify(innerHttpClient, times(2)).get(any(), any(), any());
+    }
+
+    @Test
+    void shouldThrowAClientErrorOnPatchAfterRefreshedToken() {
+        when(innerHttpClient.patch(any(), any(), any(), any()))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        assertThrows(HttpStatusCodeException.class, () -> authenticatingHttpClient.patch("url", new HttpHeaders(), "boom and blow", String.class));
+
+        verify(innerHttpClient, times(2)).patch(any(), any(), any(), any());
     }
 }
