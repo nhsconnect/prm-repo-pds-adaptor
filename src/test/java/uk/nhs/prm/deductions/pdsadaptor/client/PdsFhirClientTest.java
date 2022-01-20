@@ -10,18 +10,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.NotFoundException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirPatchInvalidException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
@@ -43,7 +36,7 @@ import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSusp
 class PdsFhirClientTest {
 
     @Mock
-    private RestTemplate restTemplate;
+    private AuthenticatingHttpClient httpClient;
 
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
@@ -58,11 +51,11 @@ class PdsFhirClientTest {
     private static final String URL_PATH = PDS_FHIR_ENDPOINT + "Patient/" + NHS_NUMBER;
 
     @Captor
-    private ArgumentCaptor<HttpEntity> requestCapture;
+    private ArgumentCaptor<HttpHeaders> headersCaptor;
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(restTemplate, PDS_FHIR_ENDPOINT);
+        pdsFhirClient = new PdsFhirClient(httpClient, PDS_FHIR_ENDPOINT);
     }
 
     @Nested
@@ -72,14 +65,12 @@ class PdsFhirClientTest {
         void shouldSetHeaderOnRequestForGet() {
             PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
-                new ResponseEntity<>(pdsResponse, HttpStatus.OK));
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
             pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
 
-            verify(restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), requestCapture.capture(), eq(PdsResponse.class));
-            HttpEntity value = requestCapture.getValue();
-            assertThat(value.getHeaders().get("X-Request-ID").get(0)).isNotNull();
+            verify(httpClient).get(eq(URL_PATH), headersCaptor.capture(), eq(PdsResponse.class));
+            assertThat(headersCaptor.getValue().get("X-Request-ID").get(0)).isNotNull();
         }
 
         @Test
@@ -89,7 +80,7 @@ class PdsFhirClientTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setETag(RECORD_E_TAG);
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(
                 new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
             PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
@@ -106,7 +97,7 @@ class PdsFhirClientTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setETag("W/\"1--gzip\"");
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(
                 new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
             PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
@@ -118,7 +109,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
-            when((restTemplate).exchange(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
@@ -128,7 +119,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsReturnsInternalServerError() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
@@ -138,7 +129,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
@@ -148,7 +139,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
@@ -158,7 +149,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.GET), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
@@ -172,20 +163,22 @@ class PdsFhirClientTest {
     @DisplayName("PDS FHIR Patch Request")
     class PdsFhirPatchRequest {
 
+        @Captor
+        private ArgumentCaptor<Object> patchCaptor;
+
         @Test
         void shouldSetHeaderOnRequestForPatch() {
             PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
                 new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
             pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG));
 
-            verify(restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), requestCapture.capture(), eq(PdsResponse.class));
-            HttpEntity value = requestCapture.getValue();
-            assertThat(value.getHeaders().get("X-Request-ID").get(0)).isNotNull();
-            assertThat(value.getHeaders().getContentType().toString()).isEqualTo("application/json-patch+json");
-            assertThat(value.getHeaders().get("If-Match").get(0)).isEqualTo(RECORD_E_TAG);
+            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+            assertThat(headersCaptor.getValue().getFirst("X-Request-ID")).isNotNull();
+            assertThat(headersCaptor.getValue().getContentType().toString()).isEqualTo("application/json-patch+json");
+            assertThat(headersCaptor.getValue().getFirst("If-Match")).isEqualTo(RECORD_E_TAG);
         }
 
         @Test
@@ -197,14 +190,14 @@ class PdsFhirClientTest {
             HttpHeaders headers = new HttpHeaders();
             headers.setETag(tagVersion);
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
                 new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
             PdsResponse expected = pdsFhirClient.updateManagingOrganisation(
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation,  RECORD_E_TAG));
 
-            verify(restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), requestCapture.capture(), eq(PdsResponse.class));
-            PdsPatchRequest requestBody = (PdsPatchRequest) requestCapture.getValue().getBody();
+            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+            PdsPatchRequest requestBody = (PdsPatchRequest) patchCaptor.getValue();
 
             assertThat(requestBody).isNotNull();
             assertThat(requestBody.getPatches()).hasSize(1);
@@ -244,7 +237,7 @@ class PdsFhirClientTest {
                 "    \"resourceType\": \"OperationOutcome\"\n" +
                 "}";
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenAnswer(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
                 (i) -> {
                     throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "400 Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
                 });
@@ -279,7 +272,7 @@ class PdsFhirClientTest {
                 "    \"resourceType\": \"OperationOutcome\"\n" +
                 "}";
 
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenAnswer(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
                 (i) -> {
                     throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
                 });
@@ -294,7 +287,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
-            when((restTemplate).exchange(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), eq(HttpMethod.PATCH), any(),
+            when(httpClient.patch(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), any(),
                 eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
@@ -306,7 +299,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsReturnsInternalServerError() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
@@ -317,7 +310,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.updateManagingOrganisation(
@@ -328,7 +321,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.updateManagingOrganisation(
@@ -339,7 +332,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
-            when((restTemplate).exchange(eq(URL_PATH), eq(HttpMethod.PATCH), any(), eq(PdsResponse.class))).thenThrow(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.updateManagingOrganisation(

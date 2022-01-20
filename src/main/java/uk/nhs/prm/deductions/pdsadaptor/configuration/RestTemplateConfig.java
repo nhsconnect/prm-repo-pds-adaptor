@@ -15,17 +15,15 @@ import java.util.List;
 public class RestTemplateConfig {
 
     @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
+    public RestTemplate apacheBasedRestTemplate(HttpComponentsClientHttpRequestFactory apacheHttpClientRequestFactory) {
+        return new RestTemplate(apacheHttpClientRequestFactory);
     }
 
     @Bean
-    public RestTemplate pdsFhirRestTemplate(AuthService authService) {
+    public HttpComponentsClientHttpRequestFactory apacheHttpClientRequestFactory() {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         requestFactory.setConnectTimeout(30000);
         requestFactory.setReadTimeout(30000);
-        RestTemplate restTemplate = new RestTemplate(requestFactory);
-        restTemplate.setInterceptors(List.of(new OAuthRequestInterceptor(authService)));
-        return restTemplate;
+        return requestFactory;
     }
 }

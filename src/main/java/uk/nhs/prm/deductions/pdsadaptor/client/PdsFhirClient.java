@@ -33,10 +33,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 public class PdsFhirClient {
 
     private final String pdsFhirEndpoint;
-    private final HttpClient httpClient;
+    private final AuthenticatingHttpClient httpClient;
 
-    public PdsFhirClient(RestTemplate pdsFhirRestTemplate, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
-        this.httpClient = new HttpClient(pdsFhirRestTemplate);
+    public PdsFhirClient(AuthenticatingHttpClient httpClient, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
+        this.httpClient = httpClient;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
@@ -44,7 +44,7 @@ public class PdsFhirClient {
         String path = "Patient/" + nhsNumber;
         log.info("Sending request to pds for patient");
         try {
-            ResponseEntity<PdsResponse> response = httpClient.makeGetRequest(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
+            ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
             log.info("Successful request of pds record for patient");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
@@ -61,7 +61,7 @@ public class PdsFhirClient {
             PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
             ResponseEntity<PdsResponse> response =
-                httpClient.makePatchRequest(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
+                httpClient.patch(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
             log.info("Successful updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
