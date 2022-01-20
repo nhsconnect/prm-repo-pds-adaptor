@@ -14,9 +14,9 @@ def random_gp_ods_code():
 
 trace_id_prefix = 'perf' + str(random.randint(1000, 9999))
 
-min_wait_seconds = int(os.getenv(os.getenv("MIN_WAIT_SECONDS", "4")))
+min_wait_seconds = int(os.getenv("MIN_WAIT_SECONDS", "4"))
 
-max_wait_seconds = int(os.getenv(os.getenv("MAX_WAIT_SECONDS", "5")))
+max_wait_seconds = int(os.getenv("MAX_WAIT_SECONDS", "5"))
 
 class PdsAdaptorUser(FastHttpUser):
     wait_time = between(min_wait_seconds, max_wait_seconds)
