@@ -4,9 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -34,11 +32,11 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @Slf4j
 public class PdsFhirClient {
 
-    private final RestTemplate pdsFhirRestTemplate;
     private final String pdsFhirEndpoint;
+    private final HttpClient httpClient;
 
     public PdsFhirClient(RestTemplate pdsFhirRestTemplate, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
-        this.pdsFhirRestTemplate = pdsFhirRestTemplate;
+        this.httpClient = new HttpClient(pdsFhirRestTemplate);
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
@@ -46,8 +44,7 @@ public class PdsFhirClient {
         String path = "Patient/" + nhsNumber;
         log.info("Sending request to pds for patient");
         try {
-            ResponseEntity<PdsResponse> response =
-                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.GET, new HttpEntity<>(createHeaders()), PdsResponse.class);
+            ResponseEntity<PdsResponse> response = httpClient.makeGetRequest(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
             log.info("Successful request of pds record for patient");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
@@ -56,6 +53,7 @@ public class PdsFhirClient {
         }
     }
 
+
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         String path = "Patient/" + nhsNumber;
         log.info("Sending patch request to pds for patient");
@@ -63,8 +61,7 @@ public class PdsFhirClient {
             PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
             ResponseEntity<PdsResponse> response =
-                pdsFhirRestTemplate.exchange(pdsFhirEndpoint + path, HttpMethod.PATCH, new HttpEntity<>(patchRequest, requestHeaders),
-                    PdsResponse.class);
+                httpClient.makePatchRequest(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
             log.info("Successful updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
@@ -73,6 +70,7 @@ public class PdsFhirClient {
             throw new PdsFhirRequestException(e);
         }
     }
+
 
     private void handleExceptions(HttpStatusCodeException e) {
         if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {

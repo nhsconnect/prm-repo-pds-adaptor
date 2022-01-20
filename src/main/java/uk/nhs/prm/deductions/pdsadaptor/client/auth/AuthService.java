@@ -34,15 +34,18 @@ public class AuthService {
         this.accessTokenEndpoint = accessTokenEndpoint;
     }
 
-    public String getNewAccessToken() throws IOException {
-        HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
+    public String getNewAccessToken() {
         try {
+            HttpEntity<MultiValueMap<String, String>> request = createRequestEntity();
             ResponseEntity<String> accessTokenResponse = restTemplate.postForEntity(accessTokenEndpoint, request, String.class);
             accessToken = getAccessTokenFromResponse(accessTokenResponse);
             log.info("Successfully generated new access token");
             return accessToken;
         } catch (HttpStatusCodeException e) {
             log.error("Got a http exception when requesting new access token", e);
+            throw new AccessTokenRequestException(e);
+        } catch (IOException e) {
+            log.error("IO Exception");
             throw new AccessTokenRequestException(e);
         }
     }
