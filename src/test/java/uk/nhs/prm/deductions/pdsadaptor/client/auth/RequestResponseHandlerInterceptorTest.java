@@ -29,7 +29,7 @@ class RequestResponseHandlerInterceptorTest {
 
     @Test
     public void shouldAddAnAccessTokenToRequestOnFirstRequest() throws Exception {
-        when(authService.getCurrentAccessToken()).thenReturn("");
+        when(authService.getAccessToken()).thenReturn("");
         when(authService.getNewAccessToken()).thenReturn("1234567890");
         Request request = new Request();
         new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
@@ -39,7 +39,7 @@ class RequestResponseHandlerInterceptorTest {
 
     @Test
     public void shouldSetToNewAccessTokenWhenCurrentAccessTokenExpires() throws Exception {
-        when(authService.getCurrentAccessToken()).thenReturn("0987654321");
+        when(authService.getAccessToken()).thenReturn("0987654321");
         when(authService.getNewAccessToken()).thenReturn("1234567890");
         Request request = new Request();
         new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(UNAUTHORIZED));
@@ -49,7 +49,7 @@ class RequestResponseHandlerInterceptorTest {
 
     @Test
     public void shouldNotCallAuthServiceIfResponseIsAuthorised() throws Exception {
-        when(authService.getCurrentAccessToken()).thenReturn("0987654321");
+        when(authService.getAccessToken()).thenReturn("0987654321");
         Request request = new Request();
         HttpHeaders headers = request.getHeaders();
         new OAuthRequestInterceptor(authService).intercept(request, new byte[0], new RequestExecution(HttpStatus.OK));

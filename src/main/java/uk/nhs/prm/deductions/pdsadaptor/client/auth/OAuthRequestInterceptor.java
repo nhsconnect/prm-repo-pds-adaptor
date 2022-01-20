@@ -22,7 +22,7 @@ public class OAuthRequestInterceptor implements ClientHttpRequestInterceptor {
     public ClientHttpResponse intercept(HttpRequest request, byte[] body, ClientHttpRequestExecution execution) throws IOException {
         log.info("Intercepted request to pds fhir to add access token.");
         ClientHttpResponse response;
-        String currentAccessToken = authService.getCurrentAccessToken();
+        String currentAccessToken = authService.getAccessToken();
 
         if (currentAccessToken.isEmpty()) {
             log.info("No access token available. Requesting new access token");

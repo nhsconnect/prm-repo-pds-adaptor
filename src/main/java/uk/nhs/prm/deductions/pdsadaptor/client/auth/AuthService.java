@@ -50,8 +50,17 @@ public class AuthService {
         }
     }
 
-    public String getCurrentAccessToken() {
-        return this.accessToken;
+    public String getAccessToken() {
+        if (this.accessToken.isEmpty()) {
+            log.info("No access token available. Requesting new access token");
+            return getNewAccessToken();
+        } else {
+            return this.accessToken;
+        }
+    }
+
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
     private HttpEntity<MultiValueMap<String, String>> createRequestEntity() throws IOException {

@@ -16,9 +16,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.AccessTokenRequestException;
 
+import java.io.IOException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,13 +36,14 @@ public class AuthServiceTest {
     private AuthService authService;
 
     @BeforeEach
-    void setUp() throws Exception {
-        when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
+    void setUp()  {
         authService = new AuthService(signedJWTGenerator, restTemplate, "https://token-endpoint");
     }
 
     @Test
-    public void shouldRequestAccessTokenWithSignedJWT() throws Exception {
+    public void shouldRequestAccessTokenWithSignedJWTWhenGettitngNewAccessToken() throws Exception {
+        when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
+
         String tokenResponse = "{\"access_token\": \"Sr5PGv19wTEHJdDr2wx2f7IGd0cw\",\n" +
             " \"expires_in\": \"599\",\n" +
             " \"token_type\": \"Bearer\"}";
@@ -53,11 +57,42 @@ public class AuthServiceTest {
 
         verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
         assertThat(accessToken).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
-        assertThat(authService.getCurrentAccessToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
+        assertThat(authService.getAccessToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
     }
 
     @Test
-    public void shouldHandleFailureFromTokenAccessRequestEndPoint() {
+    public void shouldRequestAccessTokenWithSignedJWTWhenCurrentAccessTokenIsEmpty() throws IOException {
+        when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
+
+        String tokenResponse = "{\"access_token\": \"Sr5PGv19wTEHJdDr2wx2f7IGd0cw\",\n" +
+            " \"expires_in\": \"599\",\n" +
+            " \"token_type\": \"Bearer\"}";
+
+        HttpEntity<MultiValueMap<String, String>> request = createRequest();
+
+        when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenReturn(
+            new ResponseEntity<String>(tokenResponse, HttpStatus.OK));
+
+        String accessToken = authService.getAccessToken();
+
+        verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
+        assertThat(accessToken).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
+        assertThat(authService.getAccessToken()).isEqualTo("Sr5PGv19wTEHJdDr2wx2f7IGd0cw");
+    }
+
+    @Test
+    public void shouldReturnCurrentAccessTokenWhenAlreadySet() {
+        authService.setAccessToken("someToken");
+        String accessToken = authService.getAccessToken();
+        verifyNoInteractions(signedJWTGenerator);
+        verifyNoInteractions(restTemplate);
+        assertThat(accessToken).isEqualTo("someToken");
+    }
+
+    @Test
+    public void shouldHandleFailureFromTokenAccessRequestEndPoint() throws IOException {
+        when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
+
         HttpEntity<MultiValueMap<String, String>> request = createRequest();
 
         when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenThrow(
@@ -70,8 +105,6 @@ public class AuthServiceTest {
         verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
 
     }
-
-
 
     private HttpEntity<MultiValueMap<String, String>> createRequest() {
         HttpHeaders headers = new HttpHeaders();
