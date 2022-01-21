@@ -91,22 +91,6 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldSetHeaderOnRequestForGetRemoveGzipFromETag() {
-            PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setETag("W/\"1--gzip\"");
-
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(
-                new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
-
-            PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
-
-            assertThat(expected).isEqualTo(pdsResponse);
-            assertThat(expected.getETag()).isEqualTo(RECORD_E_TAG);
-        }
-
-        @Test
         void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(

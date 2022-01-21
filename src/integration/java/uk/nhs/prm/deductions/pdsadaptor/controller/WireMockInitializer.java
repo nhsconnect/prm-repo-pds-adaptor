@@ -6,13 +6,15 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.event.ContextClosedEvent;
 
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+
 import java.util.Map;
 
 public class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     @Override
     public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
-        WireMockServer wireMockServer = new WireMockServer(8080);
+        WireMockServer wireMockServer = new WireMockServer(options().gzipDisabled(true).port(8080));
         wireMockServer.start();
 
         configurableApplicationContext

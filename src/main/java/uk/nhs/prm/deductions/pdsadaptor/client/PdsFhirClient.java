@@ -42,10 +42,10 @@ public class PdsFhirClient {
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
-        log.info("Sending request to pds for patient");
+        log.info("Making GET request for pds record from pds fhir");
         try {
             ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
-            log.info("Successful request of pds record for patient");
+            log.info("Successfully requested pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             handleExceptions(e);
@@ -56,13 +56,13 @@ public class PdsFhirClient {
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         String path = "Patient/" + nhsNumber;
-        log.info("Sending patch request to pds for patient");
+        log.info("Making PATCH request to update managing organisation from pds fhr");
         try {
             PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
             ResponseEntity<PdsResponse> response =
                 httpClient.patch(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
-            log.info("Successful updated managing organisation on pds record");
+            log.info("Successfully updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             handlePatchInvalidException(e);
@@ -128,7 +128,7 @@ public class PdsFhirClient {
         PdsResponse pdsResponse = response.getBody();
         if (pdsResponse != null) {
             String eTag = response.getHeaders().getETag();
-            pdsResponse.setETag(eTag != null ? eTag.replace("--gzip", "") : null);
+            pdsResponse.setETag(eTag);
             return pdsResponse;
         }
         return null;
