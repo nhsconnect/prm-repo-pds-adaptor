@@ -22,6 +22,7 @@ import java.util.UUID;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ExceptionFactory.createException;
 
 @Component
 @Slf4j
@@ -43,8 +44,7 @@ public class PdsFhirClient {
             log.info("Successfully requested pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
-            handleExceptions(e);
-            throw new PdsFhirRequestException(e);
+            throw createException(e);
         }
     }
 
@@ -61,24 +61,7 @@ public class PdsFhirClient {
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             handlePatchInvalidException(e);
-            handleExceptions(e);
-            throw new PdsFhirRequestException(e);
-        }
-    }
-
-
-    private void handleExceptions(HttpStatusCodeException e) {
-        if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-            throw new NotFoundException("PDS FHIR Request failed - Patient not found");
-        }
-        if (e.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
-            throw new TooManyRequestsException();
-        }
-        if (e.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
-            throw new ServiceUnavailableException();
-        }
-        if (e.getStatusCode().is4xxClientError()) {
-            throw new BadRequestException("Received status code: " + e.getStatusCode() + " from PDS FHIR");
+            throw createException(e);
         }
     }
 
