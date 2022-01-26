@@ -1,15 +1,11 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -19,10 +15,9 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.util.UUID;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ExceptionFactory.createException;
+import static uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ExceptionFactory.*;
 
 @Component
 @Slf4j
@@ -48,7 +43,6 @@ public class PdsFhirClient {
         }
     }
 
-
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         String path = "Patient/" + nhsNumber;
         log.info("Making PATCH request to update managing organisation from pds fhr");
@@ -60,25 +54,7 @@ public class PdsFhirClient {
             log.info("Successfully updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
-            handlePatchInvalidException(e);
-            throw createException(e);
-        }
-    }
-
-    private void handlePatchInvalidException(HttpStatusCodeException e) {
-        if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
-            try {
-                String diagnosticsValue = new JSONObject(e.getResponseBodyAsString(UTF_8))
-                    .getJSONArray("issue")
-                    .getJSONObject(0)
-                    .getString("diagnostics");
-
-                if (diagnosticsValue.contains("Provided patch made no changes to the resource")) {
-                    throw new PdsFhirPatchInvalidException();
-                }
-            } catch (JSONException jsonException) {
-                log.debug("Not invalid patch exception so ignoring");
-            }
+            throw createPatchException(e);
         }
     }
 
