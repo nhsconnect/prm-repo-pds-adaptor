@@ -19,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.BadRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
@@ -117,6 +118,22 @@ class PdsControllerTest {
         assertNotNull(lastLoggedEvent);
         assertTrue(lastLoggedEvent.getMDCPropertyMap().containsKey("traceId"));
         assertThat(lastLoggedEvent.getFormattedMessage()).isEqualTo("Update request for pds record received by fake-user");
+    }
+
+    @Test
+    void shouldReturn400ResponseWhenPDSReturnsANonAuthNonRateLimit4xxResponse() throws Exception {
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(BadRequestException.class);
+
+        Principal mockPrincipal = Mockito.mock(Principal.class);
+        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+
+        mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
+                        .header("traceId", "fake-trace-id")
+                        .principal(mockPrincipal))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+
+        verify(pdsService,times(1)).getPatientGpStatus(NHS_NUMBER);
     }
 
     @NotNull

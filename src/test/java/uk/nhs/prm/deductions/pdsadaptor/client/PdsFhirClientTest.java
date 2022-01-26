@@ -91,14 +91,14 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
+        void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
+            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 400. reason 400 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
         }
 
         @Test
@@ -235,7 +235,7 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowPdsFhirExceptionWhenNonePatchError() {
+        void shouldThrowBadRequestExceptionWhenNonePatchError() {
             String errorResponse = "{\n" +
                 "    \"issue\": [\n" +
                 "        {\n" +
@@ -261,24 +261,24 @@ class PdsFhirClientTest {
                     throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
                 });
 
-            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
+            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 400. reason 400 Bad Request");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
 
         }
 
         @Test
-        void shouldThrowPdsFhirExceptionWhenPdsResourceInvalid() {
+        void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.patch(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), any(),
                 eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
+            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 400. reason 400 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
         }
 
         @Test
