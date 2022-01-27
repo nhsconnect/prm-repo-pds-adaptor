@@ -112,6 +112,26 @@ class PdsFhirClientTest {
         }
 
         @Test
+        void shouldThrowAuthExceptionWhenPdsReturnsForbiddenError() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.FORBIDDEN, "error"));
+
+            Exception exception = assertThrows(AuthException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed on auth - status code: 403");
+        }
+
+        @Test
+        void shouldThrowAuthExceptionWhenPdsReturnsUnauthorizedError() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "error"));
+
+            Exception exception = assertThrows(AuthException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed on auth - status code: 401");
+        }
+
+        @Test
         void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));

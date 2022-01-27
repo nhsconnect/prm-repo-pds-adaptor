@@ -12,5 +12,4 @@ public class PdsFhirRequestException extends RuntimeException {
         super(String.format("PDS FHIR request failed status code: %s. reason %s", e.getStatusCode().value(), e.getMessage()));
         log.info("PDS FHIR request failed - status code: {}, error: {}", e.getStatusCode().value(), e.getMessage());
     }
-
 }

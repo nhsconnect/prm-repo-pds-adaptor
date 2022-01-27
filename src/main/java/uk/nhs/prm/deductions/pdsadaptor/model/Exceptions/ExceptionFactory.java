@@ -14,17 +14,20 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class ExceptionFactory {
 
     public static RuntimeException createException(HttpStatusCodeException exception) {
+        if (exception.getStatusCode().equals(HttpStatus.FORBIDDEN) || exception.getStatusCode().equals(HttpStatus.UNAUTHORIZED)) {
+            return new AuthException(exception);
+        }
         if (exception.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
             return new NotFoundException("PDS FHIR Request failed - Patient not found");
         }
         if (exception.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
             return new TooManyRequestsException();
         }
-        if (exception.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
-            return new ServiceUnavailableException();
-        }
         if (exception.getStatusCode().is4xxClientError()) {
             return new BadRequestException("Received status code: " + exception.getStatusCode() + " from PDS FHIR");
+        }
+        if (exception.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
+            return new ServiceUnavailableException();
         }
         return new PdsFhirRequestException(exception);
     }
