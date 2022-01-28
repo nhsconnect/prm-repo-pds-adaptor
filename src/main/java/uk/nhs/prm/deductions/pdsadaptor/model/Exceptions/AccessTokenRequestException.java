@@ -8,7 +8,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import java.io.IOException;
 
 @Slf4j
-@ResponseStatus(value= HttpStatus.INTERNAL_SERVER_ERROR)
+@ResponseStatus(value= HttpStatus.SERVICE_UNAVAILABLE)
 public class AccessTokenRequestException extends RuntimeException {
     public AccessTokenRequestException(HttpStatusCodeException e) {
         super(String.format("Access token request failed status code: %s. reason %s", e.getStatusCode().value(), e.getMessage()));
@@ -18,5 +18,4 @@ public class AccessTokenRequestException extends RuntimeException {
     public AccessTokenRequestException(IOException e) {
         super(String.format("Access token request failed: Cause: %s", e.getMessage()));
     }
-
 }

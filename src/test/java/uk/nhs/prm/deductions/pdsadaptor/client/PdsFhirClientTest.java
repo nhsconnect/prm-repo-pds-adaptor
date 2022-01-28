@@ -94,21 +94,21 @@ class PdsFhirClientTest {
         void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
+                new HttpClientErrorException(HttpStatus.BAD_REQUEST, "bad-request-error"));
 
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 bad-request-error");
         }
 
         @Test
-        void shouldThrowPdsFhirExceptionWhenPdsReturnsInternalServerError() {
+        void shouldThrowBadGatewayExceptionWhenPdsReturnsInternalServerError() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
 
-            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 500. reason 500 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Status code: 500, Reason: 500 error");
         }
 
         @Test
@@ -152,16 +152,27 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
+        void shouldThrowPdsFhirExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
-            Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
+            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
                 NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Unavailable");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+        }
+
+        @Test
+        void shouldThrowBadGatewayExceptionWhenPdsFhirNotResponding() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "not-responding"));
+
+            Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Status code: 500, Reason: 500 not-responding");
         }
     }
+
 
     @Nested
     @DisplayName("PDS FHIR Patch Request")
@@ -284,7 +295,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
 
         }
 
@@ -298,18 +309,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received status code: 400 BAD_REQUEST from PDS FHIR");
-        }
-
-        @Test
-        void shouldThrowPdsFhirExceptionWhenPdsReturnsInternalServerError() {
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
-
-            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));
-
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 500. reason 500 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 error");
         }
 
         @Test
@@ -335,17 +335,14 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowServiceUnavailableExceptionWhenPdsFhirIsUnavailable() {
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                 new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
-            Exception exception = assertThrows(ServiceUnavailableException.class, () -> pdsFhirClient.updateManagingOrganisation(
+            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Unavailable");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
         }
-
     }
-
-
 }

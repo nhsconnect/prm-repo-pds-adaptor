@@ -24,10 +24,10 @@ public class ExceptionFactory {
             return new TooManyRequestsException();
         }
         if (exception.getStatusCode().is4xxClientError()) {
-            return new BadRequestException("Received status code: " + exception.getStatusCode() + " from PDS FHIR");
+            return new BadRequestException(exception);
         }
-        if (exception.getStatusCode().equals(HttpStatus.SERVICE_UNAVAILABLE)) {
-            return new ServiceUnavailableException();
+        if (exception.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
+            return new BadGatewayException(exception);
         }
         return new PdsFhirRequestException(exception);
     }

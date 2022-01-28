@@ -3,7 +3,6 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.AppenderBase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -18,10 +17,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.BadRequestException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.AuthException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ServiceUnavailableException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
@@ -138,7 +134,7 @@ class PdsControllerTest {
     }
 
     @Test
-    void shouldReturn503ResponseWhenPdsRequestReturnsForbiddenException() throws Exception {
+    void shouldReturn503ResponseWhenPdsRequestReturnsAuthException() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(AuthException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
@@ -168,8 +164,23 @@ class PdsControllerTest {
     }
 
     @Test
+    void shouldReturn502ResponseWhenPdsFhirIsNotRespondingAndBadGatewayExceptionThrown() throws Exception {
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(BadGatewayException.class);
+
+        Principal mockPrincipal = Mockito.mock(Principal.class);
+        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+
+        mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
+                        .header("traceId", "fake-trace-id")
+                        .principal(mockPrincipal))
+                .andExpect(status().isBadGateway());
+
+        verify(pdsService,times(1)).getPatientGpStatus(NHS_NUMBER);
+    }
+
+    @Test
     void shouldReturn503ResponseWhenPdsRequestReturnsA5xxException() throws Exception {
-        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(ServiceUnavailableException.class);
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(PdsFhirRequestException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
         Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
