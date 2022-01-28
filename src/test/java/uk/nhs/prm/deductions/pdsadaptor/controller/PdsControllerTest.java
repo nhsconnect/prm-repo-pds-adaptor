@@ -25,9 +25,9 @@ import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.TooManyRequestsExceptio
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
+import uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender;
 
 import java.security.Principal;
-import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -194,19 +194,5 @@ class PdsControllerTest {
 
         testLogAppender.start();
         return testLogAppender;
-    }
-}
-
-class TestLogAppender extends AppenderBase<ILoggingEvent> {
-    ArrayList<ILoggingEvent> loggingEvents = new ArrayList<>();
-
-    @Override
-    protected void append(ILoggingEvent eventObject) {
-        loggingEvents.add(eventObject);
-    }
-
-    ILoggingEvent getLastLoggedEvent() {
-        if (loggingEvents.isEmpty()) return null;
-        return loggingEvents.get(loggingEvents.size() - 1);
     }
 }
