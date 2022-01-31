@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
@@ -145,7 +146,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+                new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
                 NHS_NUMBER));
@@ -157,9 +158,9 @@ class PdsFhirClientTest {
         void shouldThrowBadGatewayExceptionWhenPdsFhirNotResponding() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
 
-            Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Reason: not-responding");
+            Assertions.assertThat(exception.getMessage()).contains("not-responding");
         }
     }
 
@@ -286,7 +287,6 @@ class PdsFhirClientTest {
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
-
         }
 
         @Test
@@ -327,7 +327,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+                new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                 NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));

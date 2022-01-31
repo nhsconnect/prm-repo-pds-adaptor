@@ -5,8 +5,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.BadGatewayException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.UnknownContentTypeException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -39,18 +41,24 @@ public class PdsFhirClient {
             ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
             log.info("Successfully requested pds record");
             return getPdsResponse(response);
-        } catch (HttpStatusCodeException e) {
-            log.error("Received HTTP Exception from PDS FHIR when requesting PDS Record");
-            throw createException(e);
+        } catch (HttpClientErrorException e) {
+            log.error("Received 4xx HTTP Error from PDS FHIR when requesting PDS Record");
+            throw createClientException(e);
+        } catch (HttpServerErrorException e) {
+            log.warn("PDS FHIR Server error when requesting PDS Record");
+            throw new PdsFhirRequestException(e);
+        } catch (UnknownContentTypeException e) {
+            log.error("PDS FHIR returned unexpected response body", e);
+            throw new RuntimeException("PDS FHIR returned unexpected response body", e);
         } catch (Exception e) {
-            log.error("Failed to connect to PDS FHIR when requesting PDS Record");
-            throw new BadGatewayException(e);
+            log.warn("Unexpected Exception", e);
+            throw new RuntimeException(e);
         }
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         String path = "Patient/" + nhsNumber;
-        log.info("Making PATCH request to update managing organisation from pds fhr");
+        log.info("Making PATCH request to update managing organisation from pds fhir");
         try {
             PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
@@ -58,12 +66,18 @@ public class PdsFhirClient {
                 httpClient.patch(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
             log.info("Successfully updated managing organisation on pds record");
             return getPdsResponse(response);
-        } catch (HttpStatusCodeException e) {
-            log.error("Received HTTP Exception from PDS FHIR when updating PDS Record");
+        } catch (HttpClientErrorException e) {
+            log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
             throw createPatchException(e);
+        } catch (HttpServerErrorException e) {
+            log.warn("PDS FHIR Server error when updating PDS Record");
+            throw new PdsFhirRequestException(e);
+        } catch (UnknownContentTypeException e) {
+            log.error("PDS FHIR returned unexpected response body", e);
+            throw new RuntimeException("PDS FHIR returned unexpected response body", e);
         } catch (Exception e) {
-            log.error("Failed to connect to PDS FHIR when updating PDS Record");
-            throw new BadGatewayException(e);
+            log.warn("Unexpected Exception", e);
+            throw new RuntimeException(e);
         }
     }
 

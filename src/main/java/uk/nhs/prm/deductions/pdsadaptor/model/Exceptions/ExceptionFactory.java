@@ -13,7 +13,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 @Slf4j
 public class ExceptionFactory {
 
-    public static RuntimeException createException(HttpStatusCodeException exception) {
+    public static RuntimeException createClientException(HttpStatusCodeException exception) {
         if (exception.getStatusCode().equals(HttpStatus.FORBIDDEN) || exception.getStatusCode().equals(HttpStatus.UNAUTHORIZED)) {
             return new AccessTokenRequestException(exception);
         }
@@ -23,15 +23,12 @@ public class ExceptionFactory {
         if (exception.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
             return new TooManyRequestsException();
         }
-        if (exception.getStatusCode().is4xxClientError()) {
-            return new BadRequestException(exception);
-        }
-        return new PdsFhirRequestException(exception);
+        return new BadRequestException(exception);
     }
 
     public static RuntimeException createPatchException(HttpStatusCodeException exception) {
         PdsFhirPatchInvalidException pdsFhirPatchInvalidException = handlePatchException(exception);
-        return Objects.requireNonNullElseGet(pdsFhirPatchInvalidException, () -> createException(exception));
+        return Objects.requireNonNullElseGet(pdsFhirPatchInvalidException, () -> createClientException(exception));
     }
 
     public static PdsFhirPatchInvalidException handlePatchException(HttpStatusCodeException exception) {
