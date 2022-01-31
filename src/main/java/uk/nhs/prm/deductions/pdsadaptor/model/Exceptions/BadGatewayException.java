@@ -8,8 +8,8 @@ import org.springframework.web.client.HttpStatusCodeException;
 @Slf4j
 @ResponseStatus(value= HttpStatus.BAD_GATEWAY)
 public class BadGatewayException extends RuntimeException {
-    public BadGatewayException(HttpStatusCodeException exception) {
-        super(String.format("PDS FHIR request failed - Status code: %s, Reason: %s", exception.getStatusCode().value(), exception.getMessage()));
-        log.info("PDS FHIR request failed - Status ode: {}, Reason: {}", exception.getStatusCode().value(), exception.getMessage());
+    public BadGatewayException(Exception exception) {
+        super(String.format("PDS FHIR request failed - Reason: %s", exception.getMessage()));
+        log.info("PDS FHIR request failed - Reason: {}", exception.getMessage());
     }
 }

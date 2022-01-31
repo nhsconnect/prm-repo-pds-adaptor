@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
+import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.BadGatewayException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -40,6 +41,9 @@ public class PdsFhirClient {
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             throw createException(e);
+        } catch (Exception e) {
+            log.warn("Failed to connect to PDS FHIR");
+            throw new BadGatewayException(e);
         }
     }
 
@@ -55,6 +59,9 @@ public class PdsFhirClient {
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
             throw createPatchException(e);
+        } catch (Exception e) {
+            log.warn("Failed to connect to PDS FHIR");
+            throw new BadGatewayException(e);
         }
     }
 

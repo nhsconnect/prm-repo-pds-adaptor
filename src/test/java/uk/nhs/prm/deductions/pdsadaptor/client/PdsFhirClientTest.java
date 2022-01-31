@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
@@ -108,7 +109,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Status code: 500, Reason: 500 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Reason: 500 error");
         }
 
         @Test
@@ -164,12 +165,11 @@ class PdsFhirClientTest {
 
         @Test
         void shouldThrowBadGatewayExceptionWhenPdsFhirNotResponding() {
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                    new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "not-responding"));
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
 
             Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Status code: 500, Reason: 500 not-responding");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Reason: not-responding");
         }
     }
 
