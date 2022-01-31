@@ -43,7 +43,7 @@ public class AuthService {
             return accessToken;
         } catch (HttpStatusCodeException e) {
             log.error("Got a http exception when requesting new access token", e);
-            throw new AccessTokenRequestException(e);
+            throw e;
         } catch (IOException e) {
             log.error("IO Exception");
             throw new AccessTokenRequestException(e);

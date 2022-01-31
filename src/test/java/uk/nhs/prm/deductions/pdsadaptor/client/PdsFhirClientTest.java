@@ -103,33 +103,23 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowBadGatewayExceptionWhenPdsReturnsInternalServerError() {
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "error"));
-
-            Exception exception = assertThrows(BadGatewayException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
-
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed - Reason: 500 error");
-        }
-
-        @Test
-        void shouldThrowAuthExceptionWhenPdsReturnsForbiddenError() {
+        void shouldThrowAccessTokenRequestExceptionWhenPdsReturnsForbiddenError() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                     new HttpClientErrorException(HttpStatus.FORBIDDEN, "error"));
 
-            Exception exception = assertThrows(AuthException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed on auth - status code: 403");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 403. reason 403 error");
         }
 
         @Test
-        void shouldThrowAuthExceptionWhenPdsReturnsUnauthorizedError() {
+        void shouldThrowAccessTokenRequestExceptionWhenPdsReturnsUnauthorizedError() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
                     new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "error"));
 
-            Exception exception = assertThrows(AuthException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed on auth - status code: 401");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 401. reason 401 error");
         }
 
         @Test

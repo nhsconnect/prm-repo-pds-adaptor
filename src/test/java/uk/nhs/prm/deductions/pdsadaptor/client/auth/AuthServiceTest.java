@@ -98,12 +98,9 @@ public class AuthServiceTest {
         when((restTemplate).postForEntity("https://token-endpoint", request, String.class)).thenThrow(
             new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-        Exception exception = assertThrows(AccessTokenRequestException.class, authService::getNewAccessToken);
-
-        assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 400. reason 400 error");
+        assertThrows(HttpClientErrorException.class, authService::getNewAccessToken);
 
         verify(restTemplate).postForEntity("https://token-endpoint", request, String.class);
-
     }
 
     private HttpEntity<MultiValueMap<String, String>> createRequest() {

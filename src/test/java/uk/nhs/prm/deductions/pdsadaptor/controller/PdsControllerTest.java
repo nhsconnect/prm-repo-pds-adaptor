@@ -134,8 +134,8 @@ class PdsControllerTest {
     }
 
     @Test
-    void shouldReturn503ResponseWhenPdsRequestReturnsAuthException() throws Exception {
-        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(AuthException.class);
+    void shouldReturn503ResponseWhenPdsRequestReturnsAccessTokenRequestException() throws Exception {
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(AccessTokenRequestException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
         Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
@@ -164,7 +164,7 @@ class PdsControllerTest {
     }
 
     @Test
-    void shouldReturn502ResponseWhenPdsFhirIsNotRespondingAndBadGatewayExceptionThrown() throws Exception {
+    void shouldReturn502ResponseWhenPdsFhirIsNotResponding() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(BadGatewayException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);

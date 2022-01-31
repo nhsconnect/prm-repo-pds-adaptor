@@ -40,9 +40,10 @@ public class PdsFhirClient {
             log.info("Successfully requested pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
+            log.error("Received HTTP Exception from PDS FHIR when requesting PDS Record");
             throw createException(e);
         } catch (Exception e) {
-            log.warn("Failed to connect to PDS FHIR");
+            log.error("Failed to connect to PDS FHIR when requesting PDS Record");
             throw new BadGatewayException(e);
         }
     }
@@ -58,9 +59,10 @@ public class PdsFhirClient {
             log.info("Successfully updated managing organisation on pds record");
             return getPdsResponse(response);
         } catch (HttpStatusCodeException e) {
+            log.error("Received HTTP Exception from PDS FHIR when updating PDS Record");
             throw createPatchException(e);
         } catch (Exception e) {
-            log.warn("Failed to connect to PDS FHIR");
+            log.error("Failed to connect to PDS FHIR when updating PDS Record");
             throw new BadGatewayException(e);
         }
     }

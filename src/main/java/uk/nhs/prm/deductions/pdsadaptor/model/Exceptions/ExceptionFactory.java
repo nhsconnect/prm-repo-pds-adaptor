@@ -15,7 +15,7 @@ public class ExceptionFactory {
 
     public static RuntimeException createException(HttpStatusCodeException exception) {
         if (exception.getStatusCode().equals(HttpStatus.FORBIDDEN) || exception.getStatusCode().equals(HttpStatus.UNAUTHORIZED)) {
-            return new AuthException(exception);
+            return new AccessTokenRequestException(exception);
         }
         if (exception.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
             return new NotFoundException("PDS FHIR Request failed - Patient not found");
@@ -25,9 +25,6 @@ public class ExceptionFactory {
         }
         if (exception.getStatusCode().is4xxClientError()) {
             return new BadRequestException(exception);
-        }
-        if (exception.getStatusCode().equals(HttpStatus.INTERNAL_SERVER_ERROR)) {
-            return new BadGatewayException(exception);
         }
         return new PdsFhirRequestException(exception);
     }
