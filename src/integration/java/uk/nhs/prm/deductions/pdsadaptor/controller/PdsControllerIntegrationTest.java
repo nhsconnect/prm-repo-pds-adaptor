@@ -1,25 +1,19 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ContextConfiguration;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,36 +27,29 @@ public class PdsControllerIntegrationTest {
     private int port;
 
     @Test
-    public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() {
+    public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnauthorized() {
         stubFor(get(urlMatching("/Patient/9691927179"))
-            .inScenario("Get PDS Record")
-            .whenScenarioStateIs(STARTED)
             .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
 
         stubFor(post(urlMatching("/access-token"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs(STARTED)
                 .willReturn(
                         aResponse()
                                 .withBody("{\"access_token\": \"accessToken\",\n" +
                                         " \"expires_in\": \"599\",\n" +
-                                        " \"token_type\": \"Bearer\"}"))
-                .willSetStateTo("Token Generated"));
+                                        " \"token_type\": \"Bearer\"}")));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
-            .inScenario("Get PDS Record")
-            .whenScenarioStateIs("Token Generated")
             .withHeader("Authorization", matching("Bearer accessToken"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withHeader("ETag", "W/\"6\"")
                 .withBody(pdsNotSuspendedPatientResponse())));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
             createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
             new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
-        SuspendedPatientStatus body = response.getBody();
+        var body = response.getBody();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body.getCurrentOdsCode()).isEqualTo("A20047");
@@ -74,22 +61,17 @@ public class PdsControllerIntegrationTest {
     @Test
     public void shouldHandle5xxErrorsFromPdsFhirAndReturn503Status() {
         stubFor(post(urlMatching("/access-token"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs(STARTED)
                 .willReturn(
                         aResponse()
                                 .withBody("{\"access_token\": \"accessToken\",\n" +
                                         " \"expires_in\": \"599\",\n" +
-                                        " \"token_type\": \"Bearer\"}"))
-                .willSetStateTo("Token Generated"));
+                                        " \"token_type\": \"Bearer\"}")));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs("Token Generated")
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .willReturn(aResponse().withStatus(503)));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
@@ -99,11 +81,9 @@ public class PdsControllerIntegrationTest {
     @Test
     public void shouldHandleAuthErrorsFromPdsFhirAndReturn503Status() {
         stubFor(post(urlMatching("/access-token"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs(STARTED)
                 .willReturn(aResponse().withStatus(403)));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
@@ -113,22 +93,17 @@ public class PdsControllerIntegrationTest {
     @Test
     public void shouldHandle4xxErrorsFromPdsFhirAndReturn400Status() {
         stubFor(post(urlMatching("/access-token"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs(STARTED)
                 .willReturn(
                         aResponse()
                                 .withBody("{\"access_token\": \"accessToken\",\n" +
                                         " \"expires_in\": \"599\",\n" +
-                                        " \"token_type\": \"Bearer\"}"))
-                .willSetStateTo("Token Generated"));
+                                        " \"token_type\": \"Bearer\"}")));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs("Token Generated")
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .willReturn(aResponse().withStatus(400)));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
@@ -138,22 +113,17 @@ public class PdsControllerIntegrationTest {
     @Test
     public void shouldHandle429TooManyRequestErrorsFromPdsFhirAndReturn503Status() {
         stubFor(post(urlMatching("/access-token"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs(STARTED)
                 .willReturn(
                         aResponse()
                                 .withBody("{\"access_token\": \"accessToken\",\n" +
                                         " \"expires_in\": \"599\",\n" +
-                                        " \"token_type\": \"Bearer\"}"))
-                .willSetStateTo("Token Generated"));
+                                        " \"token_type\": \"Bearer\"}")));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
-                .inScenario("Get PDS Record")
-                .whenScenarioStateIs("Token Generated")
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .willReturn(aResponse().withStatus(429)));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
@@ -162,12 +132,12 @@ public class PdsControllerIntegrationTest {
 
     @Test
     public void shouldSendUpdateForManagingOrganisationToPds() {
-        String requestBody = "{\n" +
+        var requestBody = "{\n" +
             "  \"previousGp\": \"A1234\",\n" +
             "  \"recordETag\": \"W/\\\"5\\\"\"\n" +
             "}";
 
-        String pdsRequstBody = "{\n" +
+        var pdsRequstBody = "{\n" +
             "  \"patches\": [\n" +
             "    {\n" +
             "      \"op\": \"add\",\n" +
@@ -184,27 +154,20 @@ public class PdsControllerIntegrationTest {
             "}";
 
         stubFor(patch(urlMatching("/Patient/9693797493"))
-            .inScenario("Update PDS Record")
-            .whenScenarioStateIs(STARTED)
             .withHeader("If-Match", matching("W/\"5\""))
             .withHeader("Content-Type", containing("application/json-patch+json"))
             .withRequestBody(equalToJson(pdsRequstBody))
             .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
 
         stubFor(post(urlMatching("/access-token"))
-            .inScenario("Update PDS Record")
-            .whenScenarioStateIs(STARTED)
             .willReturn(
                 aResponse()
                     .withBody("{\"access_token\": \"accessToken\",\n" +
                         " \"expires_in\": \"599\",\n" +
-                        " \"token_type\": \"Bearer\"}"))
-            .willSetStateTo("Token Generated"));
+                        " \"token_type\": \"Bearer\"}")));
 
 
         stubFor(patch(urlMatching("/Patient/9693797493"))
-            .inScenario("Update PDS Record")
-            .whenScenarioStateIs("Token Generated")
             .withHeader("Authorization", matching("Bearer accessToken"))
             .withHeader("If-Match", matching("W/\"5\""))
             .withHeader("Content-Type", containing("application/json-patch+json"))
@@ -214,11 +177,11 @@ public class PdsControllerIntegrationTest {
                 .withHeader("ETag", "W/\"6\"")
                 .withBody(suspendedPatientWithManagingOrganisationResponse())));
 
-        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+        var response = restTemplate.exchange(
             createURLWithPort("/suspended-patient-status/9693797493"),
             HttpMethod.PUT, new HttpEntity<>(requestBody, createHeaders()), SuspendedPatientStatus.class);
 
-        SuspendedPatientStatus body = response.getBody();
+        var body = response.getBody();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(body).isNotNull();
@@ -230,7 +193,7 @@ public class PdsControllerIntegrationTest {
     }
 
     private HttpHeaders createHeaders() {
-        HttpHeaders headers = new HttpHeaders();
+        var headers = new HttpHeaders();
         headers.setBasicAuth("admin", "admin");
         headers.add("traceId", "test-trace-id");
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -442,5 +405,4 @@ public class PdsControllerIntegrationTest {
     private String createURLWithPort(String uri) {
         return "http://localhost:" + port + uri;
     }
-
 }
