@@ -164,22 +164,7 @@ class PdsControllerTest {
     }
 
     @Test
-    void shouldReturn502ResponseWhenPdsFhirIsNotResponding() throws Exception {
-        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(BadGatewayException.class);
-
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
-
-        mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
-                        .header("traceId", "fake-trace-id")
-                        .principal(mockPrincipal))
-                .andExpect(status().isBadGateway());
-
-        verify(pdsService,times(1)).getPatientGpStatus(NHS_NUMBER);
-    }
-
-    @Test
-    void shouldReturn503ResponseWhenPdsRequestReturnsA5xxException() throws Exception {
+    void shouldReturn503ResponseWhenPdsRequestReturnsAServerException() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(PdsFhirRequestException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);

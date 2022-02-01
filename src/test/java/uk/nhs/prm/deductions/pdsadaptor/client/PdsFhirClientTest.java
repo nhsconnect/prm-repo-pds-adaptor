@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.UnknownContentTypeException;
 import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
@@ -155,9 +156,16 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowBadGatewayExceptionWhenPdsFhirNotResponding() {
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
+        void shouldThrowRuntimeExceptionWhen200ResponseButUnexpectedBodyFromPdsFhir() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(UnknownContentTypeException.class);
+            Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
+            Assertions.assertThat(exception.getMessage()).contains("PDS FHIR returned unexpected response body when requesting PDS Record");
+        }
+
+        @Test
+        void shouldThrowRuntimeExceptionWhenUnexpectedErrorFromPdsFhir() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
             Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
             Assertions.assertThat(exception.getMessage()).contains("not-responding");

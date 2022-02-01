@@ -3,9 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.controller;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -17,40 +15,22 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.matching;
-import static com.github.tomakehurst.wiremock.client.WireMock.patch;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = {WireMockInitializer.class})
 public class PdsControllerIntegrationTest {
-
-    @Autowired
-    private WireMockServer wireMockServer;
 
     @Autowired
     private TestRestTemplate restTemplate;
 
     @LocalServerPort
     private int port;
-
-    @AfterEach
-    public void afterEach() {
-        this.wireMockServer.resetAll();
-    }
 
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnAuthorized() {
@@ -89,6 +69,95 @@ public class PdsControllerIntegrationTest {
         assertThat(body.getIsSuspended()).isEqualTo(false);
         assertThat(body.getManagingOrganisation()).isNull();
         assertThat(body.getRecordETag()).isEqualTo("W/\"6\"");
+    }
+
+    @Test
+    public void shouldHandle5xxErrorsFromPdsFhirAndReturn503Status() {
+        stubFor(post(urlMatching("/access-token"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(
+                        aResponse()
+                                .withBody("{\"access_token\": \"accessToken\",\n" +
+                                        " \"expires_in\": \"599\",\n" +
+                                        " \"token_type\": \"Bearer\"}"))
+                .willSetStateTo("Token Generated"));
+
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs("Token Generated")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .willReturn(aResponse().withStatus(503)));
+
+        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @Test
+    public void shouldHandleAuthErrorsFromPdsFhirAndReturn503Status() {
+        stubFor(post(urlMatching("/access-token"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse().withStatus(403)));
+
+        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    @Test
+    public void shouldHandle4xxErrorsFromPdsFhirAndReturn400Status() {
+        stubFor(post(urlMatching("/access-token"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(
+                        aResponse()
+                                .withBody("{\"access_token\": \"accessToken\",\n" +
+                                        " \"expires_in\": \"599\",\n" +
+                                        " \"token_type\": \"Bearer\"}"))
+                .willSetStateTo("Token Generated"));
+
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs("Token Generated")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .willReturn(aResponse().withStatus(400)));
+
+        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    public void shouldHandle429TooManyRequestErrorsFromPdsFhirAndReturn503Status() {
+        stubFor(post(urlMatching("/access-token"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs(STARTED)
+                .willReturn(
+                        aResponse()
+                                .withBody("{\"access_token\": \"accessToken\",\n" +
+                                        " \"expires_in\": \"599\",\n" +
+                                        " \"token_type\": \"Bearer\"}"))
+                .willSetStateTo("Token Generated"));
+
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .inScenario("Get PDS Record")
+                .whenScenarioStateIs("Token Generated")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .willReturn(aResponse().withStatus(429)));
+
+        ResponseEntity<SuspendedPatientStatus> response = restTemplate.exchange(
+                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @Test

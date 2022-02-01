@@ -49,7 +49,7 @@ public class PdsFhirClient {
             throw new PdsFhirRequestException(e);
         } catch (UnknownContentTypeException e) {
             log.error("PDS FHIR returned unexpected response body", e);
-            throw new RuntimeException("PDS FHIR returned unexpected response body", e);
+            throw new RuntimeException("PDS FHIR returned unexpected response body when requesting PDS Record", e);
         } catch (Exception e) {
             log.warn("Unexpected Exception", e);
             throw new RuntimeException(e);
@@ -74,7 +74,7 @@ public class PdsFhirClient {
             throw new PdsFhirRequestException(e);
         } catch (UnknownContentTypeException e) {
             log.error("PDS FHIR returned unexpected response body", e);
-            throw new RuntimeException("PDS FHIR returned unexpected response body", e);
+            throw new RuntimeException("PDS FHIR returned unexpected response body when updating PDS Record", e);
         } catch (Exception e) {
             log.warn("Unexpected Exception", e);
             throw new RuntimeException(e);
