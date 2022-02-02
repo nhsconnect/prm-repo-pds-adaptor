@@ -100,3 +100,27 @@ pipelines:
     environment_variables:
       NHS_ENVIRONMENT: pre-prod
     stages: *common_stages
+
+  'prm-deductions-pds-adaptor.prod':
+    group: continuity-service
+    label_template: '${git[:8]}'
+    materials:
+      git:
+        type: configrepo
+        blacklist:
+          - docs/**/*.*
+      app:
+        pipeline: prm-deductions-pds-adaptor
+        stage: docker
+      base_infra:
+        pipeline: prm-deductions-infra
+        stage: deploy_prod
+      test_env:
+        pipeline: prm-deductions-pds-adaptor.pre-prod
+        stage: deploy
+      e2e:
+        pipeline: continuity-e2e-tests.pre-prod
+        stage: test
+    environment_variables:
+      NHS_ENVIRONMENT: prod
+    stages: *common_stages
