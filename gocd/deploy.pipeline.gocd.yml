@@ -118,9 +118,6 @@ pipelines:
       test_env:
         pipeline: prm-deductions-pds-adaptor.pre-prod
         stage: deploy
-      e2e:
-        pipeline: continuity-e2e-tests.pre-prod
-        stage: test
     environment_variables:
       NHS_ENVIRONMENT: prod
     stages: *common_stages
