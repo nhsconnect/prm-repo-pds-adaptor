@@ -1,6 +1,6 @@
 format_version: 4
 common:
-  deploy_job: &deploy_job
+  plan_job: &plan_job
     resources:
       - docker
     tasks:
@@ -9,6 +9,10 @@ common:
           arguments:
             - -c
             - ./tasks tf_plan create
+  deploy_job: &deploy_job
+    resources:
+      - docker
+    tasks:
       - exec:
           command: /bin/bash
           arguments:
@@ -30,6 +34,10 @@ common:
               arguments:
                 - -c
                 - ./tasks promote_docker_image
+    - plan:
+        clean_workspace: true
+        jobs:
+          deploy: *plan_job
     - deploy:
         clean_workspace: true
         jobs:
@@ -45,6 +53,10 @@ common:
               arguments:
                 - -c
                 - ./tasks promote_docker_image
+    - plan:
+        clean_workspace: true
+        jobs:
+          deploy: *plan_job
     - deploy:
         approval:
           type: manual
