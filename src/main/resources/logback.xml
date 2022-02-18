@@ -77,11 +77,6 @@
 
 	</appender>
 
-<!--	To debug issues in pds connections  -->
-	<logger name="org.apache.http.impl.conn.PoolingHttpClientConnectionManager" additivity="false">
-		<appender-ref ref="DEBUG_CONSOLE" />
-	</logger>
-
 	<root level="DEBUG">
 		<appender-ref ref="INFO_CONSOLE" />
 	</root>
