@@ -1,7 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.configuration;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -20,7 +19,6 @@ public class RestTemplateConfig {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         requestFactory.setConnectTimeout(30000);
         requestFactory.setReadTimeout(30000);
-        requestFactory.setHttpClient(HttpClients.custom().setMaxConnTotal(50).setMaxConnPerRoute(50).build());
         return requestFactory;
     }
 }

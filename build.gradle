@@ -39,8 +39,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.json:json:20211205'
 
-    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
-
     implementation platform('software.amazon.awssdk:bom:2.17.73')
     implementation 'software.amazon.awssdk:ssm'
 
