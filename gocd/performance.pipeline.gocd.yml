@@ -36,7 +36,7 @@ pipelines:
       spec: 0 0 22 ? * MON,TUE,WED,THU,FRI *
     environment_variables:
       NHS_ENVIRONMENT: dev
-      RUN_TIME: 30s
+      RUN_TIME: 120s
       USERS: 10
       MIN_WAIT_SECONDS: 4
       MAX_WAIT_SECONDS: 5
