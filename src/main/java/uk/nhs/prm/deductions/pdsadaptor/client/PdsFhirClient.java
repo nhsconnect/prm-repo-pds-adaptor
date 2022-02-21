@@ -16,6 +16,8 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchValue;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 
 import static java.util.Collections.singletonList;
@@ -37,6 +39,7 @@ public class PdsFhirClient {
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
         log.info("Making GET request for pds record from pds fhir");
+        var startTime = Instant.now();
         try {
             ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
             log.info("Successfully requested pds record");
@@ -54,11 +57,15 @@ public class PdsFhirClient {
             log.warn("Unexpected Exception", e);
             throw new RuntimeException(e);
         }
+        finally {
+            log.info("PDS-FHIR retrieval took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+        }
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         String path = "Patient/" + nhsNumber;
         log.info("Making PATCH request to update managing organisation from pds fhir");
+        var startTime = Instant.now();
         try {
             PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
             HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
@@ -78,6 +85,8 @@ public class PdsFhirClient {
         } catch (Exception e) {
             log.warn("Unexpected Exception", e);
             throw new RuntimeException(e);
+        }finally {
+            log.info("PDS-FHIR update took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         }
     }
 
