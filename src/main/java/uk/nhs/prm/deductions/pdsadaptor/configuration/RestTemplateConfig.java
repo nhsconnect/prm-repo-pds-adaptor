@@ -20,7 +20,7 @@ public class RestTemplateConfig {
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         requestFactory.setConnectTimeout(30000);
         requestFactory.setReadTimeout(30000);
-        requestFactory.setHttpClient(HttpClients.custom().setMaxConnTotal(50).setMaxConnPerRoute(1).build());
+        requestFactory.setHttpClient(HttpClients.custom().setMaxConnTotal(50).setMaxConnPerRoute(10).build());
         return requestFactory;
     }
 }
