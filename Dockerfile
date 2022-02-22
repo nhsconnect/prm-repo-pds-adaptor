@@ -5,4 +5,6 @@ RUN useradd --home-dir /home/spring --uid 1000 --gid 102 --shell /bin/bash sprin
 RUN usermod -a -G spring spring
 USER spring
 COPY build/libs/*.jar app.jar
-ENTRYPOINT ["java","-Dlog4j2.formatMsgNoLookups=true","-XX:+ExitOnOutOfMemoryError","-XX:MaxRAMPercentage=80.0","-jar","/app.jar"]
+COPY run-* ./
+COPY mask-pii.sh ./
+ENTRYPOINT ["./run-application-safely.sh"]
