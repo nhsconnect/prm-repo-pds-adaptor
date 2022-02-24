@@ -57,7 +57,7 @@ class PdsControllerTest {
         TestLogAppender testLogAppender = addTestLogAppender();
         ObjectMapper objectMapper = new ObjectMapper();
 
-        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, null, "W1");
+        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, null, "W1",false);
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
@@ -87,7 +87,7 @@ class PdsControllerTest {
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"2\"");
         ObjectMapper objectMapper = new ObjectMapper();
 
-        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, "A1234", "W/\"3\"");
+        SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, "A1234", "W/\"3\"",false);
         when(pdsService.updatePatientManagingOrganisation(NHS_NUMBER, updateRequest)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 

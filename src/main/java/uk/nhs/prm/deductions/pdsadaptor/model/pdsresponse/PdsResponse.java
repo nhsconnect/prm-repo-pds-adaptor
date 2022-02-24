@@ -18,4 +18,5 @@ public class PdsResponse {
     private List<GeneralPractitioner> generalPractitioner;
     private ManagingOrganization managingOrganization;
     private String eTag;
+    private String deceasedDateTime;
 }

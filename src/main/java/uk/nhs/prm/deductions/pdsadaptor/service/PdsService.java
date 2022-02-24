@@ -27,6 +27,9 @@ public class PdsService {
     }
 
     private SuspendedPatientStatus setPatientStatus(PdsResponse pdsResponse) {
+        if(hasDeceasedDateAndTime(pdsResponse)){
+            return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
+        }
         if (hasGeneralPractitioner(pdsResponse)) {
             return nonSuspendedPatientStatus(pdsResponse.getId(), getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
         }
@@ -41,7 +44,9 @@ public class PdsService {
     private boolean hasGeneralPractitioner(PdsResponse pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
     }
-
+    private boolean hasDeceasedDateAndTime(PdsResponse pdsResponse) {
+        return pdsResponse.getDeceasedDateTime() != null;
+    }
     private String getManagingOrganisation(PdsResponse pdsResponse) {
        if (pdsResponse.getManagingOrganization() != null) {
            return pdsResponse.getManagingOrganization().getIdentifier().getValue();

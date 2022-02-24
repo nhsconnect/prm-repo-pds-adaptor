@@ -68,7 +68,20 @@ class PdsServiceTest {
         assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
     }
 
+    @Test
+    void shouldReturnSuspendedPatientResponseWithDeceasedStatusTrueWhenPdsFhirReturnsDeceasedDateTimeField() {
+        PdsResponse pdsResponse = TestData.buildPdsDeceasedResponse(NHS_NUMBER ,  RECORD_E_TAG);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
 
+        SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
+
+        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
+        assertThat(expected.getIsSuspended()).isEqualTo(false);
+        assertThat(expected.getCurrentOdsCode()).isNull();
+        assertThat(expected.getManagingOrganisation()).isNull();
+        assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
+        assertThat(expected.isDeceased).isEqualTo(true);
+    }
     @Test
     void shouldCallPdsFhirClientWithUpdateAndReturnResponseForNonSuspendedPatientWithManagingOrganisationIfSet() {
         PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
