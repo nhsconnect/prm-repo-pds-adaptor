@@ -76,7 +76,7 @@ class PdsServiceTest {
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
         assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
-        assertThat(expected.getIsSuspended()).isEqualTo(false);
+        assertThat(expected.getIsSuspended()).isEqualTo(null);
         assertThat(expected.getCurrentOdsCode()).isNull();
         assertThat(expected.getManagingOrganisation()).isNull();
         assertThat(expected.getRecordETag()).isEqualTo(RECORD_E_TAG);
