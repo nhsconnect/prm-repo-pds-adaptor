@@ -1,2 +1,2 @@
 #!/bin/bash
-./breaker.sh < <(./run-application.sh)
+./run-application.sh | ./masker
