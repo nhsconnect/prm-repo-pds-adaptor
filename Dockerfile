@@ -7,4 +7,5 @@ USER spring
 COPY build/libs/*.jar app.jar
 COPY run-* ./
 COPY masker ./
+COPY breaker.sh ./
 ENTRYPOINT ["./run-application-safely.sh"]
