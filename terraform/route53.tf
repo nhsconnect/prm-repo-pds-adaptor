@@ -10,13 +10,13 @@ data "aws_route53_zone" "environment_public_zone" {
   zone_id = data.aws_ssm_parameter.environment_public_zone_id.value
 }
 
-resource "aws_route53_record" "pds-adaptor" {
-  zone_id = data.aws_ssm_parameter.environment_private_zone_id.value
-  name    = var.dns_name
-  type    = "CNAME"
-  ttl     = "300"
-  records = [aws_alb.alb-internal.dns_name]
-}
+#resource "aws_route53_record" "pds-adaptor" {
+#  zone_id = data.aws_ssm_parameter.environment_private_zone_id.value
+#  name    = var.dns_name
+#  type    = "CNAME"
+#  ttl     = "300"
+#  records = [aws_alb.alb-internal.dns_name]
+#}
 
 resource "aws_acm_certificate" "pds-adaptor-cert" {
   domain_name       = "${var.dns_name}.${data.aws_route53_zone.environment_public_zone.name}"
@@ -29,27 +29,27 @@ resource "aws_acm_certificate" "pds-adaptor-cert" {
   }
 }
 
-resource "aws_route53_record" "pds-adaptor-cert-validation-record" {
-  for_each = {
-    for dvo in aws_acm_certificate.pds-adaptor-cert.domain_validation_options : dvo.domain_name => {
-      name   = dvo.resource_record_name
-      record = dvo.resource_record_value
-      type   = dvo.resource_record_type
-    }
-  }
+#resource "aws_route53_record" "pds-adaptor-cert-validation-record" {
+#  for_each = {
+#    for dvo in aws_acm_certificate.pds-adaptor-cert.domain_validation_options : dvo.domain_name => {
+#      name   = dvo.resource_record_name
+#      record = dvo.resource_record_value
+#      type   = dvo.resource_record_type
+#    }
+#  }
+#
+#  allow_overwrite = true
+#  name            = each.value.name
+#  records         = [each.value.record]
+#  ttl             = 60
+#  type            = each.value.type
+#  zone_id         = data.aws_route53_zone.environment_public_zone.zone_id
+#}
 
-  allow_overwrite = true
-  name            = each.value.name
-  records         = [each.value.record]
-  ttl             = 60
-  type            = each.value.type
-  zone_id         = data.aws_route53_zone.environment_public_zone.zone_id
-}
-
-resource "aws_acm_certificate_validation" "pds-adaptor-cert-validation" {
-  certificate_arn = aws_acm_certificate.pds-adaptor-cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.pds-adaptor-cert-validation-record : record.fqdn]
-}
+#resource "aws_acm_certificate_validation" "pds-adaptor-cert-validation" {
+#  certificate_arn = aws_acm_certificate.pds-adaptor-cert.arn
+#  validation_record_fqdns = [for record in aws_route53_record.pds-adaptor-cert-validation-record : record.fqdn]
+#}
 
 resource "aws_ssm_parameter" "service_url" {
   name  = "/repo/${var.environment}/output/${var.repo_name}/service-url"
