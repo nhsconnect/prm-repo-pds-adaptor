@@ -240,7 +240,11 @@ case "${command}" in
       ;;
   tf)
       check_env
-      dojo -c Dojofile-infra "bash"
+      dojo -c Dojofile-infra "./tasks _tf"
+      ;;
+  _tf)
+      tf_init
+      bash
       ;;
   _tf_plan)
       _assume_environment_role $NHS_ENVIRONMENT
