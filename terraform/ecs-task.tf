@@ -52,15 +52,15 @@ resource "aws_security_group" "ecs-tasks-sg" {
   name        = "${var.environment}-${var.component_name}-ecs-tasks-sg"
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
 
-#  ingress {
-#    description     = "Allow traffic from internal ALB of pds adaptor"
-#    protocol        = "tcp"
-#    from_port       = var.port
-#    to_port         = var.port
-#    security_groups = [
-#      aws_security_group.pds_adaptor_alb.id
-#    ]
-#  }
+  ingress {
+    description     = "Allow traffic from internal ALB of pds adaptor"
+    protocol        = "tcp"
+    from_port       = var.port
+    to_port         = var.port
+    security_groups = [
+      aws_security_group.pds_adaptor_alb.id
+    ]
+  }
 
   egress {
     description = "Allow All Outbound"
