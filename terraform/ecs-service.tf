@@ -18,6 +18,7 @@ resource "aws_ecs_service" "ecs-service" {
   }
 
   load_balancer {
+    elb_name = "pds-elb"
 #    target_group_arn = local.int_alb_tg_arn
     container_name   = "${var.component_name}-container"
     container_port   = var.port
