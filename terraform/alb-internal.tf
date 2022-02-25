@@ -9,7 +9,6 @@ resource "aws_alb" "alb-internal" {
     aws_security_group.pds_adaptor_alb.id,
     aws_security_group.alb_to_pds_adaptor_ecs.id,
     aws_security_group.service_to_pds_adaptor.id,
-    aws_security_group.vpn_to_pds_adaptor.id,
     aws_security_group.gocd_to_pds_adaptor.id
   ]
   internal        = true
@@ -184,29 +183,6 @@ resource "aws_ssm_parameter" "service_to_pds_adaptor" {
     CreatedBy   = var.repo_name
     Environment = var.environment
   }
-}
-
-resource "aws_security_group" "vpn_to_pds_adaptor" {
-  name        = "${var.environment}-vpn-to-${var.component_name}"
-  description = "Controls access from vpn to pds-adaptor"
-  vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
-
-  tags = {
-    Name = "${var.environment}-vpn-to-${var.component_name}-sg"
-    CreatedBy   = var.repo_name
-    Environment = var.environment
-  }
-}
-
-resource "aws_security_group_rule" "vpn_to_pds_adaptor" {
-  count       = var.grant_access_through_vpn ? 1 : 0
-  type        = "ingress"
-  description = "Allow vpn to access PDS Adaptor ALB"
-  protocol    = "tcp"
-  from_port   = 443
-  to_port     = 443
-  source_security_group_id = data.aws_ssm_parameter.vpn_sg_id.value
-  security_group_id = aws_security_group.vpn_to_pds_adaptor.id
 }
 
 resource "aws_security_group" "gocd_to_pds_adaptor" {

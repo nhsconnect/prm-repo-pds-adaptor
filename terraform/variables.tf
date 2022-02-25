@@ -30,5 +30,4 @@ variable "log_level" {
 }
 
 variable "grant_access_through_vpn" {
-  type = string
 }
