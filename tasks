@@ -13,6 +13,10 @@ AWS_HELPERS_VERSION=0.2.25
 echo "AWS helper scripts version: $AWS_HELPERS_VERSION"
 
 
+###########################
+# Shared utils            #
+###########################
+
 function download_util() {
   local UTIL_VERSION=$1
   local UTIL_FILENAME=$2
@@ -28,6 +32,10 @@ function download_util() {
   echo "$UTIL_FILEPATH"
 }
 
+function fetch_redaction_utils() {
+  download_util $AWS_HELPERS_VERSION run-with-redaction.sh
+  download_util $AWS_HELPERS_VERSION redactor
+}
 
 AWS_HELPERS_FILE=$(download_util $AWS_HELPERS_VERSION aws-helpers)
 source $AWS_HELPERS_FILE
@@ -132,6 +140,10 @@ function build_docker_image() {
   echo Build completed on `date`
 }
 
+###########
+## Tests ##
+###########
+
 function test_performance() {
   export AWS_DEFAULT_REGION
   virtualenv virtualenv_performance
@@ -164,11 +176,6 @@ function test_performance() {
       --host=$TARGET_HOST
 
   deactivate
-}
-
-function fetch_redaction_utils() {
-  download_util $AWS_HELPERS_VERSION run-with-redaction.sh
-  download_util $AWS_HELPERS_VERSION redactor
 }
 
 ###########
