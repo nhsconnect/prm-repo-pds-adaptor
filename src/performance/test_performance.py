@@ -12,7 +12,7 @@ def extract_etag(response_data):
 def random_gp_ods_code():
     return "PERF" + str(random.randint(10000, 99999))
 
-trace_id_prefix = 'perf' + str(random.randint(1000, 9999))
+trace_id_prefix = 'perf' + str(random.randint(1000, 9999)) + '-'
 
 min_wait_seconds = int(os.getenv("MIN_WAIT_SECONDS", "4"))
 
