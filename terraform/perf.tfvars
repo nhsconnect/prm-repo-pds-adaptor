@@ -13,4 +13,4 @@ alb_deregistration_delay = 15
 
 log_level = "info"
 
-grant_access_through_vpn = false
+grant_access_through_vpn = true
