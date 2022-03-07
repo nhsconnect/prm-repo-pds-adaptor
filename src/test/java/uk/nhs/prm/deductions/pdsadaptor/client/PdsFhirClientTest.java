@@ -30,8 +30,8 @@ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
 
@@ -59,6 +59,7 @@ class PdsFhirClientTest {
     @BeforeEach
     void setUp() {
         pdsFhirClient = new PdsFhirClient(httpClient, PDS_FHIR_ENDPOINT);
+        setField(pdsFhirClient, "initialNumberOfTry", 3);
     }
 
     @Nested
@@ -84,7 +85,7 @@ class PdsFhirClientTest {
             headers.setETag(RECORD_E_TAG);
 
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(
-                new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
+                    new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
             PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
 
@@ -97,7 +98,7 @@ class PdsFhirClientTest {
         void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.BAD_REQUEST, "bad-request-error"));
+                    new HttpClientErrorException(HttpStatus.BAD_REQUEST, "bad-request-error"));
 
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
@@ -127,7 +128,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
+                    new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
@@ -137,7 +138,7 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
+                    new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
@@ -147,10 +148,10 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
-                NHS_NUMBER));
+                    NHS_NUMBER));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
         }
@@ -185,7 +186,7 @@ class PdsFhirClientTest {
             PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
-                new ResponseEntity<>(pdsResponse, HttpStatus.OK));
+                    new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
             pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG));
 
@@ -197,7 +198,7 @@ class PdsFhirClientTest {
 
         @Test
         void shouldReturnPdsResponseWithEtagFromHeadersAfterSuccessfulUpdate() {
-            String tagVersion =  "W/\"2\"";
+            String tagVersion = "W/\"2\"";
             String managingOrganisation = "A1234";
             PdsResponse pdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, managingOrganisation, null);
 
@@ -205,10 +206,10 @@ class PdsFhirClientTest {
             headers.setETag(tagVersion);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
-                new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
+                    new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
             PdsResponse expected = pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation,  RECORD_E_TAG));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation, RECORD_E_TAG));
 
             verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
             PdsPatchRequest requestBody = (PdsPatchRequest) patchCaptor.getValue();
@@ -231,68 +232,68 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirPatchExceptionWhenUpdateIsToSameManagingOrganisation() {
             String errorResponse = "{\n" +
-                "    \"issue\": [\n" +
-                "        {\n" +
-                "            \"code\": \"structure\",\n" +
-                "            \"details\": {\n" +
-                "                \"coding\": [\n" +
-                "                    {\n" +
-                "                        \"code\": \"INVALID_UPDATE\",\n" +
-                "                        \"display\": \"Update is invalid\",\n" +
-                "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
-                "                        \"version\": \"1\"\n" +
-                "                    }\n" +
-                "                ]\n" +
-                "            },\n" +
-                "            \"diagnostics\": \"Invalid update with error - Invalid patch - Provided patch made no changes to the resource\",\n" +
-                "            \"severity\": \"error\"\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"resourceType\": \"OperationOutcome\"\n" +
-                "}";
+                    "    \"issue\": [\n" +
+                    "        {\n" +
+                    "            \"code\": \"structure\",\n" +
+                    "            \"details\": {\n" +
+                    "                \"coding\": [\n" +
+                    "                    {\n" +
+                    "                        \"code\": \"INVALID_UPDATE\",\n" +
+                    "                        \"display\": \"Update is invalid\",\n" +
+                    "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
+                    "                        \"version\": \"1\"\n" +
+                    "                    }\n" +
+                    "                ]\n" +
+                    "            },\n" +
+                    "            \"diagnostics\": \"Invalid update with error - Invalid patch - Provided patch made no changes to the resource\",\n" +
+                    "            \"severity\": \"error\"\n" +
+                    "        }\n" +
+                    "    ],\n" +
+                    "    \"resourceType\": \"OperationOutcome\"\n" +
+                    "}";
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
-                (i) -> {
-                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "400 Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
-                });
+                    (i) -> {
+                        throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "400 Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
+                    });
 
             Exception exception = assertThrows(PdsFhirPatchInvalidException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage())
-                .isEqualTo("PDS FHIR request failed status code: 400. reason Provided patch made " +
-                    "no changes to the resource");
+                    .isEqualTo("PDS FHIR request failed status code: 400. reason Provided patch made " +
+                            "no changes to the resource");
         }
 
         @Test
         void shouldThrowBadRequestExceptionWhenNonePatchError() {
             String errorResponse = "{\n" +
-                "    \"issue\": [\n" +
-                "        {\n" +
-                "            \"code\": \"structure\",\n" +
-                "            \"details\": {\n" +
-                "                \"coding\": [\n" +
-                "                    {\n" +
-                "                        \"code\": \"INVALID_UPDATE\",\n" +
-                "                        \"display\": \"Update is invalid\",\n" +
-                "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
-                "                        \"version\": \"1\"\n" +
-                "                    }\n" +
-                "                ]\n" +
-                "            },\n" +
-                "            \"severity\": \"error\"\n" +
-                "        }\n" +
-                "    ],\n" +
-                "    \"resourceType\": \"OperationOutcome\"\n" +
-                "}";
+                    "    \"issue\": [\n" +
+                    "        {\n" +
+                    "            \"code\": \"structure\",\n" +
+                    "            \"details\": {\n" +
+                    "                \"coding\": [\n" +
+                    "                    {\n" +
+                    "                        \"code\": \"INVALID_UPDATE\",\n" +
+                    "                        \"display\": \"Update is invalid\",\n" +
+                    "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
+                    "                        \"version\": \"1\"\n" +
+                    "                    }\n" +
+                    "                ]\n" +
+                    "            },\n" +
+                    "            \"severity\": \"error\"\n" +
+                    "        }\n" +
+                    "    ],\n" +
+                    "    \"resourceType\": \"OperationOutcome\"\n" +
+                    "}";
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
-                (i) -> {
-                    throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
-                });
+                    (i) -> {
+                        throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
+                    });
 
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
         }
@@ -301,11 +302,11 @@ class PdsFhirClientTest {
         void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
             String invalidNhsNumber = "1234";
             when(httpClient.patch(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), any(),
-                eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
+                    eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+                    invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 error");
         }
@@ -313,10 +314,10 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
+                    new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
         }
@@ -324,10 +325,10 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
+                    new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
         }
@@ -335,12 +336,25 @@ class PdsFhirClientTest {
         @Test
         void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailable() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION,  RECORD_E_TAG)));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
         }
+
+        @Test
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailableAfterRetry() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+            assertThrows(PdsFhirRequestException.class, () ->
+                    pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
+
+            verify(httpClient, times(3)).patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class));
+
+        }
+
     }
 }
