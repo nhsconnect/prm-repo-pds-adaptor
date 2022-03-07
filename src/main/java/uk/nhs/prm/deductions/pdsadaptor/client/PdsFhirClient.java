@@ -30,14 +30,17 @@ public class PdsFhirClient {
 
     private final String pdsFhirEndpoint;
     private final AuthenticatingHttpClient httpClient;
+    private final int initialNumberOfPdsUpdateRetry;
 
-    public PdsFhirClient(AuthenticatingHttpClient httpClient, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
+    public PdsFhirClient(AuthenticatingHttpClient httpClient, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
+                         @Value("${pds.fhir.update.number.of.try}") int initialNumberOfTry) {
         this.httpClient = httpClient;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
+        this.initialNumberOfPdsUpdateRetry = initialNumberOfTry;
     }
 
-    @Value("${pds.fhir.update.number.of.try}")
-    private Integer initialNumberOfTry;
+
+
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
@@ -71,7 +74,7 @@ public class PdsFhirClient {
         PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
         HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
         try {
-            return makePdsUpdateCall(path, patchRequest, requestHeaders, initialNumberOfTry);
+            return makePdsUpdateCall(path, patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
         } catch (HttpClientErrorException e) {
             log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
             throw createPatchException(e);
@@ -100,7 +103,7 @@ public class PdsFhirClient {
             while (numberOfTry > 1) {
                 makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry-1);
             }
-            log.error("Got server error after " + initialNumberOfTry + " attempts.");
+            log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
             throw serverErrorException;
         }
     }

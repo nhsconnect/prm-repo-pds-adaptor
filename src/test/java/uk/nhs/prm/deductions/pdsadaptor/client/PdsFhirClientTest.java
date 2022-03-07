@@ -70,8 +70,7 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, PDS_FHIR_ENDPOINT);
-        setField(pdsFhirClient, "initialNumberOfTry", 3);
+        pdsFhirClient = new PdsFhirClient(httpClient, PDS_FHIR_ENDPOINT, 3);
     }
 
     @Nested
