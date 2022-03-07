@@ -1,15 +1,23 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.read.ListAppender;
 import org.assertj.core.api.Assertions;
+import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,10 +32,13 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.internal.bytebuddy.matcher.ElementMatchers.is;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -52,6 +63,7 @@ class PdsFhirClientTest {
     private static final String RECORD_E_TAG = "W/\"1\"";
 
     private static final String URL_PATH = PDS_FHIR_ENDPOINT + "Patient/" + NHS_NUMBER;
+
 
     @Captor
     private ArgumentCaptor<HttpHeaders> headersCaptor;
@@ -353,6 +365,23 @@ class PdsFhirClientTest {
                     pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
 
             verify(httpClient, times(3)).patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class));
+        }
+
+        @Test
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailableAfterRetryWithSameRequestId() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+            assertThrows(PdsFhirRequestException.class, () ->
+                    pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
+
+            verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+
+            String requestId=headersCaptor.getValue().get("X-Request-ID").get(0);
+
+            for (HttpHeaders header: headersCaptor.getAllValues()){
+                assertTrue((header.get("X-Request-ID").get(0).equals(requestId)));
+            }
 
         }
 
