@@ -3,7 +3,6 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -46,7 +45,7 @@ public class PdsFhirClient {
         log.info("Making GET request for pds record from pds fhir");
         var startTime = Instant.now();
         try {
-            ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createHeaders(), PdsResponse.class);
+            ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createRetrieveHeaders(), PdsResponse.class);
             log.info("Successfully requested pds record");
             return getPdsResponse(response);
         } catch (HttpClientErrorException e) {
@@ -99,6 +98,7 @@ public class PdsFhirClient {
             log.info("Successfully updated managing organisation on pds record.");
             return getPdsResponse(response);
         } catch (HttpServerErrorException serverErrorException) {
+            log.info("Got PDS-FHIR exception with status code : "+ serverErrorException.getStatusCode());
             if (numberOfTry > 1) {
                 numberOfTry = numberOfTry - 1;
                 return makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry);
@@ -111,7 +111,7 @@ public class PdsFhirClient {
     }
 
 
-    private HttpHeaders createHeaders() {
+    private HttpHeaders createRetrieveHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", UUID.randomUUID().toString());
         headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON.toString());
