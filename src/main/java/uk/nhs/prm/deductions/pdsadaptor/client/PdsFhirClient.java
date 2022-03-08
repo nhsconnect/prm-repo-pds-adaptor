@@ -102,10 +102,12 @@ public class PdsFhirClient {
             if (numberOfTry > 1) {
                 numberOfTry = numberOfTry - 1;
                 return makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry);
+            } else{
+                log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
+                throw serverErrorException;
             }
         }
-        log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
-        throw new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE);
+
     }
 
 

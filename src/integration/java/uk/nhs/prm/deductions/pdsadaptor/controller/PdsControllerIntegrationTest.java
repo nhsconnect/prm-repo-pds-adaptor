@@ -282,13 +282,9 @@ public class PdsControllerIntegrationTest {
                         .withHeader("ETag", "W/\"6\"")
                         .withBody(suspendedPatientWithManagingOrganisationResponse())));
 
-
-
         var response = restTemplate.exchange(
                 createURLWithPort("/suspended-patient-status/9691927179"),
                 HttpMethod.PUT, new HttpEntity<>(requestBody, createHeaders()), SuspendedPatientStatus.class);
-
-        var body = response.getBody();
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
