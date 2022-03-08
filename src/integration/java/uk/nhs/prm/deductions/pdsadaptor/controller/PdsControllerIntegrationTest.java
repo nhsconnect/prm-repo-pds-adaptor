@@ -14,6 +14,7 @@ import org.springframework.test.context.ContextConfiguration;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -223,6 +224,73 @@ public class PdsControllerIntegrationTest {
         assertThat(body.getIsSuspended()).isEqualTo(true);
         assertThat(body.getManagingOrganisation()).isEqualTo("A1234");
         assertThat(body.getRecordETag()).isEqualTo("W/\"6\"");
+    }
+
+
+    @Test
+    public void shouldRetryWhen503ErrorsFromPdsFhir() {
+        var requestBody = "{\n" +
+                "  \"previousGp\": \"A1234\",\n" +
+                "  \"recordETag\": \"W/\\\"5\\\"\"\n" +
+                "}";
+
+        var pdsRequstBody = "{\n" +
+                "  \"patches\": [\n" +
+                "    {\n" +
+                "      \"op\": \"add\",\n" +
+                "      \"path\": \"/managingOrganization\",\n" +
+                "      \"value\": {\n" +
+                "        \"type\": \"Organization\",\n" +
+                "        \"identifier\": {\n" +
+                "          \"system\": \"https://fhir.nhs.uk/Id/ods-organization-code\",\n" +
+                "          \"value\": \"A1234\"\n" +
+                "        }\n" +
+                "      }\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        stubFor(post(urlMatching("/access-token"))
+                .willReturn(
+                        aResponse()
+                                .withBody("{\"access_token\": \"accessToken\",\n" +
+                                        " \"expires_in\": \"599\",\n" +
+                                        " \"token_type\": \"Bearer\"}")));
+
+        stubFor(patch(urlMatching("/Patient/9691927179"))
+                .inScenario("Retry Scenario")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .withHeader("If-Match", matching("W/\"5\""))
+                .withHeader("Content-Type", containing("application/json-patch+json"))
+                .withRequestBody(equalToJson(pdsRequstBody))
+                .whenScenarioStateIs(STARTED)
+                .willReturn(aResponse()
+                        .withStatus(503) // request unsuccessful with status code 500
+                        .withHeader("Content-Type", "text/xml")
+                        .withBody("<response>Some content</response>"))
+                .willSetStateTo("CAUSE"));
+
+
+        stubFor(patch(urlMatching("/Patient/9691927179"))
+                .inScenario("Retry Scenario")
+                .withHeader("Authorization", matching("Bearer accessToken"))
+                .withHeader("If-Match", matching("W/\"5\""))
+                .withHeader("Content-Type", containing("application/json-patch+json"))
+                .withRequestBody(equalToJson(pdsRequstBody))
+                .whenScenarioStateIs("CAUSE")
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withHeader("ETag", "W/\"6\"")
+                        .withBody(suspendedPatientWithManagingOrganisationResponse())));
+
+
+
+        var response = restTemplate.exchange(
+                createURLWithPort("/suspended-patient-status/9691927179"),
+                HttpMethod.PUT, new HttpEntity<>(requestBody, createHeaders()), SuspendedPatientStatus.class);
+
+        var body = response.getBody();
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     }
 
     private HttpHeaders createHeaders() {

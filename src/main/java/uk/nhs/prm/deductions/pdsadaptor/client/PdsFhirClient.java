@@ -3,6 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -38,8 +39,6 @@ public class PdsFhirClient {
         this.pdsFhirEndpoint = pdsFhirEndpoint;
         this.initialNumberOfPdsUpdateRetry = initialNumberOfTry;
     }
-
-
 
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
@@ -100,14 +99,15 @@ public class PdsFhirClient {
             log.info("Successfully updated managing organisation on pds record.");
             return getPdsResponse(response);
         } catch (HttpServerErrorException serverErrorException) {
-            while (numberOfTry > 1) {
+            if (numberOfTry > 1) {
                 numberOfTry = numberOfTry - 1;
-                makePdsUpdateCall(path, patchRequest, requestHeaders,numberOfTry);
+                return makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry);
             }
-            log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
-            throw serverErrorException;
         }
+        log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
+        throw new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE);
     }
+
 
     private HttpHeaders createHeaders() {
         HttpHeaders headers = new HttpHeaders();

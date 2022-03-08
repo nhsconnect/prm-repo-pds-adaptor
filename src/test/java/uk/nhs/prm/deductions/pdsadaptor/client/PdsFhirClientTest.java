@@ -341,7 +341,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 SERVICE_UNAVAILABLE");
         }
 
         @Test
