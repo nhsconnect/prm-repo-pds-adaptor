@@ -1,23 +1,15 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.read.ListAppender;
 import org.assertj.core.api.Assertions;
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,17 +24,14 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.assertj.core.internal.bytebuddy.matcher.ElementMatchers.is;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
 
@@ -376,7 +365,13 @@ class PdsFhirClientTest {
 
             verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
 
-            String requestId=headersCaptor.getValue().get("X-Request-ID").get(0);
+            String requestId="";
+
+            try{
+                requestId = headersCaptor.getValue().get("X-Request-ID").get(0);
+            }catch (NullPointerException e){
+                System.out.println("value or it's sub value is null");
+            }
 
             for (HttpHeaders header: headersCaptor.getAllValues()){
                 assertTrue((header.get("X-Request-ID").get(0).equals(requestId)));

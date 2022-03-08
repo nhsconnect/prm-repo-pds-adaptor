@@ -101,7 +101,8 @@ public class PdsFhirClient {
             return getPdsResponse(response);
         } catch (HttpServerErrorException serverErrorException) {
             while (numberOfTry > 1) {
-                makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry-1);
+                numberOfTry = numberOfTry - 1;
+                makePdsUpdateCall(path, patchRequest, requestHeaders,numberOfTry);
             }
             log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
             throw serverErrorException;
