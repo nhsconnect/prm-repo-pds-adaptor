@@ -12,6 +12,7 @@
 				<timestamp>
 					<timeZone>UTC</timeZone>
 				</timestamp>
+				<logstashMarkers/>
 				<mdc />
 				<pattern>
 					<omitEmptyFields>true</omitEmptyFields>

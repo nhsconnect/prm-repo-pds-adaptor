@@ -69,6 +69,10 @@ dependencies {
     }
 }
 
+springBoot {
+    mainClass = 'uk.nhs.prm.deductions.pdsadaptor.PdsAdaptorApplication'
+}
+
 sourceSets {
     integration {
         compileClasspath += sourceSets.main.output
