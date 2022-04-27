@@ -27,16 +27,11 @@ public class PdsAdaptorApplication {
         map.put("what", "spring");
         map.put("evaluation", "great");
         superMap.put("nested", map);
-        log.info("bejeez, spring is so great", map);
-        log.info("amaze, spring is so great {}", map);
-        log.info("coool, spring is so great {}", superMap);
-        var asJson = new JSONObject(map).toString();
-        log.info("wowzie, spring is so great", asJson);
-        var superJson = new JSONObject(superMap).toString();
-        log.info("beleev, spring is so great", superJson);
 
-        log.info(Markers.appendRaw("details", superJson), "mark my words");
-        log.info(Markers.appendEntries(superMap), "mark my wurdz");
+        var superJson = new JSONObject(superMap).toString();
+
+        log.info(Markers.appendRaw("detail", superJson), "log spike: detail from json string");
+        log.info(Markers.append("detail", superMap), "log spike: detail from map of info");
     }
 
 }
