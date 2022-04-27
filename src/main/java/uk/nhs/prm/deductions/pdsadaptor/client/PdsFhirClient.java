@@ -58,7 +58,7 @@ public class PdsFhirClient {
             log.error("PDS FHIR returned unexpected response body", e);
             throw new RuntimeException("PDS FHIR returned unexpected response body when requesting PDS Record", e);
         } catch (Exception e) {
-            log.warn("Unexpected Exception", e);
+            log.warn("Unexpected exception", e);
             throw new RuntimeException(e);
         } finally {
             log.info("PDS-FHIR retrieval took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
@@ -102,7 +102,7 @@ public class PdsFhirClient {
             if (numberOfTry > 1) {
                 numberOfTry = numberOfTry - 1;
                 return makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry);
-            } else{
+            } else {
                 log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
                 throw serverErrorException;
             }

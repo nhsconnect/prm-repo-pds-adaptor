@@ -26,14 +26,7 @@
 						}
 					</pattern>
 				</pattern>
-				<stackTrace>
-					<throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-						<maxDepthPerThrowable>30</maxDepthPerThrowable>
-						<maxLength>2048</maxLength>
-						<shortenedClassNameLength>20</shortenedClassNameLength>
-						<rootCauseFirst>true</rootCauseFirst>
-					</throwableConverter>
-				</stackTrace>
+				<stackTrace/>
 				<arguments>
 					<includeNonStructuredArguments>true</includeNonStructuredArguments>
 				</arguments>
