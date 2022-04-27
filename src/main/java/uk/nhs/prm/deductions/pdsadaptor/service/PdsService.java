@@ -27,7 +27,7 @@ public class PdsService {
     }
 
     private SuspendedPatientStatus setPatientStatus(PdsResponse pdsResponse) {
-        if(hasDeceasedDateAndTime(pdsResponse)){
+        if (hasDeceasedDateAndTime(pdsResponse)) {
             return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
         }
         if (hasGeneralPractitioner(pdsResponse)) {
