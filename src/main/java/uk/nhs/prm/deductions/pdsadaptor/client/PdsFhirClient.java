@@ -17,6 +17,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.lang.String.format;
@@ -43,56 +44,65 @@ public class PdsFhirClient {
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         log.info("Making GET request for pds record from pds fhir");
-        return timeRequest("retrieval", () -> {
-            try {
+        return handleRequest("retrieval", () -> {
                 var response = httpClient.get(patientUrl(nhsNumber), createRetrieveHeaders(), PdsResponse.class);
                 log.info("Successfully requested pds record");
-                return addEtagProperty(response);
-            }
-            catch (Exception e) {
-                throw handleCommonExceptions("requesting", e);
-            }
-        });
+                return response;
+            },
+            exception -> {
+                throw handleCommonExceptions("requesting", exception);
+            });
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        log.info("Making PATCH request to update managing organisation from pds fhir");
+        log.info("Making PATCH request to update managing organisation via pds fhir");
+
         var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
         var requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
 
-        return timeRequest("update", () -> {
-            try {
-                return makePdsUpdateCall(patientUrl(nhsNumber), patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
-            }
-            catch (Exception e) {
-                if (isRejectionDueToNotMakingChanges(e)) {
-                    log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
-                    throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
-                }
-                throw handleCommonExceptions("updating", e);
-            }
-        });
+        return handleRequest("update",
+                () -> {
+                    var response = makePdsUpdateCall(patientUrl(nhsNumber), patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
+                    log.info("Successfully updated managing organisation on pds record.");
+                    return response;
+                },
+                exception -> {
+                    if (isRejectionDueToNotMakingChanges(exception)) {
+                        log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
+                        throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
+                    }
+                    throw handleCommonExceptions("updating", exception);
+                });
     }
 
-    private PdsResponse makePdsUpdateCall(String url, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, Integer numberOfTry) {
+    private PdsResponse handleRequest(final String description,
+                                      final Supplier<ResponseEntity<PdsResponse>> pdsRequestProcess,
+                                      final Function<Exception, RuntimeException> exceptionHandler) {
+        var startTime = Instant.now();
+        try {
+            return addEtagToResponseObject(pdsRequestProcess.get());
+        }
+        catch (Exception exception) {
+            throw exceptionHandler.apply(exception);
+        }
+        finally {
+            log.info("PDS-FHIR " + description + " took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+        }
+    }
+
+    private ResponseEntity<PdsResponse> makePdsUpdateCall(String url, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, int triesLeft) {
         try {
             log.info("request id of the request: " + requestHeaders.get("X-Request-ID"));
-            var response = httpClient.patch(url, requestHeaders, patchRequest, PdsResponse.class);
-            log.info("Successfully updated managing organisation on pds record.");
-            return addEtagProperty(response);
+            return httpClient.patch(url, requestHeaders, patchRequest, PdsResponse.class);
         }
         catch (HttpServerErrorException serverErrorException) {
             log.info("Got PDS-FHIR exception with status code : " + serverErrorException.getStatusCode());
-            if (numberOfTry > 1) {
-                numberOfTry = numberOfTry - 1;
-                return makePdsUpdateCall(url, patchRequest, requestHeaders, numberOfTry);
+            if (triesLeft > 1) {
+                return makePdsUpdateCall(url, patchRequest, requestHeaders, triesLeft - 1);
             }
-            else {
-                log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
-                throw serverErrorException;
-            }
+            log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
+            throw serverErrorException;
         }
-
     }
 
     private String patientUrl(String nhsNumber) {
@@ -121,7 +131,7 @@ public class PdsFhirClient {
         return new PdsPatchRequest(singletonList(patch));
     }
 
-    private PdsResponse addEtagProperty(ResponseEntity<PdsResponse> response) {
+    private PdsResponse addEtagToResponseObject(ResponseEntity<PdsResponse> response) {
         PdsResponse pdsResponse = response.getBody();
         if (pdsResponse != null) {
             String eTag = response.getHeaders().getETag();
@@ -129,15 +139,5 @@ public class PdsFhirClient {
             return pdsResponse;
         }
         return null;
-    }
-
-    private PdsResponse timeRequest(String description, Supplier<PdsResponse> pdsRequestProcess) {
-        var startTime = Instant.now();
-        try {
-            return pdsRequestProcess.get();
-        }
-        finally {
-            log.info("PDS-FHIR " + description + " took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
-        }
     }
 }
