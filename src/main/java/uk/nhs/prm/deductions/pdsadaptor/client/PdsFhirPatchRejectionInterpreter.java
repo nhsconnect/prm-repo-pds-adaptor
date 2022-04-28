@@ -11,12 +11,17 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
 public class PdsFhirPatchRejectionInterpreter {
-    public static boolean isRejectionDueToNotMakingChanges(HttpStatusCodeException exception) {
-        if (!exception.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+    public static boolean isRejectionDueToNotMakingChanges(Exception exception) {
+        if (!(exception instanceof HttpStatusCodeException)) {
+            return false;
+        }
+        var exceptionWithStatusCode = (HttpStatusCodeException) exception;
+        if (!exceptionWithStatusCode.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
             return false;
         }
 
-        return extractPatchRejectionDiagnostics(exception).contains("Provided patch made no changes to the resource");
+        return extractPatchRejectionDiagnostics(exceptionWithStatusCode)
+                .contains("Provided patch made no changes to the resource");
     }
 
     private static String extractPatchRejectionDiagnostics(HttpStatusCodeException exception) {

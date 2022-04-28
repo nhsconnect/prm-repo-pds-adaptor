@@ -1,16 +1,12 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.UnknownContentTypeException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -23,6 +19,7 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirPatchRejectionInterpreter.isRejectionDueToNotMakingChanges;
@@ -36,7 +33,8 @@ public class PdsFhirClient {
     private final AuthenticatingHttpClient httpClient;
     private final int initialNumberOfPdsUpdateRetry;
 
-    public PdsFhirClient(AuthenticatingHttpClient httpClient, @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
+    public PdsFhirClient(AuthenticatingHttpClient httpClient,
+                         @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
                          @Value("${pds.fhir.update.number.of.try}") int initialNumberOfTry) {
         this.httpClient = httpClient;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
@@ -44,90 +42,52 @@ public class PdsFhirClient {
     }
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
-        String path = "Patient/" + nhsNumber;
         log.info("Making GET request for pds record from pds fhir");
-        var startTime = Instant.now();
-        return handleCommonErrors("requesting", () -> {
+        return timeRequest("retrieval", () -> {
             try {
-                ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createRetrieveHeaders(), PdsResponse.class);
+                var response = httpClient.get(patientUrl(nhsNumber), createRetrieveHeaders(), PdsResponse.class);
                 log.info("Successfully requested pds record");
                 return addEtagProperty(response);
             }
-            catch (HttpClientErrorException e) {
-                log.error("Received 4xx HTTP Error from PDS FHIR when requesting PDS Record");
-                throw createClientException(e);
-            }
-            catch (HttpServerErrorException e) {
-                log.warn("PDS FHIR Server error when requesting PDS Record");
-                throw new PdsFhirRequestException(e);
-            }
-            catch (UnknownContentTypeException e) {
-                log.error("PDS FHIR returned unexpected response body", e);
-                throw new RuntimeException("PDS FHIR returned unexpected response body when requesting PDS Record", e);
-            }
             catch (Exception e) {
-                log.warn("Unexpected exception", e);
-                throw new RuntimeException(e);
-            }
-            finally {
-                log.info("PDS-FHIR retrieval took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+                throw handleCommonExceptions("requesting", e);
             }
         });
-    }
-
-    @NotNull
-    private PdsResponse handleCommonErrors(String description, Supplier<PdsResponse> pdsRequestProcess) {
-        return pdsRequestProcess.get();
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        String path = "Patient/" + nhsNumber;
         log.info("Making PATCH request to update managing organisation from pds fhir");
-        var startTime = Instant.now();
-        PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
-        HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
-        return handleCommonErrors("updating", () -> {
+        var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
+        var requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
+
+        return timeRequest("update", () -> {
             try {
-                return makePdsUpdateCall(path, patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
-            }
-            catch (HttpClientErrorException e) {
-                log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
-                if (isRejectionDueToNotMakingChanges(e)) {
-                    throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
-                }
-                throw createClientException(e);
-            }
-            catch (HttpServerErrorException e) {
-                log.warn("PDS FHIR Server error when updating PDS Record");
-                throw new PdsFhirRequestException(e);
-            }
-            catch (UnknownContentTypeException e) {
-                log.error("PDS FHIR returned unexpected response body", e);
-                throw new RuntimeException("PDS FHIR returned unexpected response body when updating PDS Record", e);
+                return makePdsUpdateCall(patientUrl(nhsNumber), patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
             }
             catch (Exception e) {
-                log.warn("Unexpected Exception", e);
-                throw new RuntimeException(e);
-            }
-            finally {
-                log.info("PDS-FHIR update took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+                if (isRejectionDueToNotMakingChanges(e)) {
+                    log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
+                    throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
+                }
+                throw handleCommonExceptions("updating", e);
             }
         });
     }
 
-    private PdsResponse makePdsUpdateCall(String path, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, Integer numberOfTry) {
+    private PdsResponse makePdsUpdateCall(String url, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, Integer numberOfTry) {
         try {
             log.info("request id of the request: " + requestHeaders.get("X-Request-ID"));
-            var response =
-                    httpClient.patch(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
+            var response = httpClient.patch(url, requestHeaders, patchRequest, PdsResponse.class);
             log.info("Successfully updated managing organisation on pds record.");
             return addEtagProperty(response);
-        } catch (HttpServerErrorException serverErrorException) {
-            log.info("Got PDS-FHIR exception with status code : "+ serverErrorException.getStatusCode());
+        }
+        catch (HttpServerErrorException serverErrorException) {
+            log.info("Got PDS-FHIR exception with status code : " + serverErrorException.getStatusCode());
             if (numberOfTry > 1) {
                 numberOfTry = numberOfTry - 1;
-                return makePdsUpdateCall(path, patchRequest, requestHeaders, numberOfTry);
-            } else {
+                return makePdsUpdateCall(url, patchRequest, requestHeaders, numberOfTry);
+            }
+            else {
                 log.error("Got server error after " + initialNumberOfPdsUpdateRetry + " attempts.");
                 throw serverErrorException;
             }
@@ -135,6 +95,9 @@ public class PdsFhirClient {
 
     }
 
+    private String patientUrl(String nhsNumber) {
+        return pdsFhirEndpoint + "Patient/" + nhsNumber;
+    }
 
     private HttpHeaders createRetrieveHeaders() {
         HttpHeaders headers = new HttpHeaders();
@@ -152,10 +115,9 @@ public class PdsFhirClient {
     }
 
     private PdsPatchRequest createPatchRequest(String managingOrganisation) {
-        PdsPatchIdentifier identifier =
-                new PdsPatchIdentifier("https://fhir.nhs.uk/Id/ods-organization-code", managingOrganisation);
-        PdsPatchValue patchValue = new PdsPatchValue("Organization", identifier);
-        PdsPatch patch = new PdsPatch("add", "/managingOrganization", patchValue);
+        var identifier = new PdsPatchIdentifier("https://fhir.nhs.uk/Id/ods-organization-code", managingOrganisation);
+        var patchValue = new PdsPatchValue("Organization", identifier);
+        var patch = new PdsPatch("add", "/managingOrganization", patchValue);
         return new PdsPatchRequest(singletonList(patch));
     }
 
@@ -167,5 +129,15 @@ public class PdsFhirClient {
             return pdsResponse;
         }
         return null;
+    }
+
+    private PdsResponse timeRequest(String description, Supplier<PdsResponse> pdsRequestProcess) {
+        var startTime = Instant.now();
+        try {
+            return pdsRequestProcess.get();
+        }
+        finally {
+            log.info("PDS-FHIR " + description + " took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+        }
     }
 }
