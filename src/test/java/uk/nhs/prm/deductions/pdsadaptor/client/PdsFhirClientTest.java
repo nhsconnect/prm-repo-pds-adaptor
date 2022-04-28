@@ -40,6 +40,9 @@ class PdsFhirClientTest {
     @Mock
     private AuthenticatingHttpClient httpClient;
 
+    @Mock
+    private PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
+
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
     private PdsFhirClient pdsFhirClient;
@@ -58,7 +61,7 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, PDS_FHIR_ENDPOINT, 3);
+        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, PDS_FHIR_ENDPOINT, 3);
     }
 
     @Nested
@@ -229,23 +232,12 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowExceptionRecognisingWhenUpdateIsToSameManagingOrganisationAndTherebyRjectedAsMakingNoChanges() {
-            String errorResponse = "{\n" +
-                    "    \"issue\": [\n" +
-                    "        {\n" +
-                    "            \"code\": \"whatever structure\",\n" +
-                    "            \"details\": \"whatever details\",\n" +
-                    "            \"diagnostics\": \"Invalid update with error - Invalid patch - Provided patch made no changes to the resource\",\n" +
-                    "            \"severity\": \"whatever severity\"\n" +
-                    "        }\n" +
-                    "    ],\n" +
-                    "    \"resourceType\": \"whatever\"\n" +
-                    "}";
+        void shouldThrowExceptionWhenUpdateIsToSameManagingOrganisationAndTherebyRjectedAsMakingNoChanges() {
+            var httpException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
-                    i -> {
-                        throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "400 Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
-                    });
+            when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(httpException)).thenReturn(true);
+
+            when(httpClient.patch(any(), any(), any(), any())).thenThrow(httpException);
 
             var exception = assertThrows(PdsFhirPatchInvalidSpecifiesNoChangesException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
@@ -256,33 +248,14 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowBadRequestExceptionWhenNonePatchError() {
-            String errorResponse = "{\n" +
-                    "    \"issue\": [\n" +
-                    "        {\n" +
-                    "            \"code\": \"structure\",\n" +
-                    "            \"details\": {\n" +
-                    "                \"coding\": [\n" +
-                    "                    {\n" +
-                    "                        \"code\": \"INVALID_UPDATE\",\n" +
-                    "                        \"display\": \"Update is invalid\",\n" +
-                    "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
-                    "                        \"version\": \"1\"\n" +
-                    "                    }\n" +
-                    "                ]\n" +
-                    "            },\n" +
-                    "            \"severity\": \"error\"\n" +
-                    "        }\n" +
-                    "    ],\n" +
-                    "    \"resourceType\": \"OperationOutcome\"\n" +
-                    "}";
+        void shouldThrowBadRequestExceptionWhenItsA400BadRequestButNotANoChangesRejection() {
+            var httpException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
-                    (i) -> {
-                        throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
-                    });
+            when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(httpException)).thenReturn(false);
 
-            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
+            when(httpClient.patch(any(), any(), any(), any())).thenThrow(httpException);
+
+            var exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
             assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
@@ -355,15 +328,16 @@ class PdsFhirClientTest {
 
             verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
 
-            String requestId="";
+            String requestId = "";
 
-            try{
+            try {
                 requestId = headersCaptor.getValue().get("X-Request-ID").get(0);
-            }catch (NullPointerException e){
+            }
+            catch (NullPointerException e) {
                 System.out.println("value or it's sub value is null");
             }
 
-            for (HttpHeaders header: headersCaptor.getAllValues()){
+            for (HttpHeaders header : headersCaptor.getAllValues()) {
                 assertTrue((header.get("X-Request-ID").get(0).equals(requestId)));
             }
 

@@ -23,8 +23,7 @@ import java.util.function.Supplier;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirPatchRejectionInterpreter.isRejectionDueToNotMakingChanges;
-import static uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirClientExceptionFactory.*;
+import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClientExceptionHandler.*;
 
 @Component
 @Slf4j
@@ -33,11 +32,14 @@ public class PdsFhirClient {
     private final String pdsFhirEndpoint;
     private final AuthenticatingHttpClient httpClient;
     private final int initialNumberOfPdsUpdateRetry;
+    private final PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
 
     public PdsFhirClient(AuthenticatingHttpClient httpClient,
+                         PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
                          @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
                          @Value("${pds.fhir.update.number.of.try}") int initialNumberOfTry) {
         this.httpClient = httpClient;
+        this.patchRejectionInterpreter = patchRejectionInterpreter;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
         this.initialNumberOfPdsUpdateRetry = initialNumberOfTry;
     }
@@ -67,7 +69,7 @@ public class PdsFhirClient {
                     return response;
                 },
                 exception -> {
-                    if (isRejectionDueToNotMakingChanges(exception)) {
+                    if (patchRejectionInterpreter.isRejectionDueToNotMakingChanges(exception)) {
                         log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
                         throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
                     }

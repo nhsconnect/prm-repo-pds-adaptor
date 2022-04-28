@@ -4,14 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirClientExceptionFactory;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Slf4j
+@Component
 public class PdsFhirPatchRejectionInterpreter {
-    public static boolean isRejectionDueToNotMakingChanges(Exception exception) {
+    public boolean isRejectionDueToNotMakingChanges(Exception exception) {
         if (!(exception instanceof HttpStatusCodeException)) {
             return false;
         }
