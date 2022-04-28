@@ -1,6 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -8,7 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.UnknownContentTypeException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.PdsFhirRequestException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -19,10 +21,12 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.ExceptionFactory.*;
+import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirPatchRejectionInterpreter.isRejectionDueToNotMakingChanges;
+import static uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirClientExceptionFactory.*;
 
 @Component
 @Slf4j
@@ -39,30 +43,41 @@ public class PdsFhirClient {
         this.initialNumberOfPdsUpdateRetry = initialNumberOfTry;
     }
 
-
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         String path = "Patient/" + nhsNumber;
         log.info("Making GET request for pds record from pds fhir");
         var startTime = Instant.now();
-        try {
-            ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createRetrieveHeaders(), PdsResponse.class);
-            log.info("Successfully requested pds record");
-            return getPdsResponse(response);
-        } catch (HttpClientErrorException e) {
-            log.error("Received 4xx HTTP Error from PDS FHIR when requesting PDS Record");
-            throw createClientException(e);
-        } catch (HttpServerErrorException e) {
-            log.warn("PDS FHIR Server error when requesting PDS Record");
-            throw new PdsFhirRequestException(e);
-        } catch (UnknownContentTypeException e) {
-            log.error("PDS FHIR returned unexpected response body", e);
-            throw new RuntimeException("PDS FHIR returned unexpected response body when requesting PDS Record", e);
-        } catch (Exception e) {
-            log.warn("Unexpected exception", e);
-            throw new RuntimeException(e);
-        } finally {
-            log.info("PDS-FHIR retrieval took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
-        }
+        return handleCommonErrors("requesting", () -> {
+            try {
+                ResponseEntity<PdsResponse> response = httpClient.get(pdsFhirEndpoint + path, createRetrieveHeaders(), PdsResponse.class);
+                log.info("Successfully requested pds record");
+                return addEtagProperty(response);
+            }
+            catch (HttpClientErrorException e) {
+                log.error("Received 4xx HTTP Error from PDS FHIR when requesting PDS Record");
+                throw createClientException(e);
+            }
+            catch (HttpServerErrorException e) {
+                log.warn("PDS FHIR Server error when requesting PDS Record");
+                throw new PdsFhirRequestException(e);
+            }
+            catch (UnknownContentTypeException e) {
+                log.error("PDS FHIR returned unexpected response body", e);
+                throw new RuntimeException("PDS FHIR returned unexpected response body when requesting PDS Record", e);
+            }
+            catch (Exception e) {
+                log.warn("Unexpected exception", e);
+                throw new RuntimeException(e);
+            }
+            finally {
+                log.info("PDS-FHIR retrieval took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+            }
+        });
+    }
+
+    @NotNull
+    private PdsResponse handleCommonErrors(String description, Supplier<PdsResponse> pdsRequestProcess) {
+        return pdsRequestProcess.get();
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
@@ -71,23 +86,33 @@ public class PdsFhirClient {
         var startTime = Instant.now();
         PdsPatchRequest patchRequest = createPatchRequest(updateRequest.getPreviousGp());
         HttpHeaders requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
-        try {
-            return makePdsUpdateCall(path, patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
-        } catch (HttpClientErrorException e) {
-            log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
-            throw createPatchException(e);
-        } catch (HttpServerErrorException e) {
-            log.warn("PDS FHIR Server error when updating PDS Record");
-            throw new PdsFhirRequestException(e);
-        } catch (UnknownContentTypeException e) {
-            log.error("PDS FHIR returned unexpected response body", e);
-            throw new RuntimeException("PDS FHIR returned unexpected response body when updating PDS Record", e);
-        } catch (Exception e) {
-            log.warn("Unexpected Exception", e);
-            throw new RuntimeException(e);
-        } finally {
-            log.info("PDS-FHIR update took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
-        }
+        return handleCommonErrors("updating", () -> {
+            try {
+                return makePdsUpdateCall(path, patchRequest, requestHeaders, initialNumberOfPdsUpdateRetry);
+            }
+            catch (HttpClientErrorException e) {
+                log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
+                if (isRejectionDueToNotMakingChanges(e)) {
+                    throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
+                }
+                throw createClientException(e);
+            }
+            catch (HttpServerErrorException e) {
+                log.warn("PDS FHIR Server error when updating PDS Record");
+                throw new PdsFhirRequestException(e);
+            }
+            catch (UnknownContentTypeException e) {
+                log.error("PDS FHIR returned unexpected response body", e);
+                throw new RuntimeException("PDS FHIR returned unexpected response body when updating PDS Record", e);
+            }
+            catch (Exception e) {
+                log.warn("Unexpected Exception", e);
+                throw new RuntimeException(e);
+            }
+            finally {
+                log.info("PDS-FHIR update took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+            }
+        });
     }
 
     private PdsResponse makePdsUpdateCall(String path, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, Integer numberOfTry) {
@@ -96,7 +121,7 @@ public class PdsFhirClient {
             var response =
                     httpClient.patch(pdsFhirEndpoint + path, requestHeaders, patchRequest, PdsResponse.class);
             log.info("Successfully updated managing organisation on pds record.");
-            return getPdsResponse(response);
+            return addEtagProperty(response);
         } catch (HttpServerErrorException serverErrorException) {
             log.info("Got PDS-FHIR exception with status code : "+ serverErrorException.getStatusCode());
             if (numberOfTry > 1) {
@@ -134,7 +159,7 @@ public class PdsFhirClient {
         return new PdsPatchRequest(singletonList(patch));
     }
 
-    private PdsResponse getPdsResponse(ResponseEntity<PdsResponse> response) {
+    private PdsResponse addEtagProperty(ResponseEntity<PdsResponse> response) {
         PdsResponse pdsResponse = response.getBody();
         if (pdsResponse != null) {
             String eTag = response.getHeaders().getETag();

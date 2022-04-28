@@ -1,6 +1,5 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +16,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
-import uk.nhs.prm.deductions.pdsadaptor.model.Exceptions.*;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
@@ -102,7 +101,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 bad-request-error");
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 bad-request-error");
         }
 
         @Test
@@ -112,7 +111,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 403. reason 403 error");
+            assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 403. reason 403 error");
         }
 
         @Test
@@ -122,7 +121,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 401. reason 401 error");
+            assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 401. reason 401 error");
         }
 
         @Test
@@ -132,7 +131,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
         }
 
         @Test
@@ -142,7 +141,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
+            assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
         }
 
         @Test
@@ -153,7 +152,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
                     NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
         }
 
         @Test
@@ -161,7 +160,7 @@ class PdsFhirClientTest {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(UnknownContentTypeException.class);
             Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).contains("PDS FHIR returned unexpected response body when requesting PDS Record");
+            assertThat(exception.getMessage()).contains("PDS FHIR returned unexpected response body when requesting PDS Record");
         }
 
         @Test
@@ -169,7 +168,7 @@ class PdsFhirClientTest {
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
             Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            Assertions.assertThat(exception.getMessage()).contains("not-responding");
+            assertThat(exception.getMessage()).contains("not-responding");
         }
     }
 
@@ -230,37 +229,28 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowPdsFhirPatchExceptionWhenUpdateIsToSameManagingOrganisation() {
+        void shouldThrowExceptionRecognisingWhenUpdateIsToSameManagingOrganisationAndTherebyRjectedAsMakingNoChanges() {
             String errorResponse = "{\n" +
                     "    \"issue\": [\n" +
                     "        {\n" +
-                    "            \"code\": \"structure\",\n" +
-                    "            \"details\": {\n" +
-                    "                \"coding\": [\n" +
-                    "                    {\n" +
-                    "                        \"code\": \"INVALID_UPDATE\",\n" +
-                    "                        \"display\": \"Update is invalid\",\n" +
-                    "                        \"system\": \"https://fhir.nhs.uk/R4/CodeSystem/Spine-ErrorOrWarningCode\",\n" +
-                    "                        \"version\": \"1\"\n" +
-                    "                    }\n" +
-                    "                ]\n" +
-                    "            },\n" +
+                    "            \"code\": \"whatever structure\",\n" +
+                    "            \"details\": \"whatever details\",\n" +
                     "            \"diagnostics\": \"Invalid update with error - Invalid patch - Provided patch made no changes to the resource\",\n" +
-                    "            \"severity\": \"error\"\n" +
+                    "            \"severity\": \"whatever severity\"\n" +
                     "        }\n" +
                     "    ],\n" +
-                    "    \"resourceType\": \"OperationOutcome\"\n" +
+                    "    \"resourceType\": \"whatever\"\n" +
                     "}";
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenAnswer(
-                    (i) -> {
+                    i -> {
                         throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "400 Bad Request", errorResponse.getBytes(UTF_8), UTF_8);
                     });
 
-            Exception exception = assertThrows(PdsFhirPatchInvalidException.class, () -> pdsFhirClient.updateManagingOrganisation(
+            var exception = assertThrows(PdsFhirPatchInvalidSpecifiesNoChangesException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage())
+            assertThat(exception.getMessage())
                     .isEqualTo("PDS FHIR request failed status code: 400. reason Provided patch made " +
                             "no changes to the resource");
         }
@@ -295,7 +285,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
         }
 
         @Test
@@ -308,7 +298,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 error");
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 error");
         }
 
         @Test
@@ -319,7 +309,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
         }
 
         @Test
@@ -330,7 +320,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
+            assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
         }
 
         @Test
@@ -341,7 +331,7 @@ class PdsFhirClientTest {
             Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            Assertions.assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
         }
 
         @Test

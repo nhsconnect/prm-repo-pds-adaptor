@@ -18,15 +18,15 @@ public class PdsService {
 
     public SuspendedPatientStatus getPatientGpStatus(String nhsNumber) {
         PdsResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
-        return setPatientStatus(pdsResponse);
+        return convertToPatientStatusObject(pdsResponse);
     }
 
     public SuspendedPatientStatus updatePatientManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         PdsResponse pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
-        return setPatientStatus(pdsResponse);
+        return convertToPatientStatusObject(pdsResponse);
     }
 
-    private SuspendedPatientStatus setPatientStatus(PdsResponse pdsResponse) {
+    private SuspendedPatientStatus convertToPatientStatusObject(PdsResponse pdsResponse) {
         if (hasDeceasedDateAndTime(pdsResponse)) {
             return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
         }
