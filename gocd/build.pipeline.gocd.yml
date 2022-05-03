@@ -17,9 +17,9 @@ pipelines:
                 - docker
               artifacts:
                 - build:
-                    source: build/reports/tests
+                    source: build
               tabs:
-                TestReport: tests/test/index.html
+                TestReport: build/reports/tests/test/index.html
               tasks:
                 - exec:
                     command: /bin/bash
