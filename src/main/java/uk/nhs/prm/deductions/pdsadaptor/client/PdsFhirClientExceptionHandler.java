@@ -38,7 +38,7 @@ public class PdsFhirClientExceptionHandler {
             return new AccessTokenRequestException(exception);
         }
         if (exception.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-            return new NotFoundException("PDS FHIR Request failed - Patient not found");
+            return new NotFoundException("PDS FHIR Request failed - Patient not found", exception);
         }
         if (exception.getStatusCode().equals(HttpStatus.TOO_MANY_REQUESTS)) {
             return new TooManyRequestsException();

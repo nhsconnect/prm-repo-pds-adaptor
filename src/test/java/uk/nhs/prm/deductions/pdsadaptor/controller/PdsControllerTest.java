@@ -1,15 +1,11 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.filter.ThresholdFilter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -57,7 +53,7 @@ class PdsControllerTest {
 
     @Test
     void shouldCallPdsServiceWithNhsNumberOnDemographicsRequest() throws Exception {
-        TestLogAppender testLogAppender = addTestLogAppender();
+        TestLogAppender testLogAppender = TestLogAppender.addTestLogAppender();
         ObjectMapper objectMapper = new ObjectMapper();
 
         SuspendedPatientStatus actualSuspendedPatientStatus = new SuspendedPatientStatus(NHS_NUMBER,true, null, null, "W1",false);
@@ -86,7 +82,7 @@ class PdsControllerTest {
 
     @Test
     void shouldCallPdsServiceWithNhsNumberAndUpdateRequest() throws Exception {
-        TestLogAppender testLogAppender = addTestLogAppender();
+        TestLogAppender testLogAppender = TestLogAppender.addTestLogAppender();
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"2\"");
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -179,19 +175,5 @@ class PdsControllerTest {
                 .andExpect(status().isServiceUnavailable());
 
         verify(pdsService,times(1)).getPatientGpStatus(NHS_NUMBER);
-    }
-
-    @NotNull
-    private TestLogAppender addTestLogAppender() {
-        TestLogAppender testLogAppender = new TestLogAppender();
-        ThresholdFilter filter = new ThresholdFilter();
-        filter.setLevel("INFO");
-        filter.start();
-        testLogAppender.addFilter(filter);
-        Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        logger.addAppender(testLogAppender);
-
-        testLogAppender.start();
-        return testLogAppender;
     }
 }
