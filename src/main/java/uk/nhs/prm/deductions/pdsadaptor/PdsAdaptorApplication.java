@@ -1,5 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.marker.Markers;
 import org.json.JSONObject;
@@ -32,12 +34,25 @@ public class PdsAdaptorApplication {
 
         log.info(Markers.appendRaw("detail", superJson), "log spike: detail from json string");
 
-        var superJsonWithBreaks = "{\"a\":\"aa\"," +
+        var jsonWithBreaks = "{\"a\":\"aa\"," +
                 "\n\"b\":{" +
                     "\n\"c\":\"cc\"}" +
                 "\n}";
 
-        log.info(Markers.appendRaw("detail", superJsonWithBreaks), "log spike: detail from json with line breaks");
+        log.info(Markers.appendRaw("detail", jsonWithBreaks), "log spike: detail from json with line breaks");
+        log.info(Markers.append("detail", parseJson(jsonWithBreaks)), "log spike: re-parsed to remove line breaks");
+        log.info(Markers.append("detail", parseJson(superJson)), "log spike: re-parsed original superJson");
+    }
+
+    private HashMap<String, Object> parseJson(String json) {
+        try {
+            return new ObjectMapper().readValue(json, HashMap.class);
+        }
+        catch (JsonProcessingException e) {
+            return new HashMap<>() {{
+                put("json_parse_failure", e.getMessage());
+            }};
+        }
     }
 
 }
