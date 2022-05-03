@@ -133,7 +133,7 @@ class PdsFhirClientTest {
 
             Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found");
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found 404");
         }
 
         @Test
