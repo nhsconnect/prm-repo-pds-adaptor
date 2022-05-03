@@ -17,7 +17,9 @@ pipelines:
                 - docker
               artifacts:
                 - build:
-                    source: build
+                    source: build/reports/tests
+              tabs:
+                TestReport: tests/test/index.html
               tasks:
                 - exec:
                     command: /bin/bash
@@ -29,7 +31,9 @@ pipelines:
                 - docker
               artifacts:
                 - build:
-                    source: build
+                    source: build/reports/tests
+              tabs:
+                TestReport: tests/integration/index.html
               tasks:
                 - exec:
                     command: /bin/bash
@@ -40,8 +44,11 @@ pipelines:
               artifacts:
                 - build:
                     source: build/reports/jacoco
+                - build:
+                    source: build/reports/tests
               tabs:
-                coverage: jacoco/test/html/index.html
+                TestReport: tests/test/index.html
+                Coverage: jacoco/test/html/index.html
               resources:
                 - docker
               tasks:
