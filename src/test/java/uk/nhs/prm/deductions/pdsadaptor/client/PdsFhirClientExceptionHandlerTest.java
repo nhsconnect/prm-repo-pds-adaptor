@@ -41,35 +41,6 @@ class PdsFhirClientExceptionHandlerTest {
         assertThat(loggedJson.contains("some_detail")).isTrue();
     }
 
-    @Test
-    public void shouldRemoveLineBreaksWithinJsonWhenStructurallyLoggingTheResponseBodyForAHttp404() {
-        var testLogAppender = addTestLogAppender();
-
-        var jsonWithLineBreak = "{\n" +
-                "\"a_field\": \"some value\"}";
-        assertThrows(RuntimeException.class, () ->
-                handleCommonExceptions("some description", createErrorResponse(404, jsonWithLineBreak)));
-
-        var logged = testLogAppender.getLastLoggedEvent();
-        var jsonMarker = (RawJsonAppendingMarker) logged.getMarker();
-        var loggedJson = (String) jsonMarker.getFieldValue();
-        assertThat(loggedJson.contains("{\"a_field")).isTrue();
-    }
-
-    @Test
-    public void shouldLogRawResponseWhenNotValidJsonAndHandlingA404() {
-        var testLogAppender = addTestLogAppender();
-
-        var invalidJsonResponse = "raw-not-json";
-        assertThrows(RuntimeException.class, () ->
-                handleCommonExceptions("some description", createErrorResponse(404, invalidJsonResponse)));
-
-        var logged = testLogAppender.getLastLoggedEvent();
-        var jsonMarker = (RawJsonAppendingMarker) logged.getMarker();
-        var loggedJson = (String) jsonMarker.getFieldValue();
-        assertThat(loggedJson).isEqualTo("raw-not-json");
-    }
-
     @NotNull
     private HttpClientErrorException createErrorResponse(int statusCode, String responseBodyJson) {
         return new HttpClientErrorException(HttpStatus.resolve(statusCode), "error", responseBodyJson.getBytes(UTF_8), UTF_8);
