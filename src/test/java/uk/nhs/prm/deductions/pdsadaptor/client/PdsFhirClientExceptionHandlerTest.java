@@ -4,7 +4,6 @@ import net.logstash.logback.marker.RawJsonAppendingMarker;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Marker;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
 
@@ -12,7 +11,7 @@ import java.util.HashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClientExceptionHandler.handleCommonExceptions;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
 
@@ -40,6 +39,35 @@ class PdsFhirClientExceptionHandlerTest {
         var loggedJson = (String) jsonMarker.getFieldValue();
         assertThat(loggedJson.contains("some_code")).isTrue();
         assertThat(loggedJson.contains("some_detail")).isTrue();
+    }
+
+    @Test
+    public void shouldRemoveLineBreaksWithinJsonWhenStructurallyLoggingTheResponseBodyForAHttp404() {
+        var testLogAppender = addTestLogAppender();
+
+        var jsonWithLineBreak = "{\n" +
+                "\"a_field\": \"some value\"}";
+        assertThrows(RuntimeException.class, () ->
+                handleCommonExceptions("some description", createErrorResponse(404, jsonWithLineBreak)));
+
+        var logged = testLogAppender.getLastLoggedEvent();
+        var jsonMarker = (RawJsonAppendingMarker) logged.getMarker();
+        var loggedJson = (String) jsonMarker.getFieldValue();
+        assertThat(loggedJson.contains("{\"a_field")).isTrue();
+    }
+
+    @Test
+    public void shouldLogRawResponseWhenNotValidJsonAndHandlingA404() {
+        var testLogAppender = addTestLogAppender();
+
+        var invalidJsonResponse = "raw-not-json";
+        assertThrows(RuntimeException.class, () ->
+                handleCommonExceptions("some description", createErrorResponse(404, invalidJsonResponse)));
+
+        var logged = testLogAppender.getLastLoggedEvent();
+        var jsonMarker = (RawJsonAppendingMarker) logged.getMarker();
+        var loggedJson = (String) jsonMarker.getFieldValue();
+        assertThat(loggedJson).isEqualTo("raw-not-json");
     }
 
     @NotNull
