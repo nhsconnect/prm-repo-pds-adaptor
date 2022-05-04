@@ -13,7 +13,7 @@ import static java.lang.String.format;
 @Slf4j
 public class PdsFhirClientExceptionHandler {
 
-    public static RuntimeException handleCommonExceptions(String description, Exception exception) {
+    public RuntimeException handleCommonExceptions(String description, Exception exception) {
         if (exception instanceof HttpClientErrorException) {
             log.error(format("Received 4xx HTTP Error from PDS FHIR when %s PDS Record", description));
             throw createClientException((HttpClientErrorException) exception);

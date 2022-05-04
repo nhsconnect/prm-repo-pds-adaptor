@@ -19,26 +19,27 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClientExceptionHandler.*;
 
 @Component
 @Slf4j
 public class PdsFhirClient {
 
-    private final String pdsFhirEndpoint;
     private final AuthenticatingHttpClient httpClient;
-    private final int maxUpdateTries;
     private final PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
+    private final PdsFhirClientExceptionHandler clientExceptionHandler;
+    private final String pdsFhirEndpoint;
+    private final int maxUpdateTries;
 
     public PdsFhirClient(AuthenticatingHttpClient httpClient,
                          PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
+                         PdsFhirClientExceptionHandler clientExceptionHandler,
                          @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
                          @Value("${pds.fhir.update.number.of.tries}") int maxUpdateTries) {
         this.httpClient = httpClient;
         this.patchRejectionInterpreter = patchRejectionInterpreter;
+        this.clientExceptionHandler = clientExceptionHandler;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
         this.maxUpdateTries = maxUpdateTries;
     }
@@ -52,7 +53,7 @@ public class PdsFhirClient {
                 return addEtagToResponseObject(response);
             }
             catch (Exception exception) {
-                throw handleCommonExceptions("requesting", exception);
+                throw clientExceptionHandler.handleCommonExceptions("requesting", exception);
             }
         });
     }
@@ -74,7 +75,7 @@ public class PdsFhirClient {
                     log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
                     throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
                 }
-                throw handleCommonExceptions("updating", exception);
+                throw clientExceptionHandler.handleCommonExceptions("updating", exception);
             }
         });
     }

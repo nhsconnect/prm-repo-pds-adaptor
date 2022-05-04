@@ -1,9 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.logging;
 
 import ch.qos.logback.classic.Level;
-import io.swagger.v3.core.util.Json;
 import net.logstash.logback.marker.RawJsonAppendingMarker;
-import org.eclipse.jetty.util.log.Slf4jLog;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,9 +10,7 @@ import org.slf4j.Logger;
 import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.slf4j.LoggerFactory.getLogger;
-import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClientExceptionHandler.handleCommonExceptions;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
 
 class JsonLoggerTest {

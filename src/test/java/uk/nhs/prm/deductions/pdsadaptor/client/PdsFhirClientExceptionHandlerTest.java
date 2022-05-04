@@ -3,6 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import net.logstash.logback.marker.RawJsonAppendingMarker;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.HttpClientErrorException;
@@ -12,10 +13,16 @@ import java.util.HashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClientExceptionHandler.handleCommonExceptions;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
 
 class PdsFhirClientExceptionHandlerTest {
+
+    private PdsFhirClientExceptionHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        handler = new PdsFhirClientExceptionHandler();
+    }
 
     @Test
     public void shouldStructurallyLogTheResponseBodyForAHttp404() {
@@ -28,7 +35,7 @@ class PdsFhirClientExceptionHandlerTest {
             }
         };
         assertThrows(RuntimeException.class, () ->
-                handleCommonExceptions("some description", createErrorResponse(404, asJson(responseBody))));
+                handler.handleCommonExceptions("some description", createErrorResponse(404, asJson(responseBody))));
 
         var logged = testLogAppender.getLastLoggedEvent();
         assertThat(logged.getMarker()).isInstanceOf(RawJsonAppendingMarker.class);

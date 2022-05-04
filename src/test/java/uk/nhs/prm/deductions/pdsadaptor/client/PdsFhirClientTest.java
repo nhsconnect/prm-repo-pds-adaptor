@@ -1,5 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -54,13 +55,12 @@ class PdsFhirClientTest {
 
     private static final String URL_PATH = PDS_FHIR_ENDPOINT + "Patient/" + NHS_NUMBER;
 
-
     @Captor
     private ArgumentCaptor<HttpHeaders> headersCaptor;
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, PDS_FHIR_ENDPOINT, 3);
+        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, new PdsFhirClientExceptionHandler(), PDS_FHIR_ENDPOINT, 3);
     }
 
     @Nested
@@ -201,15 +201,15 @@ class PdsFhirClientTest {
         void shouldReturnPdsResponseWithEtagFromHeadersAfterSuccessfulUpdate() {
             String tagVersion = "W/\"2\"";
             String managingOrganisation = "A1234";
-            PdsResponse pdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, managingOrganisation, null);
+            var httpClientPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, managingOrganisation, null);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setETag(tagVersion);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
-                    new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
+                    new ResponseEntity<>(httpClientPdsResponse, headers, HttpStatus.OK));
 
-            PdsResponse expected = pdsFhirClient.updateManagingOrganisation(
+            var updateResult = pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation, RECORD_E_TAG));
 
             verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
@@ -225,9 +225,8 @@ class PdsFhirClientTest {
             assertThat(pdsPatch.getValue().getIdentifier().getSystem()).isEqualTo("https://fhir.nhs.uk/Id/ods-organization-code");
             assertThat(pdsPatch.getValue().getIdentifier().getValue()).isEqualTo(managingOrganisation);
 
-
-            assertThat(expected).isEqualTo(pdsResponse);
-            assertThat(expected.getETag()).isEqualTo(tagVersion);
+            assertThat(updateResult).isEqualTo(httpClientPdsResponse);
+            assertThat(updateResult.getETag()).isEqualTo(tagVersion);
         }
 
         @Test
@@ -307,6 +306,19 @@ class PdsFhirClientTest {
         }
 
         @Test
+        void shouldRetryUpdateAndReturnSuccessfulResponseIfSuccessfulOnSecondTry() {
+            var successfulPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
+
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
+                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"))
+                    .thenReturn(new ResponseEntity<>(successfulPdsResponse, headersWithEtag("\"new etag\""), HttpStatus.OK));
+
+            var response = pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "previous etag"));
+
+            assertThat(response).isEqualTo(successfulPdsResponse);
+        }
+
+        @Test
         void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailableAfterRetry() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
                     new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
@@ -329,6 +341,22 @@ class PdsFhirClientTest {
 
             String requestId = "";
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //
+            // wth, which path is this meant to go down?? Dan
             try {
                 requestId = headersCaptor.getValue().get("X-Request-ID").get(0);
             }
@@ -342,5 +370,11 @@ class PdsFhirClientTest {
 
         }
 
+        @NotNull
+        private HttpHeaders headersWithEtag(String etag) {
+            var headers = new HttpHeaders();
+            headers.setETag(etag);
+            return headers;
+        }
     }
 }
