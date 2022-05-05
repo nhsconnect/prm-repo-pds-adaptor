@@ -2,6 +2,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -11,7 +12,8 @@ import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
 import static java.lang.String.format;
 
 @Slf4j
-public class PdsFhirClientExceptionHandler {
+@Component
+public class PdsFhirExceptionHandler {
 
     public RuntimeException handleCommonExceptions(String description, Exception exception) {
         if (exception instanceof HttpClientErrorException) {
