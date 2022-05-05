@@ -28,13 +28,13 @@ public class PdsFhirClient {
 
     private final AuthenticatingHttpClient httpClient;
     private final PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
-    private final PdsFhirClientExceptionHandler clientExceptionHandler;
+    private final PdsFhirExceptionHandler clientExceptionHandler;
     private final String pdsFhirEndpoint;
     private final int maxUpdateTries;
 
     public PdsFhirClient(AuthenticatingHttpClient httpClient,
                          PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
-                         PdsFhirClientExceptionHandler clientExceptionHandler,
+                         PdsFhirExceptionHandler clientExceptionHandler,
                          @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
                          @Value("${pds.fhir.update.number.of.tries}") int maxUpdateTries) {
         this.httpClient = httpClient;
