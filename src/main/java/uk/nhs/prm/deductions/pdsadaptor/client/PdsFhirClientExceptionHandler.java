@@ -11,7 +11,7 @@ import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
 import static java.lang.String.format;
 
 @Slf4j
-public class PdsFhirExceptionHandler {
+public class PdsFhirClientExceptionHandler {
 
     public RuntimeException handleCommonExceptions(String description, Exception exception) {
         if (exception instanceof HttpClientErrorException) {

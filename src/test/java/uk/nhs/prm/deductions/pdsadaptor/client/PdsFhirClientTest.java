@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
@@ -23,15 +24,13 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
 
@@ -43,9 +42,6 @@ class PdsFhirClientTest {
 
     @Mock
     private PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
-
-    @Mock
-    private PdsFhirExceptionHandler clientExceptionHandler;
 
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
@@ -64,7 +60,7 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT, 3);
+        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, new PdsFhirClientExceptionHandler(), PDS_FHIR_ENDPOINT, 3);
     }
 
     @Nested
@@ -100,34 +96,84 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldDelegateHandlingExceptionsToExceptionHandler() {
-            var causingException = new HttpClientErrorException(HttpStatus.BAD_REQUEST);
-            var exceptionFromHandler = new RuntimeException("kabooey");
+        void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
+            String invalidNhsNumber = "1234";
+            when(httpClient.get(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.BAD_REQUEST, "bad-request-error"));
 
-            when(httpClient.get(any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("requesting", causingException))
-                    .thenThrow(exceptionFromHandler);
+            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(invalidNhsNumber));
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber("123"));
-
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 bad-request-error");
         }
 
         @Test
-        void shouldDelegateToExceptionHandlerWhenOkResponseButUnexpectedBodyFromPdsFhir() {
-            var unknownResponseException = new UnknownContentTypeException(PdsResponse.class, APPLICATION_JSON, 200,
-                    "ok", new HttpHeaders(), new byte[0]);
-            var exceptionFromHandler = new RuntimeException("kabooey");
+        void shouldThrowAccessTokenRequestExceptionWhenPdsReturnsForbiddenError() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.FORBIDDEN, "error"));
 
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(unknownResponseException);
-            when(clientExceptionHandler.handleCommonExceptions("requesting", unknownResponseException))
-                    .thenThrow(exceptionFromHandler);
+            Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 403. reason 403 error");
+        }
 
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
+        @Test
+        void shouldThrowAccessTokenRequestExceptionWhenPdsReturnsUnauthorizedError() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.UNAUTHORIZED, "error"));
+
+            Exception exception = assertThrows(AccessTokenRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 401. reason 401 error");
+        }
+
+        @Test
+        void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
+
+            Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found 404");
+        }
+
+        @Test
+        void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
+
+            Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
+        }
+
+        @Test
+        void shouldThrowPdsFhirExceptionWhenPdsFhirIsUnavailable() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+            Exception exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(
+                    NHS_NUMBER));
+
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+        }
+
+        @Test
+        void shouldThrowRuntimeExceptionWhen200ResponseButUnexpectedBodyFromPdsFhir() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(UnknownContentTypeException.class);
+            Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            assertThat(exception.getMessage()).contains("PDS FHIR returned unexpected response body when requesting PDS Record");
+        }
+
+        @Test
+        void shouldThrowRuntimeExceptionWhenUnexpectedErrorFromPdsFhir() {
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(new ResourceAccessException("not-responding"));
+            Exception exception = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+
+            assertThat(exception.getMessage()).contains("not-responding");
         }
     }
+
 
     @Nested
     @DisplayName("PDS FHIR Patch Request")
@@ -152,12 +198,13 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldReturnPdsResponseWithEtagFromHeadersAddedToItAfterSuccessfulUpdate() {
+        void shouldReturnPdsResponseWithEtagFromHeadersAfterSuccessfulUpdate() {
             String tagVersion = "W/\"2\"";
             String managingOrganisation = "A1234";
             var httpClientPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, managingOrganisation, null);
 
-            var headers = headersWithEtag(tagVersion);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setETag(tagVersion);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
                     new ResponseEntity<>(httpClientPdsResponse, headers, HttpStatus.OK));
@@ -183,7 +230,7 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenUpdateIsToSameManagingOrganisationAndTherebyRejectedAsMakingNoChanges() {
+        void shouldThrowExceptionWhenUpdateIsToSameManagingOrganisationAndTherebyRjectedAsMakingNoChanges() {
             var httpException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
 
             when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(httpException)).thenReturn(true);
@@ -199,54 +246,67 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldDelegateToCommonExceptionHandlerWhenItsA400BadRequestButNotANoChangesRejection() {
-            var causingException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
-            var exceptionFromHandler = new RuntimeException("kaboom");
+        void shouldThrowBadRequestExceptionWhenItsA400BadRequestButNotANoChangesRejection() {
+            var httpException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
 
-            when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(causingException)).thenReturn(false);
-            when(httpClient.patch(any(), any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
-                    .thenThrow(exceptionFromHandler);
+            when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(httpException)).thenReturn(false);
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
+            when(httpClient.patch(any(), any(), any(), any())).thenThrow(httpException);
+
+            var exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 Bad Request");
         }
 
         @Test
-        void shouldDelegateHandlingAllOtherExceptionsToExceptionHandler() {
-            var causingException = new HttpClientErrorException(HttpStatus.BAD_REQUEST);
-            var exceptionFromHandler = new RuntimeException("kabowza");
+        void shouldThrowBadRequestExceptionWhenPdsResourceInvalid() {
+            String invalidNhsNumber = "1234";
+            when(httpClient.patch(eq(PDS_FHIR_ENDPOINT + "Patient/" + invalidNhsNumber), any(), any(),
+                    eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.BAD_REQUEST, "error"));
 
-            when(httpClient.patch(any(), any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
-                    .thenThrow(exceptionFromHandler);
+            Exception exception = assertThrows(BadRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
+                    invalidNhsNumber, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
+            assertThat(exception.getMessage()).isEqualTo("Received 400 error from PDS FHIR: error: 400 error");
+        }
+
+        @Test
+        void shouldThrowNotFoundExceptionIfPatientNotFoundInPds() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.NOT_FOUND, "error"));
+
+            Exception exception = assertThrows(NotFoundException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR Request failed - Patient not found 404");
         }
 
         @Test
-        void shouldRetryIfPdsUnavailableWithSameRequestDetailsAndSpecificallyRequestIdEachTime() {
-            when(clientExceptionHandler.handleCommonExceptions(any(), any())).thenThrow(RuntimeException.class);
+        void shouldThrowTooManyRequestsExceptionWhenExceedingPdsFhirRateLimit() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpClientErrorException(HttpStatus.TOO_MANY_REQUESTS, "error"));
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+            Exception exception = assertThrows(TooManyRequestsException.class, () -> pdsFhirClient.updateManagingOrganisation(
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
 
-            assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
-
-            verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
-
-            var lastRequestIdUsed = headersCaptor.getValue().get("X-Request-ID").get(0);
-            assertThat(requestIdsFromEachCall(headersCaptor)).allMatch(requestIdFromTry -> requestIdFromTry == lastRequestIdUsed);
+            assertThat(exception.getMessage()).isEqualTo("Rate limit exceeded for PDS FHIR - too many requests");
         }
 
         @Test
-        void shouldRetryUpdateIfPdsUnavailableAndReturnSuccessfulResponseIfThenSuccessful() {
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailable() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+            var exception = assertThrows(PdsFhirRequestException.class, () -> pdsFhirClient.updateManagingOrganisation(
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+
+            assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+        }
+
+        @Test
+        void shouldRetryUpdateAndReturnSuccessfulResponseIfSuccessfulOnSecondTry() {
             var successfulPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
@@ -259,31 +319,55 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldDelegateToExceptionHandlerWhenPdsFhirIsUnavailableAfterRetry() {
-            var causingException = new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error");
-            var exceptionFromHandler = new RuntimeException("kablowey");
-
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
-                    .thenThrow(exceptionFromHandler);
-
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailableAfterRetry() {
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                    causingException);
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
+            assertThrows(PdsFhirRequestException.class, () ->
+                    pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
 
-            verify(httpClient, times(3)).patch(any(), any(), any(), any());
-
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
+            verify(httpClient, times(3)).patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class));
         }
 
-        @NotNull
-        private List<String> requestIdsFromEachCall(ArgumentCaptor<HttpHeaders> headersCaptor) {
-            List<String> requestIdsFromEachTry = new ArrayList<>();
-            for (HttpHeaders headers : headersCaptor.getAllValues()) {
-                requestIdsFromEachTry.add(headers.get("X-Request-ID").get(0));
+        @Test
+        void shouldThrowPdsFhirRequestExceptionWhenPdsFhirIsUnavailableAfterRetryWithSameRequestId() {
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
+                    new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+
+            assertThrows(PdsFhirRequestException.class, () ->
+                    pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
+
+            verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+
+            String requestId = "";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            //
+            // wth, which path is this meant to go down?? Dan
+            try {
+                requestId = headersCaptor.getValue().get("X-Request-ID").get(0);
             }
-            return requestIdsFromEachTry;
+            catch (NullPointerException e) {
+                System.out.println("value or it's sub value is null");
+            }
+
+            for (HttpHeaders header : headersCaptor.getAllValues()) {
+                assertTrue((header.get("X-Request-ID").get(0).equals(requestId)));
+            }
+
         }
 
         @NotNull
