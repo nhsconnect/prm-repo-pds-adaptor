@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = {WireMockInitializer.class})
-public class PdsControllerIntegrationTest {
+public class PdsAdaptorIntegrationTest {
 
     @Autowired
     private TestRestTemplate restTemplate;

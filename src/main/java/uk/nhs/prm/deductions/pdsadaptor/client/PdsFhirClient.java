@@ -1,11 +1,11 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpServerErrorException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirGeneralServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
@@ -49,7 +49,7 @@ public class PdsFhirClient {
         log.info("Making GET request for pds record from pds fhir");
         return timeRequest("retrieval", () -> {
             try {
-                var response = httpClient.get(patientUrl(nhsNumber), createRetrieveHeaders(), PdsResponse.class);
+                var response = httpClient.get(patientUrl(nhsNumber), createRequestHeaders(UUID.randomUUID(), APPLICATION_JSON.toString()), PdsResponse.class);
                 log.info("Successfully requested pds record");
                 return addEtagToResponseObject(response);
             }
@@ -99,18 +99,16 @@ public class PdsFhirClient {
         });
     }
 
-    private HttpHeaders createRetrieveHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Request-ID", UUID.randomUUID().toString());
-        headers.set(HttpHeaders.CONTENT_TYPE, APPLICATION_JSON.toString());
+    private HttpHeaders createUpdateHeaders(String recordETag, UUID requestId) {
+        HttpHeaders headers = createRequestHeaders(requestId, "application/json-patch+json");
+        headers.setIfMatch(recordETag);
         return headers;
     }
 
-    private HttpHeaders createUpdateHeaders(String recordETag, UUID requestId) {
+    private HttpHeaders createRequestHeaders(UUID requestId, String contentType) {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", requestId.toString());
-        headers.set(HttpHeaders.CONTENT_TYPE, "application/json-patch+json");
-        headers.setIfMatch(recordETag);
+        headers.set(HttpHeaders.CONTENT_TYPE, contentType);
         return headers;
     }
 
@@ -123,12 +121,9 @@ public class PdsFhirClient {
 
     private PdsResponse addEtagToResponseObject(ResponseEntity<PdsResponse> response) {
         PdsResponse pdsResponse = response.getBody();
-        if (pdsResponse != null) {
-            String eTag = response.getHeaders().getETag();
-            pdsResponse.setETag(eTag);
-            return pdsResponse;
-        }
-        return null;
+        String eTag = response.getHeaders().getETag();
+        pdsResponse.setETag(eTag);
+        return pdsResponse;
     }
 
     private String patientUrl(String nhsNumber) {
