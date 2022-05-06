@@ -152,3 +152,6 @@ dependencyCheck {
 }
 
 check.dependsOn integration
+
+test.outputs.upToDateWhen {false}
+integration.outputs.upToDateWhen {false}
