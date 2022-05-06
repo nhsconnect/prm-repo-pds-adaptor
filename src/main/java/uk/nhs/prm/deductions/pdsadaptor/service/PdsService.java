@@ -2,7 +2,7 @@ package uk.nhs.prm.deductions.pdsadaptor.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClient;
+import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
@@ -14,7 +14,7 @@ import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 @RequiredArgsConstructor
 public class PdsService {
 
-    private final PdsFhirClient pdsFhirClient;
+    private final RetryingPdsFhirClient pdsFhirClient;
 
     public SuspendedPatientStatus getPatientGpStatus(String nhsNumber) {
         PdsResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);

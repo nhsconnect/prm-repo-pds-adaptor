@@ -50,7 +50,7 @@ class PdsFhirClientTest {
 
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
-    private PdsFhirClient pdsFhirClient;
+    private RetryingPdsFhirClient pdsFhirClient;
 
     private static final String NHS_NUMBER = "123456789";
 
@@ -65,7 +65,8 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT, 3);
+        var pdsFhirSingleShotClient = new PdsFhirSingleShotClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT);
+        pdsFhirClient = new RetryingPdsFhirClient(pdsFhirSingleShotClient, 3);
     }
 
     @Nested

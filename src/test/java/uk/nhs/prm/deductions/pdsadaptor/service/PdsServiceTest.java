@@ -5,7 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import uk.nhs.prm.deductions.pdsadaptor.client.PdsFhirClient;
+import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class PdsServiceTest {
 
     @Mock
-    private PdsFhirClient pdsFhirClient;
+    private RetryingPdsFhirClient pdsFhirClient;
 
     @InjectMocks
     private PdsService pdsService;

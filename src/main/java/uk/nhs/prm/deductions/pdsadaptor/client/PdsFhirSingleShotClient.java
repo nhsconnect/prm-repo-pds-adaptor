@@ -1,12 +1,10 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirGeneralServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
@@ -23,26 +21,23 @@ import java.util.function.Supplier;
 import static java.util.Collections.singletonList;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
-@Component
 @Slf4j
-public class PdsFhirClient {
-
+@Component
+public class PdsFhirSingleShotClient {
     private final AuthenticatingHttpClient httpClient;
     private final PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
-    private final PdsFhirExceptionHandler clientExceptionHandler;
+    private final PdsFhirExceptionHandler exceptionHandler;
     private final String pdsFhirEndpoint;
-    private final int maxUpdateTries;
 
-    public PdsFhirClient(AuthenticatingHttpClient httpClient,
-                         PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
-                         PdsFhirExceptionHandler clientExceptionHandler,
-                         @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint,
-                         @Value("${pds.fhir.update.number.of.tries}") int maxUpdateTries) {
+    public PdsFhirSingleShotClient(AuthenticatingHttpClient httpClient,
+                                   PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
+                                   PdsFhirExceptionHandler exceptionHandler,
+                                   @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
+
         this.httpClient = httpClient;
         this.patchRejectionInterpreter = patchRejectionInterpreter;
-        this.clientExceptionHandler = clientExceptionHandler;
+        this.exceptionHandler = exceptionHandler;
         this.pdsFhirEndpoint = pdsFhirEndpoint;
-        this.maxUpdateTries = maxUpdateTries;
     }
 
     public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
@@ -54,30 +49,12 @@ public class PdsFhirClient {
                 return addEtagToResponseObject(response);
             }
             catch (Exception exception) {
-                throw clientExceptionHandler.handleCommonExceptions("requesting", exception);
+                throw exceptionHandler.handleCommonExceptions("requesting", exception);
             }
         });
     }
 
-    public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        return doUpdateManagingOrganisationWithRetries(nhsNumber, updateRequest, UUID.randomUUID(), maxUpdateTries);
-    }
-
-    private PdsResponse doUpdateManagingOrganisationWithRetries(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId, int triesLeft) {
-        try {
-            return doUpdateManagingOrganisation(nhsNumber, updateRequest, requestId);
-        }
-        catch (PdsFhirGeneralServiceUnavailableException serverUnavailableException) {
-            if (triesLeft > 1) {
-                log.error("Retrying server update, tries remaining: " + (triesLeft - 1));
-                return doUpdateManagingOrganisationWithRetries(nhsNumber, updateRequest, requestId, triesLeft - 1);
-            }
-            log.error("Got server error after " + maxUpdateTries + " attempts.");
-            throw serverUnavailableException;
-        }
-    }
-
-    private PdsResponse doUpdateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId) {
+    public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId) {
         log.info("Making PATCH request to update managing organisation via pds fhir");
 
         var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
@@ -94,7 +71,7 @@ public class PdsFhirClient {
                     log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
                     throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
                 }
-                throw clientExceptionHandler.handleCommonExceptions("updating", exception);
+                throw exceptionHandler.handleCommonExceptions("updating", exception);
             }
         });
     }
