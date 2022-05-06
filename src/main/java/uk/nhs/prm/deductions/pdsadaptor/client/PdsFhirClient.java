@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpServerErrorException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirGeneralServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
@@ -59,14 +60,32 @@ public class PdsFhirClient {
     }
 
     public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
+        return doUpdateManagingOrganisationWithRetries(nhsNumber, updateRequest, UUID.randomUUID(), maxUpdateTries);
+    }
+
+    private PdsResponse doUpdateManagingOrganisationWithRetries(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId, int triesLeft) {
+        try {
+            return doUpdateManagingOrganisation(nhsNumber, updateRequest, requestId);
+        }
+        catch (PdsFhirGeneralServiceUnavailableException serverUnavailableException) {
+            if (triesLeft > 1) {
+                log.error("Retrying server update, tries remaining: " + (triesLeft - 1));
+                return doUpdateManagingOrganisationWithRetries(nhsNumber, updateRequest, requestId, triesLeft - 1);
+            }
+            log.error("Got server error after " + maxUpdateTries + " attempts.");
+            throw serverUnavailableException;
+        }
+    }
+
+    private PdsResponse doUpdateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId) {
         log.info("Making PATCH request to update managing organisation via pds fhir");
 
         var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
-        var requestHeaders = createUpdateHeaders(updateRequest.getRecordETag());
+        var requestHeaders = createUpdateHeaders(updateRequest.getRecordETag(), requestId);
 
         return timeRequest("update", () -> {
             try {
-                var response = makePdsUpdateCall(patientUrl(nhsNumber), patchRequest, requestHeaders, maxUpdateTries);
+                var response = httpClient.patch(patientUrl(nhsNumber), requestHeaders, patchRequest, PdsResponse.class);
                 log.info("Successfully updated managing organisation on pds record.");
                 return addEtagToResponseObject(response);
             }
@@ -80,21 +99,6 @@ public class PdsFhirClient {
         });
     }
 
-    private ResponseEntity<PdsResponse> makePdsUpdateCall(String url, PdsPatchRequest patchRequest, HttpHeaders requestHeaders, int triesLeft) {
-        try {
-            log.info("request id of the request: " + requestHeaders.get("X-Request-ID"));
-            return httpClient.patch(url, requestHeaders, patchRequest, PdsResponse.class);
-        }
-        catch (HttpServerErrorException serverErrorException) {
-            log.info("Got PDS-FHIR exception with status code : " + serverErrorException.getStatusCode());
-            if (triesLeft > 1) {
-                return makePdsUpdateCall(url, patchRequest, requestHeaders, triesLeft - 1);
-            }
-            log.error("Got server error after " + maxUpdateTries + " attempts.");
-            throw serverErrorException;
-        }
-    }
-
     private HttpHeaders createRetrieveHeaders() {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Request-ID", UUID.randomUUID().toString());
@@ -102,9 +106,9 @@ public class PdsFhirClient {
         return headers;
     }
 
-    private HttpHeaders createUpdateHeaders(String recordETag) {
+    private HttpHeaders createUpdateHeaders(String recordETag, UUID requestId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Request-ID", UUID.randomUUID().toString());
+        headers.set("X-Request-ID", requestId.toString());
         headers.set(HttpHeaders.CONTENT_TYPE, "application/json-patch+json");
         headers.setIfMatch(recordETag);
         return headers;

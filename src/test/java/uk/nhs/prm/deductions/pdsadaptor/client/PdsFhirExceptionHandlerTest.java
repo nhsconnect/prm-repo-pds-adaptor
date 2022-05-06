@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -22,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
@@ -112,10 +110,10 @@ class PdsFhirExceptionHandlerTest {
     }
 
     @Test
-    void shouldThrowPdsFhirExceptionWhenPdsFhirIsUnavailable___howDoesThatMakeSense__ifPdsFhirIsUnavailableWeJustKindOfStareOutOurFeetAndSayUmmYeahWhateverSomethingHappenedWithPds__iDontUnderstandWhatThatIsCommunicatingOrReasonableOrUseful___inFactItsBlatantlyMisleadingBecauseItImpliesThereIsAProblemWithTheRequestNotATemporaryIssueWithBackend() {
+    void shouldThrowNonSpecificPdsFhirUnavailableExceptionWhenPdsFhirIsApparentlyUnavailable() {
         var pdsServiceIsUnavailable503 = new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error");
 
-        var exception = assertThrows(PdsFhirRequestException.class, () ->
+        var exception = assertThrows(PdsFhirGeneralServiceUnavailableException.class, () ->
                 handler.handleCommonExceptions("context", pdsServiceIsUnavailable503));
 
         assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");

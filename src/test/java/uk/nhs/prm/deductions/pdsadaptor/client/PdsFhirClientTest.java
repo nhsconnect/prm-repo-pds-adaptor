@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
@@ -230,11 +231,14 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldRetryIfPdsUnavailableWithSameRequestDetailsAndSpecificallyRequestIdEachTime() {
-            when(clientExceptionHandler.handleCommonExceptions(any(), any())).thenThrow(RuntimeException.class);
+        void shouldRetryIfPdsFhirServiceUnavailableWithSameRequestIdEachTime() {
+            var initialException = new HttpServerErrorException(SERVICE_UNAVAILABLE, "error");
+
+            when(clientExceptionHandler.handleCommonExceptions(any(), any()))
+                    .thenThrow(PdsFhirGeneralServiceUnavailableException.class);
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"));
+                    .thenThrow(initialException);
 
             assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
@@ -242,15 +246,18 @@ class PdsFhirClientTest {
             verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
 
             var lastRequestIdUsed = headersCaptor.getValue().get("X-Request-ID").get(0);
-            assertThat(requestIdsFromEachCall(headersCaptor)).allMatch(requestIdFromTry -> requestIdFromTry == lastRequestIdUsed);
+            assertThat(requestIdsFromEachCall(headersCaptor)).allMatch(requestIdFromTry -> lastRequestIdUsed.equals(requestIdFromTry));
         }
 
         @Test
         void shouldRetryUpdateIfPdsUnavailableAndReturnSuccessfulResponseIfThenSuccessful() {
             var successfulPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
 
+            when(clientExceptionHandler.handleCommonExceptions(any(), any()))
+                    .thenThrow(PdsFhirGeneralServiceUnavailableException.class);
+
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
-                    .thenThrow(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error"))
+                    .thenThrow(new RuntimeException())
                     .thenReturn(new ResponseEntity<>(successfulPdsResponse, headersWithEtag("\"new etag\""), HttpStatus.OK));
 
             var response = pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "previous etag"));
@@ -260,14 +267,13 @@ class PdsFhirClientTest {
 
         @Test
         void shouldDelegateToExceptionHandlerWhenPdsFhirIsUnavailableAfterRetry() {
-            var causingException = new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error");
-            var exceptionFromHandler = new RuntimeException("kablowey");
+            var exceptionFromHandler = new PdsFhirGeneralServiceUnavailableException(new HttpServerErrorException(SERVICE_UNAVAILABLE));
+            var causalException = new RuntimeException("some http exception related to service unavailability");
 
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
+            when(clientExceptionHandler.handleCommonExceptions("updating", causalException))
                     .thenThrow(exceptionFromHandler);
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenThrow(
-                    causingException);
+            when(httpClient.patch(any(), any(), any(), any())).thenThrow(causalException);
 
             var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));

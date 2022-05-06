@@ -1,9 +1,8 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
-import org.junit.jupiter.api.BeforeEach;
+import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +11,8 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.test.context.ContextConfiguration;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
+
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
@@ -166,31 +167,14 @@ public class PdsControllerIntegrationTest {
 
     @Test
     public void shouldSendUpdateForManagingOrganisationToPds() {
-        var requestBody = "{\n" +
-                "  \"previousGp\": \"A1234\",\n" +
-                "  \"recordETag\": \"W/\\\"5\\\"\"\n" +
-                "}";
-
-        var pdsRequstBody = "{\n" +
-                "  \"patches\": [\n" +
-                "    {\n" +
-                "      \"op\": \"add\",\n" +
-                "      \"path\": \"/managingOrganization\",\n" +
-                "      \"value\": {\n" +
-                "        \"type\": \"Organization\",\n" +
-                "        \"identifier\": {\n" +
-                "          \"system\": \"https://fhir.nhs.uk/Id/ods-organization-code\",\n" +
-                "          \"value\": \"A1234\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
+        var requestBody = new JSONObject()
+                .put("previousGp", "A1234")
+                .put("recordETag", "W/\"5\"").toString();
 
         stubFor(patch(urlMatching("/Patient/9693797493"))
                 .withHeader("If-Match", matching("W/\"5\""))
                 .withHeader("Content-Type", containing("application/json-patch+json"))
-                .withRequestBody(equalToJson(pdsRequstBody))
+                .withRequestBody(equalToJson(fhirPatchJsonToUpdateMofTo("A1234")))
                 .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
 
         stubFor(post(urlMatching("/access-token"))
@@ -205,7 +189,7 @@ public class PdsControllerIntegrationTest {
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .withHeader("If-Match", matching("W/\"5\""))
                 .withHeader("Content-Type", containing("application/json-patch+json"))
-                .withRequestBody(equalToJson(pdsRequstBody))
+                .withRequestBody(equalToJson(fhirPatchJsonToUpdateMofTo("A1234")))
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withHeader("ETag", "W/\"6\"")
@@ -226,29 +210,12 @@ public class PdsControllerIntegrationTest {
         assertThat(body.getRecordETag()).isEqualTo("W/\"6\"");
     }
 
-
     @Test
     public void shouldRetryWhen503ErrorsFromPdsFhir() {
-        var requestBody = "{\n" +
-                "  \"previousGp\": \"A1234\",\n" +
-                "  \"recordETag\": \"W/\\\"5\\\"\"\n" +
-                "}";
+        var requestBody = new JSONObject()
+                .put("previousGp", "A1235")
+                .put("recordETag", "W/\"5\"").toString();
 
-        var pdsRequstBody = "{\n" +
-                "  \"patches\": [\n" +
-                "    {\n" +
-                "      \"op\": \"add\",\n" +
-                "      \"path\": \"/managingOrganization\",\n" +
-                "      \"value\": {\n" +
-                "        \"type\": \"Organization\",\n" +
-                "        \"identifier\": {\n" +
-                "          \"system\": \"https://fhir.nhs.uk/Id/ods-organization-code\",\n" +
-                "          \"value\": \"A1234\"\n" +
-                "        }\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ]\n" +
-                "}";
         stubFor(post(urlMatching("/access-token"))
                 .willReturn(
                         aResponse()
@@ -261,13 +228,13 @@ public class PdsControllerIntegrationTest {
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .withHeader("If-Match", matching("W/\"5\""))
                 .withHeader("Content-Type", containing("application/json-patch+json"))
-                .withRequestBody(equalToJson(pdsRequstBody))
+                .withRequestBody(equalToJson(fhirPatchJsonToUpdateMofTo("A1235")))
                 .whenScenarioStateIs(STARTED)
                 .willReturn(aResponse()
                         .withStatus(503) // request unsuccessful with status code 500
                         .withHeader("Content-Type", "text/xml")
                         .withBody("<response>Some content</response>"))
-                .willSetStateTo("CAUSE"));
+                .willSetStateTo("TRIED_ONCE"));
 
 
         stubFor(patch(urlMatching("/Patient/9691927179"))
@@ -275,8 +242,8 @@ public class PdsControllerIntegrationTest {
                 .withHeader("Authorization", matching("Bearer accessToken"))
                 .withHeader("If-Match", matching("W/\"5\""))
                 .withHeader("Content-Type", containing("application/json-patch+json"))
-                .withRequestBody(equalToJson(pdsRequstBody))
-                .whenScenarioStateIs("CAUSE")
+                .withRequestBody(equalToJson(fhirPatchJsonToUpdateMofTo("A1235")))
+                .whenScenarioStateIs("TRIED_ONCE")
                 .willReturn(aResponse()
                         .withHeader("Content-Type", "application/json")
                         .withHeader("ETag", "W/\"6\"")
@@ -535,6 +502,18 @@ public class PdsControllerIntegrationTest {
                 "  ],\n" +
                 "  \"resourceType\": \"Patient\"\n" +
                 "}";
+    }
+
+    private String fhirPatchJsonToUpdateMofTo(String newManagingOrganisationOdsCode) {
+        var expectedMofUpdatePatchJson = new JSONObject().put("patches", List.of(new JSONObject()
+                .put("op", "add")
+                .put("path", "/managingOrganization")
+                .put("value", new JSONObject()
+                        .put("type", "Organization")
+                        .put("identifier", new JSONObject()
+                                .put("system", "https://fhir.nhs.uk/Id/ods-organization-code")
+                                .put("value", newManagingOrganisationOdsCode))))).toString();
+        return expectedMofUpdatePatchJson;
     }
 
     private String suspendedPatientWithManagingOrganisationResponse() {
