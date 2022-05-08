@@ -8,6 +8,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Component
 @Slf4j
@@ -27,17 +28,19 @@ public class RetryingPdsFhirClient {
     }
 
     public PdsFhirPatient updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        return updateManagingOrganisationWithRetries(nhsNumber, updateRequest, UUID.randomUUID(), maxUpdateTries);
+        var sharedRequestIdAcrossRetries = UUID.randomUUID();
+        return processWithRetries(() -> client.updateManagingOrganisation(nhsNumber, updateRequest, sharedRequestIdAcrossRetries), maxUpdateTries
+        );
     }
 
-    private PdsFhirPatient updateManagingOrganisationWithRetries(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId, int triesLeft) {
+    private PdsFhirPatient processWithRetries(Supplier<PdsFhirPatient> updateProcess, int triesLeft) {
         try {
-            return client.updateManagingOrganisation(nhsNumber, updateRequest, requestId);
+            return updateProcess.get();
         }
         catch (PdsFhirServiceUnavailableException serverUnavailableException) {
             if (triesLeft > 1) {
                 log.error("Retrying server update, tries remaining: " + (triesLeft - 1));
-                return updateManagingOrganisationWithRetries(nhsNumber, updateRequest, requestId, triesLeft - 1);
+                return processWithRetries(updateProcess, triesLeft - 1);
             }
             log.error("Got server error after " + maxUpdateTries + " attempts.");
             throw serverUnavailableException;
