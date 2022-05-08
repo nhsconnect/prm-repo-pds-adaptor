@@ -10,3 +10,5 @@ fileignoreconfig:
 - filename: src/main/java/uk/nhs/prm/deductions/pdsadaptor/service/ReadSSMParameter.java
   checksum: 6908435f6a7e4f6c630415acc55444515eac402268f10c64ea8e66a20a342175
 version: ""
+allowed_patterns:
+- key
