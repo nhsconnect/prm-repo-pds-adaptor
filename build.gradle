@@ -138,6 +138,7 @@ spotbugsTest {
 }
 
 spotbugsIntegration {
+    ignoreFailures = true
     reports {
         html {
             enabled = true
