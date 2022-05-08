@@ -6,7 +6,7 @@ import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 
@@ -17,16 +17,16 @@ public class PdsService {
     private final RetryingPdsFhirClient pdsFhirClient;
 
     public SuspendedPatientStatus getPatientGpStatus(String nhsNumber) {
-        PdsResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+        PdsFhirPatient pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
         return convertToPatientStatusObject(pdsResponse);
     }
 
     public SuspendedPatientStatus updatePatientManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        PdsResponse pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
+        PdsFhirPatient pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
         return convertToPatientStatusObject(pdsResponse);
     }
 
-    private SuspendedPatientStatus convertToPatientStatusObject(PdsResponse pdsResponse) {
+    private SuspendedPatientStatus convertToPatientStatusObject(PdsFhirPatient pdsResponse) {
         if (hasDeceasedDateAndTime(pdsResponse)) {
             return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
         }
@@ -36,18 +36,18 @@ public class PdsService {
         return suspendedPatientStatus(pdsResponse.getId(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
     }
 
-    private String getOdsCode(PdsResponse pdsResponse) {
+    private String getOdsCode(PdsFhirPatient pdsResponse) {
         GeneralPractitioner generalPractitioner = pdsResponse.getGeneralPractitioner().get(0);
         return generalPractitioner.getIdentifier().getValue();
     }
 
-    private boolean hasGeneralPractitioner(PdsResponse pdsResponse) {
+    private boolean hasGeneralPractitioner(PdsFhirPatient pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
     }
-    private boolean hasDeceasedDateAndTime(PdsResponse pdsResponse) {
+    private boolean hasDeceasedDateAndTime(PdsFhirPatient pdsResponse) {
         return pdsResponse.getDeceasedDateTime() != null;
     }
-    private String getManagingOrganisation(PdsResponse pdsResponse) {
+    private String getManagingOrganisation(PdsFhirPatient pdsResponse) {
        if (pdsResponse.getManagingOrganization() != null) {
            return pdsResponse.getManagingOrganization().getIdentifier().getValue();
        }

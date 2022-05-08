@@ -11,7 +11,7 @@ import java.util.HashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
-import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.TestLogAppender.addTestLogAppender;
 
 class JsonLoggerTest {
 

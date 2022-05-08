@@ -12,7 +12,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import java.util.HashMap;
 
@@ -23,7 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender.addTestLogAppender;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.TestLogAppender.addTestLogAppender;
 
 class PdsFhirExceptionHandlerTest {
 
@@ -121,7 +121,7 @@ class PdsFhirExceptionHandlerTest {
 
     @Test
     void shouldThrowRuntimeExceptionWhenClientCannotParseSeeminglySuccessfulResponse____feelsLikeImplementationDetailLowerDownShouldMoveIntoHttpClient() {
-        var unparseableResponseException = new UnknownContentTypeException(PdsResponse.class, APPLICATION_JSON, 200,
+        var unparseableResponseException = new UnknownContentTypeException(PdsFhirPatient.class, APPLICATION_JSON, 200,
                 "ok", new HttpHeaders(), new byte[0]);
 
         var exception = assertThrows(RuntimeException.class, () ->

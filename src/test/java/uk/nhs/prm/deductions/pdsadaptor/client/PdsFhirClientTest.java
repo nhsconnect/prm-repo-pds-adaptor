@@ -18,7 +18,7 @@ import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpe
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import java.time.LocalDate;
 import java.util.UUID;
@@ -30,8 +30,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
-import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.PdsFhirTestData.buildPdsResponse;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.PdsFhirTestData.buildPdsSuspendedResponse;
 
 @ExtendWith(MockitoExtension.class)
 class PdsFhirClientTest {
@@ -70,31 +70,30 @@ class PdsFhirClientTest {
     class PdsFhirGetRequest {
         @Test
         void shouldSetHeaderOnRequestForGet() {
-            PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
+            PdsFhirPatient pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
 
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(new ResponseEntity<>(pdsResponse, HttpStatus.OK));
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsFhirPatient.class))).thenReturn(new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
             pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
 
-            verify(httpClient).get(eq(URL_PATH), headersCaptor.capture(), eq(PdsResponse.class));
+            verify(httpClient).get(eq(URL_PATH), headersCaptor.capture(), eq(PdsFhirPatient.class));
             assertThat(headersCaptor.getValue().get("X-Request-ID").get(0)).isNotNull();
         }
 
         @Test
         void shouldReturnPdsResponseWithEtagFromHeaders() {
-            PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
+            PdsFhirPatient pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setETag(RECORD_E_TAG);
 
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsFhirPatient.class))).thenReturn(
                     new ResponseEntity<>(pdsResponse, headers, HttpStatus.OK));
 
-            PdsResponse expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
+            PdsFhirPatient expected = pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
 
             assertThat(expected).isEqualTo(pdsResponse);
             assertThat(expected.getETag()).isEqualTo(RECORD_E_TAG);
-
         }
 
         @Test
@@ -113,11 +112,11 @@ class PdsFhirClientTest {
 
         @Test
         void shouldDelegateToExceptionHandlerWhenOkResponseButUnexpectedBodyFromPdsFhir() {
-            var unknownResponseException = new UnknownContentTypeException(PdsResponse.class, APPLICATION_JSON, 200,
+            var unknownResponseException = new UnknownContentTypeException(PdsFhirPatient.class, APPLICATION_JSON, 200,
                     "ok", new HttpHeaders(), new byte[0]);
             var exceptionFromHandler = new RuntimeException("kabooey");
 
-            when(httpClient.get(eq(URL_PATH), any(), eq(PdsResponse.class))).thenThrow(unknownResponseException);
+            when(httpClient.get(eq(URL_PATH), any(), eq(PdsFhirPatient.class))).thenThrow(unknownResponseException);
             when(clientExceptionHandler.handleCommonExceptions("requesting", unknownResponseException))
                     .thenThrow(exceptionFromHandler);
 
@@ -139,12 +138,12 @@ class PdsFhirClientTest {
             var pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
             var requestId = UUID.randomUUID();
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsFhirPatient.class))).thenReturn(
                     new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
             pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG), requestId);
 
-            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsFhirPatient.class));
             assertThat(headersCaptor.getValue().getFirst("X-Request-ID")).isEqualTo(requestId.toString());
             assertThat(headersCaptor.getValue().getContentType().toString()).isEqualTo("application/json-patch+json");
             assertThat(headersCaptor.getValue().getFirst("If-Match")).isEqualTo(RECORD_E_TAG);
@@ -158,13 +157,13 @@ class PdsFhirClientTest {
 
             var headers = headersWithEtag(tagVersion);
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
+            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsFhirPatient.class))).thenReturn(
                     new ResponseEntity<>(httpClientPdsResponse, headers, HttpStatus.OK));
 
             var updateResult = pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation, RECORD_E_TAG), aRequestId());
 
-            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
+            verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsFhirPatient.class));
             PdsPatchRequest requestBody = (PdsPatchRequest) patchCaptor.getValue();
 
             assertThat(requestBody).isNotNull();

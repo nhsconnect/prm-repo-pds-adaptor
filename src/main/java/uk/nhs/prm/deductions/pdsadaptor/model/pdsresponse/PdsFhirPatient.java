@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PdsResponse {
+public class PdsFhirPatient {
     private String id;
     private List<GeneralPractitioner> generalPractitioner;
     private ManagingOrganization managingOrganization;

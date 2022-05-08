@@ -7,9 +7,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
-import uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData;
+import uk.nhs.prm.deductions.pdsadaptor.testing.PdsFhirTestData;
 
 import java.time.LocalDate;
 
@@ -30,7 +30,7 @@ class PdsServiceTest {
 
     @Test
     void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatient() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), null, RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
@@ -43,7 +43,7 @@ class PdsServiceTest {
 
     @Test
     void shouldCallPdsFhirClientAndReturnResponseForNonSuspendedPatientWithManagingOrganisationIfSet() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
 
@@ -56,7 +56,7 @@ class PdsServiceTest {
 
     @Test
     void shouldReturnSuspendedPatientResponseWhenNoGpPractitionerField() {
-        PdsResponse pdsResponse = TestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234", RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234", RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
 
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
@@ -70,7 +70,7 @@ class PdsServiceTest {
 
     @Test
     void shouldReturnSuspendedPatientResponseWithDeceasedStatusTrueWhenPdsFhirReturnsDeceasedDateTimeField() {
-        PdsResponse pdsResponse = TestData.buildPdsDeceasedResponse(NHS_NUMBER ,  RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsDeceasedResponse(NHS_NUMBER ,  RECORD_E_TAG);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
 
         SuspendedPatientStatus expected = pdsService.getPatientGpStatus(NHS_NUMBER);
@@ -84,7 +84,7 @@ class PdsServiceTest {
     }
     @Test
     void shouldCallPdsFhirClientWithUpdateAndReturnResponseForNonSuspendedPatientWithManagingOrganisationIfSet() {
-        PdsResponse pdsResponse = TestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsResponse(NHS_NUMBER, "B1234", LocalDate.now().minusYears(1), "A9876", RECORD_E_TAG);
 
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"1\"");
 
@@ -101,7 +101,7 @@ class PdsServiceTest {
 
     @Test
     void shouldCallPdsFhirWithUpdateReturnSuspendedPatientResponseWhenNoGpPractitionerField() {
-        PdsResponse pdsResponse = TestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234", RECORD_E_TAG);
+        PdsFhirPatient pdsResponse = PdsFhirTestData.buildPdsSuspendedResponse(NHS_NUMBER , "B1234", RECORD_E_TAG);
 
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"1\"");
 

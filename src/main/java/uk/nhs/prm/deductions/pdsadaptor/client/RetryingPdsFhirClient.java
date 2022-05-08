@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import java.util.UUID;
 
@@ -22,15 +22,15 @@ public class RetryingPdsFhirClient {
         this.maxUpdateTries = maxUpdateTries;
     }
 
-    public PdsResponse requestPdsRecordByNhsNumber(String nhsNumber) {
+    public PdsFhirPatient requestPdsRecordByNhsNumber(String nhsNumber) {
         return client.requestPdsRecordByNhsNumber(nhsNumber);
     }
 
-    public PdsResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
+    public PdsFhirPatient updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         return updateManagingOrganisationWithRetries(nhsNumber, updateRequest, UUID.randomUUID(), maxUpdateTries);
     }
 
-    private PdsResponse updateManagingOrganisationWithRetries(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId, int triesLeft) {
+    private PdsFhirPatient updateManagingOrganisationWithRetries(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId, int triesLeft) {
         try {
             return client.updateManagingOrganisation(nhsNumber, updateRequest, requestId);
         }

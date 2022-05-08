@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.testhelpers;
+package uk.nhs.prm.deductions.pdsadaptor.testing;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.filter.ThresholdFilter;

@@ -20,7 +20,7 @@ import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
-import uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestLogAppender;
+import uk.nhs.prm.deductions.pdsadaptor.testing.TestLogAppender;
 
 import java.security.Principal;
 
