@@ -18,6 +18,7 @@ import java.util.List;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.MapBuilder.json;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ContextConfiguration(initializers = {WireMockInitializer.class})
@@ -258,9 +259,10 @@ public class PdsAdaptorIntegrationTest {
     }
 
     private String freshAccessToken() {
-        return "{\"access_token\": \"accessToken\",\n" +
-                " \"expires_in\": \"599\",\n" +
-                " \"token_type\": \"Bearer\"}";
+        return json(at -> at
+                .kv("access_token", "accessToken")
+                .kv("expires_in", "599")
+                .kv("token_type", "Bearer"));
     }
 
     private String createURLWithPort(String uri) {

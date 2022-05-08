@@ -44,9 +44,11 @@ public class PdsService {
     private boolean hasGeneralPractitioner(PdsFhirPatient pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
     }
+
     private boolean hasDeceasedDateAndTime(PdsFhirPatient pdsResponse) {
         return pdsResponse.getDeceasedDateTime() != null;
     }
+
     private String getManagingOrganisation(PdsFhirPatient pdsResponse) {
        if (pdsResponse.getManagingOrganization() != null) {
            return pdsResponse.getManagingOrganization().getIdentifier().getValue();

@@ -76,7 +76,9 @@ springBoot {
 sourceSets {
     integration {
         compileClasspath += sourceSets.main.output
+        compileClasspath += sourceSets.test.output
         runtimeClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.test.output
     }
 }
 

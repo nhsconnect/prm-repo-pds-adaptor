@@ -14,6 +14,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import uk.nhs.prm.deductions.pdsadaptor.testing.MapBuilder;
 
 import java.io.IOException;
 
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.MapBuilder.json;
 
 @ExtendWith(MockitoExtension.class)
 public class AuthServiceTest {
@@ -43,9 +45,10 @@ public class AuthServiceTest {
     public void shouldRequestAccessTokenWithSignedJWTWhenGettitngNewAccessToken() throws Exception {
         when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
 
-        String tokenResponse = "{\"access_token\": \"Sr5PGv19wTEHJdDr2wx2f7IGd0cw\",\n" +
-            " \"expires_in\": \"599\",\n" +
-            " \"token_type\": \"Bearer\"}";
+        String tokenResponse = json(atr -> atr
+                .kv("access_token", "Sr5PGv19wTEHJdDr2wx2f7IGd0cw")
+                .kv("expires_in", "599")
+                .kv("token_type", "Bearer"));
 
         HttpEntity<MultiValueMap<String, String>> request = createRequest();
 
@@ -63,9 +66,10 @@ public class AuthServiceTest {
     public void shouldRequestAccessTokenWithSignedJWTWhenCurrentAccessTokenIsEmpty() throws IOException {
         when(signedJWTGenerator.createSignedJWT()).thenReturn("Test");
 
-        String tokenResponse = "{\"access_token\": \"Sr5PGv19wTEHJdDr2wx2f7IGd0cw\",\n" +
-            " \"expires_in\": \"599\",\n" +
-            " \"token_type\": \"Bearer\"}";
+        String tokenResponse = json(atr -> atr
+                .kv("access_token", "Sr5PGv19wTEHJdDr2wx2f7IGd0cw")
+                .kv("expires_in", "599")
+                .kv("token_type", "Bearer"));
 
         HttpEntity<MultiValueMap<String, String>> request = createRequest();
 

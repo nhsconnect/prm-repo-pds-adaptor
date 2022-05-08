@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static uk.nhs.prm.deductions.pdsadaptor.testing.MapBuilder.json;
 
 @ExtendWith(MockitoExtension.class)
 @WebMvcTest(PdsController.class)
@@ -98,10 +99,9 @@ class PdsControllerTest {
                 .principal(mockPrincipal)
                 .contentType(MediaType.APPLICATION_JSON)
                 .characterEncoding("utf-8")
-                .content("{\n" +
-                    "  \"previousGp\": \"A1234\",\n" +
-                    "  \"recordETag\": \"W/\\\"2\\\"\"\n" +
-                    "}")
+                .content(json(update -> update
+                        .kv("previousGp", "A1234")
+                        .kv("recordETag", "W/\"2\"")))
             )
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString();

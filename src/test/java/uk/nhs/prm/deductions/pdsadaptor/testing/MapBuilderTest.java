@@ -3,6 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.testing;
 import org.json.JSONObject;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,5 +95,25 @@ public class MapBuilderTest {
         assertThat(map.get("noo")).isEqualTo("now");
     }
 
+    @Test
+    public void andSupportsArraysOfLiterals() {
+        var json = json(jb -> jb.kv("wow", array("a", "b")));
+
+        assertThat(json).isEqualTo("{\"wow\":[\"a\",\"b\"]}");
+    }
+
+    @Test
+    public void andSupportsLambdaSpecsForArrayElements() {
+        var map = create(jb -> jb.kv("wow", array(
+                a -> "a",
+                b -> b.kv("type", "nested")
+                      .kv("name", "b"))));
+
+        var wowArray = (List<Object>) map.get("wow");
+        assertThat(wowArray.get(0)).isEqualTo("a");
+        var objectFromMap = (Map<String, Object>) wowArray.get(1);
+        assertThat(objectFromMap.get("type")).isEqualTo("nested");
+        assertThat(objectFromMap.get("name")).isEqualTo("b");
+    }
 }
 
