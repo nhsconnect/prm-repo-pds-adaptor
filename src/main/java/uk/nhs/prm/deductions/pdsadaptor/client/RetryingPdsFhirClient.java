@@ -3,7 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirGeneralServiceUnavailableException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirServiceUnavailableException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
@@ -14,11 +14,11 @@ import java.util.UUID;
 public class RetryingPdsFhirClient {
 
     private final int maxUpdateTries;
-    private final PdsFhirSingleShotClient client;
+    private final PdsFhirClient client;
 
-    public RetryingPdsFhirClient(PdsFhirSingleShotClient pdsFhirSingleShotClient,
+    public RetryingPdsFhirClient(PdsFhirClient pdsFhirClient,
                                  @Value("${pds.fhir.update.number.of.tries}") int maxUpdateTries) {
-        this.client = pdsFhirSingleShotClient;
+        this.client = pdsFhirClient;
         this.maxUpdateTries = maxUpdateTries;
     }
 
@@ -34,7 +34,7 @@ public class RetryingPdsFhirClient {
         try {
             return client.updateManagingOrganisation(nhsNumber, updateRequest, requestId);
         }
-        catch (PdsFhirGeneralServiceUnavailableException serverUnavailableException) {
+        catch (PdsFhirServiceUnavailableException serverUnavailableException) {
             if (triesLeft > 1) {
                 log.error("Retrying server update, tries remaining: " + (triesLeft - 1));
                 return updateManagingOrganisationWithRetries(nhsNumber, updateRequest, requestId, triesLeft - 1);

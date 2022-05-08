@@ -113,7 +113,7 @@ class PdsFhirExceptionHandlerTest {
     void shouldThrowNonSpecificPdsFhirUnavailableExceptionWhenPdsFhirIsApparentlyUnavailable() {
         var pdsServiceIsUnavailable503 = new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error");
 
-        var exception = assertThrows(PdsFhirGeneralServiceUnavailableException.class, () ->
+        var exception = assertThrows(PdsFhirServiceUnavailableException.class, () ->
                 handler.handleCommonExceptions("context", pdsServiceIsUnavailable503));
 
         assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");

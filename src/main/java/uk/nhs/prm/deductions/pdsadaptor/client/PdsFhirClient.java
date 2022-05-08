@@ -23,16 +23,16 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Slf4j
 @Component
-public class PdsFhirSingleShotClient {
+public class PdsFhirClient {
     private final AuthenticatingHttpClient httpClient;
     private final PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
     private final PdsFhirExceptionHandler exceptionHandler;
     private final String pdsFhirEndpoint;
 
-    public PdsFhirSingleShotClient(AuthenticatingHttpClient httpClient,
-                                   PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
-                                   PdsFhirExceptionHandler exceptionHandler,
-                                   @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
+    public PdsFhirClient(AuthenticatingHttpClient httpClient,
+                         PdsFhirPatchRejectionInterpreter patchRejectionInterpreter,
+                         PdsFhirExceptionHandler exceptionHandler,
+                         @Value("${pdsFhirEndpoint}") String pdsFhirEndpoint) {
 
         this.httpClient = httpClient;
         this.patchRejectionInterpreter = patchRejectionInterpreter;

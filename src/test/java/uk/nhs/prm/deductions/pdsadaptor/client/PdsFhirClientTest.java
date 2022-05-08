@@ -1,6 +1,5 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,24 +13,22 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.UnknownContentTypeException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsResponse;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsResponse;
 import static uk.nhs.prm.deductions.pdsadaptor.testhelpers.TestData.buildPdsSuspendedResponse;
@@ -50,7 +47,7 @@ class PdsFhirClientTest {
 
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
-    private RetryingPdsFhirClient pdsFhirClient;
+    private PdsFhirClient pdsFhirClient;
 
     private static final String NHS_NUMBER = "123456789";
 
@@ -65,8 +62,7 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        var pdsFhirSingleShotClient = new PdsFhirSingleShotClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT);
-        pdsFhirClient = new RetryingPdsFhirClient(pdsFhirSingleShotClient, 3);
+        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT);
     }
 
     @Nested
@@ -140,23 +136,24 @@ class PdsFhirClientTest {
 
         @Test
         void shouldSetHeaderOnRequestForPatch() {
-            PdsResponse pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
+            var pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
+            var requestId = UUID.randomUUID();
 
             when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class))).thenReturn(
                     new ResponseEntity<>(pdsResponse, HttpStatus.OK));
 
-            pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG));
+            pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG), requestId);
 
             verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
-            assertThat(headersCaptor.getValue().getFirst("X-Request-ID")).isNotNull();
+            assertThat(headersCaptor.getValue().getFirst("X-Request-ID")).isEqualTo(requestId.toString());
             assertThat(headersCaptor.getValue().getContentType().toString()).isEqualTo("application/json-patch+json");
             assertThat(headersCaptor.getValue().getFirst("If-Match")).isEqualTo(RECORD_E_TAG);
         }
 
         @Test
         void shouldReturnPdsResponseWithEtagFromHeadersAddedToItAfterSuccessfulUpdate() {
-            String tagVersion = "W/\"2\"";
-            String managingOrganisation = "A1234";
+            var tagVersion = "W/\"2\"";
+            var managingOrganisation = "A1234";
             var httpClientPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, managingOrganisation, null);
 
             var headers = headersWithEtag(tagVersion);
@@ -165,7 +162,7 @@ class PdsFhirClientTest {
                     new ResponseEntity<>(httpClientPdsResponse, headers, HttpStatus.OK));
 
             var updateResult = pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation, RECORD_E_TAG));
+                    NHS_NUMBER, new UpdateManagingOrganisationRequest(managingOrganisation, RECORD_E_TAG), aRequestId());
 
             verify(httpClient).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
             PdsPatchRequest requestBody = (PdsPatchRequest) patchCaptor.getValue();
@@ -192,8 +189,9 @@ class PdsFhirClientTest {
 
             when(httpClient.patch(any(), any(), any(), any())).thenThrow(httpException);
 
-            var exception = assertThrows(PdsFhirPatchInvalidSpecifiesNoChangesException.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+            var exception = assertThrows(PdsFhirPatchInvalidSpecifiesNoChangesException.class, () -> {
+                pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, anUpdateRequest(), aRequestId());
+            });
 
             assertThat(exception.getMessage())
                     .isEqualTo("PDS FHIR request failed status code: 400. reason Provided patch made " +
@@ -211,7 +209,7 @@ class PdsFhirClientTest {
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+                    NHS_NUMBER, anUpdateRequest(), aRequestId()));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
         }
@@ -226,78 +224,23 @@ class PdsFhirClientTest {
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest(MANAGING_ORGANISATION, RECORD_E_TAG)));
+                    NHS_NUMBER, anUpdateRequest(), aRequestId()));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
         }
+    }
 
-        @Test
-        void shouldRetryIfPdsFhirServiceUnavailableWithSameRequestIdEachTime() {
-            var initialException = new HttpServerErrorException(SERVICE_UNAVAILABLE, "error");
+    private UUID aRequestId() {
+        return UUID.randomUUID();
+    }
 
-            when(clientExceptionHandler.handleCommonExceptions(any(), any()))
-                    .thenThrow(PdsFhirGeneralServiceUnavailableException.class);
+    private HttpHeaders headersWithEtag(String etag) {
+        var headers = new HttpHeaders();
+        headers.setETag(etag);
+        return headers;
+    }
 
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
-                    .thenThrow(initialException);
-
-            assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
-
-            verify(httpClient, times(3)).patch(eq(URL_PATH), headersCaptor.capture(), patchCaptor.capture(), eq(PdsResponse.class));
-
-            var lastRequestIdUsed = headersCaptor.getValue().get("X-Request-ID").get(0);
-            assertThat(requestIdsFromEachCall(headersCaptor)).allMatch(requestIdFromTry -> lastRequestIdUsed.equals(requestIdFromTry));
-        }
-
-        @Test
-        void shouldRetryUpdateIfPdsUnavailableAndReturnSuccessfulResponseIfThenSuccessful() {
-            var successfulPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
-
-            when(clientExceptionHandler.handleCommonExceptions(any(), any()))
-                    .thenThrow(PdsFhirGeneralServiceUnavailableException.class);
-
-            when(httpClient.patch(eq(URL_PATH), any(), any(), eq(PdsResponse.class)))
-                    .thenThrow(new RuntimeException())
-                    .thenReturn(new ResponseEntity<>(successfulPdsResponse, headersWithEtag("\"new etag\""), HttpStatus.OK));
-
-            var response = pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "previous etag"));
-
-            assertThat(response).isEqualTo(successfulPdsResponse);
-        }
-
-        @Test
-        void shouldDelegateToExceptionHandlerWhenPdsFhirIsUnavailableAfterRetry() {
-            var exceptionFromHandler = new PdsFhirGeneralServiceUnavailableException(new HttpServerErrorException(SERVICE_UNAVAILABLE));
-            var causalException = new RuntimeException("some http exception related to service unavailability");
-
-            when(clientExceptionHandler.handleCommonExceptions("updating", causalException))
-                    .thenThrow(exceptionFromHandler);
-
-            when(httpClient.patch(any(), any(), any(), any())).thenThrow(causalException);
-
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
-                    NHS_NUMBER, new UpdateManagingOrganisationRequest("ODS123", "someTag")));
-
-            verify(httpClient, times(3)).patch(any(), any(), any(), any());
-
-            assertThat(resultingException).isEqualTo(exceptionFromHandler);
-        }
-
-        @NotNull
-        private List<String> requestIdsFromEachCall(ArgumentCaptor<HttpHeaders> headersCaptor) {
-            List<String> requestIdsFromEachTry = new ArrayList<>();
-            for (HttpHeaders headers : headersCaptor.getAllValues()) {
-                requestIdsFromEachTry.add(headers.get("X-Request-ID").get(0));
-            }
-            return requestIdsFromEachTry;
-        }
-
-        @NotNull
-        private HttpHeaders headersWithEtag(String etag) {
-            var headers = new HttpHeaders();
-            headers.setETag(etag);
-            return headers;
-        }
+    private UpdateManagingOrganisationRequest anUpdateRequest() {
+        return new UpdateManagingOrganisationRequest("ODS123", "someTag");
     }
 }

@@ -28,7 +28,7 @@ public class PdsFhirExceptionHandler {
 
         if (exception instanceof HttpServerErrorException) {
             log.warn(format("PDS FHIR Server error when %s PDS Record", description));
-            throw new PdsFhirGeneralServiceUnavailableException((HttpServerErrorException) exception);
+            throw new PdsFhirServiceUnavailableException((HttpServerErrorException) exception);
         }
 
         log.warn("Unexpected Exception", exception);
