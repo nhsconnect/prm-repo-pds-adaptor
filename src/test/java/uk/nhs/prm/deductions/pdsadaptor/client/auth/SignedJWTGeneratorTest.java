@@ -5,46 +5,74 @@ import org.bouncycastle.openssl.PEMException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class SignedJWTGeneratorTest {
-    String apiKey;
-    String accessTokenEndpoint;
-    String keyId;
-    String keyString;
+    private String apiKey;
+    private String accessTokenEndpoint;
+    private String keyId;
+    private String keyString;
+    private JwtSigner jwtSigner;
 
     @BeforeEach
     void setUp() {
-        this.apiKey = "api-key";
-        this.accessTokenEndpoint = "https://endpoint";
-        this.keyId = "key-id";
-        this.keyString = getTestKeyString();
+        apiKey = "api-key";
+        accessTokenEndpoint = "https://endpoint";
+        keyId = "key-id";
+        keyString = getTestKeyString();
+        jwtSigner = new JwtSigner();
     }
 
     @Test
-    public void testShouldGetJWTWhenValidKey() throws IOException, JOSEException {
-        SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator(keyString, apiKey, accessTokenEndpoint, keyId);
+    public void testShouldGetJwtWhenValidKey() {
+        SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator(keyString, apiKey, accessTokenEndpoint, keyId, jwtSigner);
         String jwt = signedJWTGenerator.createSignedJWT();
         assertNotNull(jwt);
     }
 
     @Test
-    public void testShouldThrowExceptionWhenEmptyPrivateKey() {
-        assertThrows(PEMException.class, () -> {
-            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("", apiKey, accessTokenEndpoint, keyId);
+    public void shouldThrowMisconfigurationExceptionRegardingPrivateKey_IncludingCausingException_WhenEmptyPrivateKey() {
+        var exception = assertThrows(Exception.class, () -> {
+            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("", apiKey, accessTokenEndpoint, keyId, jwtSigner);
             signedJWTGenerator.createSignedJWT();
         });
+
+        assertThat(exception).isInstanceOf(PdsAdaptorMisconfigurationException.class);
+        assertThat(exception.getMessage()).containsIgnoringCase("private key");
+        assertThat(exception.getCause()).isInstanceOf(PEMException.class);
     }
 
     @Test
-    public void testShouldThrowMalformedStringException() {
-        assertThrows(PEMException.class, () -> {
-            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("malformed", apiKey, accessTokenEndpoint, keyId);
+    public void shouldThrowMisconfigurationExceptionRegardingPrivateKey_IncludingCausingException_WhenMalformedPrivateKey() {
+        var exception = assertThrows(Exception.class, () -> {
+            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator("malformed", apiKey, accessTokenEndpoint, keyId, jwtSigner);
             signedJWTGenerator.createSignedJWT();
         });
+
+        assertThat(exception).isInstanceOf(PdsAdaptorMisconfigurationException.class);
+        assertThat(exception.getMessage()).containsIgnoringCase("private key");
+        assertThat(exception.getCause()).isInstanceOf(PEMException.class);
+    }
+
+    @Test
+    public void testShouldThrowAMisconfigurationExceptionForAnyOtherConfigurationError() throws JOSEException {
+        var mockSigner = mock(JwtSigner.class);
+        var causingException = new JOSEException("boom");
+
+        doThrow(causingException).when(mockSigner).signIt(any(), any());
+
+        var exception = assertThrows(Exception.class, () -> {
+            SignedJWTGenerator signedJWTGenerator = new SignedJWTGenerator(keyString, apiKey, accessTokenEndpoint, "", mockSigner);
+            signedJWTGenerator.createSignedJWT();
+        });
+
+        assertThat(exception).isInstanceOf(PdsAdaptorMisconfigurationException.class);
+        assertThat(exception.getMessage()).containsIgnoringCase("unable to sign jwt");
+        assertThat(exception.getCause()).isEqualTo(causingException);
     }
 
     private String getTestKeyString() {

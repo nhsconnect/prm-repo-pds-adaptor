@@ -41,6 +41,7 @@ public class PdsAdaptorIntegrationTest {
         wireMockServer.resetAll();
     }
 
+    // i'm not sure this always tests exactly what it states, dependent on ordering
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnauthorized() {
         stubFor(get(urlMatching("/Patient/9691927179"))

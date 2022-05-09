@@ -28,15 +28,22 @@ public class SignedJWTGenerator {
     private final String jwtApiKey;
     private final String accessTokenEndpoint;
     private final String jwtKeyId;
+    private final JwtSigner jwtSigner;
 
-    public SignedJWTGenerator(@Value("${jwtPrivateKey}") String jwtPrivateKey, @Value("${jwtApiKey}") String jwtApiKey, @Value("${accessTokenEndpoint}") String accessTokenEndpoint, @Value("${jwtKeyId}") String jwtKeyId) {
+    public SignedJWTGenerator(@Value("${jwtPrivateKey}") String jwtPrivateKey,
+                              @Value("${jwtApiKey}") String jwtApiKey,
+                              @Value("${accessTokenEndpoint}") String accessTokenEndpoint,
+                              @Value("${jwtKeyId}") String jwtKeyId,
+                              JwtSigner jwtSigner) {
+
         this.jwtPrivateKey = jwtPrivateKey;
         this.jwtApiKey = jwtApiKey;
         this.accessTokenEndpoint = accessTokenEndpoint;
         this.jwtKeyId = jwtKeyId;
+        this.jwtSigner = jwtSigner;
     }
 
-    public String createSignedJWT() throws IOException {
+    public String createSignedJWT() {
         PrivateKey rsaJWK = getPrivateKey(jwtPrivateKey);
         JWSSigner signer = new RSASSASigner(rsaJWK);
         JWTClaimsSet claimsSet = getClaimsSet();
@@ -50,7 +57,7 @@ public class SignedJWTGenerator {
     private void signJwt(JWSSigner signer, SignedJWT signedJWT) {
         log.info("Signing JWT Token");
         try {
-            signedJWT.sign(signer);
+            jwtSigner.signIt(signer, signedJWT);
         } catch (JOSEException e) {
             throw new SignedJwtException(e);
         }
@@ -66,13 +73,18 @@ public class SignedJWTGenerator {
                 .build();
     }
 
-    private PrivateKey getPrivateKey(String privateKeyString) throws IOException {
-        log.info("Parsing RSA Private key");
-        PEMParser pemParser = new PEMParser(new StringReader(privateKeyString));
-        Security.addProvider(new BouncyCastleProvider());
-        JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
-        Object object = pemParser.readObject();
-        KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
-        return kp.getPrivate();
+    private PrivateKey getPrivateKey(String privateKeyString) {
+        try {
+            log.info("Parsing RSA Private key");
+            PEMParser pemParser = new PEMParser(new StringReader(privateKeyString));
+            Security.addProvider(new BouncyCastleProvider());
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+            Object object = pemParser.readObject();
+            KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+            return kp.getPrivate();
+        }
+        catch (IOException e) {
+            throw new PdsAdaptorMisconfigurationException("Private key configuration unusable", e);
+        }
     }
 }

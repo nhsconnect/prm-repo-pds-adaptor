@@ -48,7 +48,7 @@ public class PdsFhirClient {
                 log.info("Successfully requested pds record");
                 return addEtagToResponseObject(response);
             }
-            catch (Exception exception) {
+            catch (RuntimeException exception) {
                 throw exceptionHandler.handleCommonExceptions("requesting", exception);
             }
         });
@@ -66,7 +66,7 @@ public class PdsFhirClient {
                 log.info("Successfully updated managing organisation on pds record.");
                 return addEtagToResponseObject(response);
             }
-            catch (Exception exception) {
+            catch (RuntimeException exception) {
                 if (patchRejectionInterpreter.isRejectionDueToNotMakingChanges(exception)) {
                     log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
                     throw new PdsFhirPatchInvalidSpecifiesNoChangesException();

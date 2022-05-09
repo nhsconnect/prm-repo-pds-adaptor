@@ -12,3 +12,4 @@ fileignoreconfig:
 version: ""
 allowed_patterns:
 - key
+- Key

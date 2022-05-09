@@ -1,7 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.client.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,8 +15,6 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.AccessTokenRequestException;
 
-import java.io.IOException;
-
 @Service
 @Slf4j
 public class AuthService {
@@ -27,7 +24,9 @@ public class AuthService {
     private final String accessTokenEndpoint;
     private String accessToken = "";
 
-    public AuthService(SignedJWTGenerator signedJWTGenerator, RestTemplate restTemplate, @Value("${accessTokenEndpoint}") String accessTokenEndpoint) {
+    public AuthService(SignedJWTGenerator signedJWTGenerator,
+                       RestTemplate restTemplate,
+                       @Value("${accessTokenEndpoint}") String accessTokenEndpoint) {
         this.signedJWTGenerator = signedJWTGenerator;
         this.restTemplate = restTemplate;
         this.accessTokenEndpoint = accessTokenEndpoint;
@@ -42,9 +41,6 @@ public class AuthService {
             return accessToken;
         } catch (HttpStatusCodeException e) {
             log.error("Got a http exception when requesting new access token", e);
-            throw e;
-        } catch (IOException e) {
-            log.error("IO Exception");
             throw new AccessTokenRequestException(e);
         }
     }
@@ -62,7 +58,7 @@ public class AuthService {
         this.accessToken = accessToken;
     }
 
-    private HttpEntity<MultiValueMap<String, String>> createRequestEntity() throws IOException {
+    private HttpEntity<MultiValueMap<String, String>> createRequestEntity() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -74,9 +70,13 @@ public class AuthService {
         return new HttpEntity<>(requestBody, headers);
     }
 
-    private String getAccessTokenFromResponse(ResponseEntity<String> accessTokenResponse) throws JsonProcessingException {
-        JsonNode parent = new ObjectMapper().readTree(accessTokenResponse.getBody());
-        return parent.get("access_token").asText();
+    private String getAccessTokenFromResponse(ResponseEntity<String> accessTokenResponse) {
+        try {
+            var parent = new ObjectMapper().readTree(accessTokenResponse.getBody());
+            return parent.get("access_token").asText();
+        }
+        catch (JsonProcessingException e) {
+            throw new AccessTokenRequestException("Could not handle access token response", e);
+        }
     }
-
 }

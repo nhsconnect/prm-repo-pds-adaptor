@@ -105,7 +105,7 @@ class PdsFhirClientTest {
             when(clientExceptionHandler.handleCommonExceptions("requesting", causingException))
                     .thenThrow(exceptionFromHandler);
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber("123"));
+            var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber("123"));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
         }
@@ -120,7 +120,7 @@ class PdsFhirClientTest {
             when(clientExceptionHandler.handleCommonExceptions("requesting", unknownResponseException))
                     .thenThrow(exceptionFromHandler);
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
+            var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
         }
@@ -207,7 +207,7 @@ class PdsFhirClientTest {
             when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
                     .thenThrow(exceptionFromHandler);
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
+            var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, anUpdateRequest(), aRequestId()));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
@@ -222,7 +222,7 @@ class PdsFhirClientTest {
             when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
                     .thenThrow(exceptionFromHandler);
 
-            var resultingException = assertThrows(Exception.class, () -> pdsFhirClient.updateManagingOrganisation(
+            var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.updateManagingOrganisation(
                     NHS_NUMBER, anUpdateRequest(), aRequestId()));
 
             assertThat(resultingException).isEqualTo(exceptionFromHandler);
