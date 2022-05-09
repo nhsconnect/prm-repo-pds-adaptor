@@ -3,10 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.UnknownContentTypeException;
+import org.springframework.web.client.*;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
 
 import static java.lang.String.format;
@@ -28,7 +25,11 @@ public class PdsFhirExceptionHandler {
 
         if (exception instanceof HttpServerErrorException) {
             log.warn(format("PDS FHIR Server error when %s PDS Record", description));
-            throw new PdsFhirServiceUnavailableException((HttpServerErrorException) exception);
+            throw new RetryableRequestException((HttpServerErrorException) exception);
+        }
+
+        if (exception instanceof ResourceAccessException) {
+            throw new RetryableRequestException((ResourceAccessException) exception);
         }
 
         log.warn("Unexpected Exception", exception);

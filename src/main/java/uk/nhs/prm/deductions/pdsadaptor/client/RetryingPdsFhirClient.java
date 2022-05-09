@@ -3,7 +3,7 @@ package uk.nhs.prm.deductions.pdsadaptor.client;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirServiceUnavailableException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.RetryableRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
@@ -38,13 +38,13 @@ public class RetryingPdsFhirClient {
         try {
             return requestProcess.get();
         }
-        catch (PdsFhirServiceUnavailableException serverUnavailableException) {
+        catch (RetryableRequestException retryableException) {
             if (triesLeft > 1) {
                 log.error("Retrying server request, tries remaining: " + (triesLeft - 1));
                 return requestWithRetries(requestProcess, triesLeft - 1);
             }
-            log.error("Giving up on server error after " + maxUpdateTries + " attempts.");
-            throw serverUnavailableException;
+            log.error("Giving up on server request after " + maxUpdateTries + " attempts.");
+            throw retryableException;
         }
     }
 

@@ -9,7 +9,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.HttpServerErrorException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirServiceUnavailableException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.RetryableRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 
 import java.util.UUID;
@@ -56,7 +56,7 @@ class RetryingPdsFhirClientTest {
         var pdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
 
         when(oneShotClient.requestPdsRecordByNhsNumber(NHS_NUMBER))
-                .thenThrow(new PdsFhirServiceUnavailableException(aServerException()))
+                .thenThrow(new RetryableRequestException(aServerException()))
                 .thenReturn(pdsResponse);
 
         var actualResponse = retryingClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
@@ -67,8 +67,8 @@ class RetryingPdsFhirClientTest {
     }
 
     @Test
-    void shouldRetryUpdateIfPdsFhirServiceUnavailable_Critically_WithSameRequestIdForEachTrySoThatAnyInterruptedProcessingIsNotDuplicatedInPds() {
-        var exception = new PdsFhirServiceUnavailableException(aServerException());
+    void shouldRetryUpdateIfCannotGetThroughToPds_Critically_WithSameRequestIdForEachTrySoThatAnyInterruptedProcessingIsNotDuplicatedInPds() {
+        var exception = new RetryableRequestException(aServerException());
         var updateRequest = anUpdateRequest();
 
         when(oneShotClient.updateManagingOrganisation(any(), any(), any()))
@@ -85,11 +85,11 @@ class RetryingPdsFhirClientTest {
     }
 
     @Test
-    void shouldRetryUpdateIfPdsUnavailableAndReturnSuccessfulResponseIfThenSuccessful() {
+    void shouldRetryUpdateIfCannotGetThroughToPdsAndReturnSuccessfulResponseIfThenSuccessful() {
         var successfulPdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
 
         when(oneShotClient.updateManagingOrganisation(any(), any(), any()))
-                .thenThrow(new PdsFhirServiceUnavailableException(aServerException()))
+                .thenThrow(new RetryableRequestException(aServerException()))
                 .thenReturn(successfulPdsResponse);
 
         var response = retryingClient.updateManagingOrganisation(NHS_NUMBER, anUpdateRequest());

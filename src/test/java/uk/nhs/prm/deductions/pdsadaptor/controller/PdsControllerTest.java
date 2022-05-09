@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.AccessTokenRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.BadRequestException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirServiceUnavailableException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.RetryableRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.TooManyRequestsException;
 import uk.nhs.prm.deductions.pdsadaptor.configuration.Tracer;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
@@ -164,7 +164,7 @@ class PdsControllerTest {
 
     @Test
     void shouldReturn503ResponseWhenPdsRequestReturnsAServerException() throws Exception {
-        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(PdsFhirServiceUnavailableException.class);
+        when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(RetryableRequestException.class);
 
         Principal mockPrincipal = Mockito.mock(Principal.class);
         Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");

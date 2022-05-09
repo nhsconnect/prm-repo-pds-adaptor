@@ -19,8 +19,6 @@ import java.util.HashMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static uk.nhs.prm.deductions.pdsadaptor.testing.TestLogAppender.addTestLogAppender;
@@ -110,13 +108,24 @@ class PdsFhirExceptionHandlerTest {
     }
 
     @Test
-    void shouldThrowNonSpecificPdsFhirUnavailableExceptionWhenPdsFhirIsApparentlyUnavailable() {
+    void whenPdsFhirIsApparentlyUnavailableShouldThrowExceptionDenotingThatItIsPossiblyATemporaryIssueAndThereforeProbablyUsefulToRetry() {
         var pdsServiceIsUnavailable503 = new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE, "error");
 
-        var exception = assertThrows(PdsFhirServiceUnavailableException.class, () ->
+        var exception = assertThrows(RetryableRequestException.class, () ->
                 handler.handleCommonExceptions("context", pdsServiceIsUnavailable503));
 
         assertThat(exception.getMessage()).isEqualTo("PDS FHIR request failed status code: 503. reason 503 error");
+    }
+
+    @Test
+    void whenThereIsANetworkFailureOrTimeoutThrowExceptionThatItIsProbablyUsefulToRetry() {
+        var networkFailure = new ResourceAccessException("something like a socket timeout");
+
+        var exception = assertThrows(RetryableRequestException.class, () ->
+                handler.handleCommonExceptions("context", networkFailure));
+
+        assertThat(exception.getCause()).isEqualTo(networkFailure);
+        assertThat(exception.getMessage()).contains("something like a socket timeout");
     }
 
     @Test

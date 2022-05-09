@@ -1,8 +1,11 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
+import com.github.tomakehurst.wiremock.http.Fault;
 import com.github.tomakehurst.wiremock.http.ResponseDefinition;
 import org.json.JSONObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +30,16 @@ public class PdsAdaptorIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    @Autowired
+    private WireMockServer wireMockServer;
+
     @LocalServerPort
     private int port;
+
+    @BeforeEach
+    void resetStubs() {
+        wireMockServer.resetAll();
+    }
 
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnauthorized() {
@@ -46,7 +57,7 @@ public class PdsAdaptorIntegrationTest {
                         .withBody(loadResource("fhir-responses/not-suspended-patient.json"))));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         var body = response.getBody();
@@ -74,7 +85,7 @@ public class PdsAdaptorIntegrationTest {
                         .withBody(loadResource("fhir-responses/deceased-patient.json"))));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         var body = response.getBody();
@@ -97,19 +108,41 @@ public class PdsAdaptorIntegrationTest {
                 .willReturn(aResponse().withStatus(503)));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     @Test
-    public void shouldHandleAuthErrorsFromPdsFhirAndReturn503Status() {
+    public void shouldDoAQuickRetryOnNetworkFailure() {
+        stubFor(post(urlMatching("/access-token"))
+                .willReturn(aResponse().withBody(freshAccessToken())));
+
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
+
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .willReturn(aValidPatientResponse()));
+
+        var response = restTemplate.exchange(
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getNhsNumber()).isEqualTo("9691927179");
+    }
+
+    @Test
+    public void shouldHandleFailureToGetAccessTokenFromAuthServer__WhenWeForceReauthentication__AndReturn503Status() {
+        stubFor(get(urlMatching("/Patient/9691927179"))
+                .willReturn(aResponse().withStatus(403)));
+
         stubFor(post(urlMatching("/access-token"))
                 .willReturn(aResponse().withStatus(403)));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
@@ -125,7 +158,7 @@ public class PdsAdaptorIntegrationTest {
                 .willReturn(aResponse().withStatus(400)));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -141,7 +174,7 @@ public class PdsAdaptorIntegrationTest {
                 .willReturn(aResponse().withStatus(429)));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"), HttpMethod.GET,
+                wireMockUrl("/suspended-patient-status/9691927179"), HttpMethod.GET,
                 new HttpEntity<String>(createHeaders()), SuspendedPatientStatus.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
@@ -173,7 +206,7 @@ public class PdsAdaptorIntegrationTest {
                         .withBody(loadResource("fhir-responses/suspended-patient-with-managing-organisation.json"))));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9693797493"),
+                wireMockUrl("/suspended-patient-status/9693797493"),
                 HttpMethod.PUT, new HttpEntity<>(requestBody, createHeaders()), SuspendedPatientStatus.class);
 
         var body = response.getBody();
@@ -222,7 +255,7 @@ public class PdsAdaptorIntegrationTest {
                         .withBody(loadResource("fhir-responses/suspended-patient-with-managing-organisation.json"))));
 
         var response = restTemplate.exchange(
-                createURLWithPort("/suspended-patient-status/9691927179"),
+                wireMockUrl("/suspended-patient-status/9691927179"),
                 HttpMethod.PUT, new HttpEntity<>(requestBody, createHeaders()), SuspendedPatientStatus.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -235,6 +268,13 @@ public class PdsAdaptorIntegrationTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         return headers;
+    }
+
+    private ResponseDefinitionBuilder aValidPatientResponse() {
+        return aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withHeader("ETag", "W/\"6\"")
+                .withBody(loadResource("fhir-responses/not-suspended-patient.json"));
     }
 
     private String fhirPatchJsonToUpdateMofTo(String newManagingOrganisationOdsCode) {
@@ -265,7 +305,7 @@ public class PdsAdaptorIntegrationTest {
                 .kv("token_type", "Bearer"));
     }
 
-    private String createURLWithPort(String uri) {
+    private String wireMockUrl(String uri) {
         return "http://localhost:" + port + uri;
     }
 }
