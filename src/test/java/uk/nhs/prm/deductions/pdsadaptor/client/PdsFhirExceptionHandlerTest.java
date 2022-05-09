@@ -84,7 +84,8 @@ class PdsFhirExceptionHandlerTest {
         var exception = assertThrows(AccessTokenRequestException.class, () ->
                 handler.handleCommonExceptions("context", forbiddenError403));
 
-        assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 403. reason 403 error");
+        assertThat(exception.getMessage()).contains("Access token request failed");
+        assertThat(exception.getCause()).isEqualTo(forbiddenError403);
     }
 
     @Test
@@ -94,7 +95,8 @@ class PdsFhirExceptionHandlerTest {
         var exception = assertThrows(AccessTokenRequestException.class, () ->
                 handler.handleCommonExceptions("context", unauthorizedError401));
 
-        assertThat(exception.getMessage()).isEqualTo("Access token request failed status code: 401. reason 401 error");
+        assertThat(exception.getMessage()).contains("Access token request failed");
+        assertThat(exception.getCause()).isEqualTo(unauthorizedError401);
     }
 
     @Test
