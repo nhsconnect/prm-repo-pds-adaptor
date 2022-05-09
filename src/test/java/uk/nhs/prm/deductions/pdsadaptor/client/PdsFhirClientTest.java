@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.UnknownContentTypeException;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
@@ -134,7 +134,7 @@ class PdsFhirClientTest {
         private ArgumentCaptor<Object> patchCaptor;
 
         @Test
-        void shouldSetHeaderOnRequestForPatch() {
+        void shouldSetHeadersCorrectlyOnRequestForPatch() {
             var pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
             var requestId = UUID.randomUUID();
 
@@ -181,14 +181,14 @@ class PdsFhirClientTest {
         }
 
         @Test
-        void shouldThrowExceptionWhenUpdateIsToSameManagingOrganisationAndTherebyRejectedAsMakingNoChanges() {
+        void shouldThrowExceptionWhenPatchUpdateIsToSameManagingOrganisationAndTherebyRejectedAsMakingNoChanges() {
             var httpException = new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request");
 
             when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(httpException)).thenReturn(true);
 
             when(httpClient.patch(any(), any(), any(), any())).thenThrow(httpException);
 
-            var exception = assertThrows(PdsFhirPatchInvalidSpecifiesNoChangesException.class, () -> {
+            var exception = assertThrows(PdsFhirPatchSpecifiesNoChangesException.class, () -> {
                 pdsFhirClient.updateManagingOrganisation(NHS_NUMBER, anUpdateRequest(), aRequestId());
             });
 

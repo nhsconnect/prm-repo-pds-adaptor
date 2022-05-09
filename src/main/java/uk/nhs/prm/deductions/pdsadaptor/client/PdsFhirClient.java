@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchInvalidSpecifiesNoChangesException;
+import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchSpecifiesNoChangesException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -69,7 +69,7 @@ public class PdsFhirClient {
             catch (RuntimeException exception) {
                 if (patchRejectionInterpreter.isRejectionDueToNotMakingChanges(exception)) {
                     log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
-                    throw new PdsFhirPatchInvalidSpecifiesNoChangesException();
+                    throw new PdsFhirPatchSpecifiesNoChangesException();
                 }
                 throw exceptionHandler.handleCommonExceptions("updating", exception);
             }
