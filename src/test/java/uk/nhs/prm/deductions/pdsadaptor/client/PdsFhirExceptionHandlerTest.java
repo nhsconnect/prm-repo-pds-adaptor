@@ -142,13 +142,23 @@ class PdsFhirExceptionHandlerTest {
     }
 
     @Test
-    void shouldThrowRuntimeExceptionWhenUnexpectedErrorFromPdsFhir() {
-        var unexpectedException = new ResourceAccessException("not-responding");
+    void shouldRethrowInitialAccessTokenRequestException() {
+        var exceptionFromAuthenticationStack = new AccessTokenRequestException(new HttpServerErrorException(HttpStatus.SERVICE_UNAVAILABLE));
+
+        var exception = assertThrows(RuntimeException.class, () ->
+                handler.handleCommonExceptions("requesting", exceptionFromAuthenticationStack));
+
+        assertThat(exception).isEqualTo(exceptionFromAuthenticationStack);
+    }
+
+    @Test
+    void shouldRethrowInitialRuntimeExceptionWhenNotSpecificallyHandled() {
+        var unexpectedException = new IllegalArgumentException("not anticipated");
 
         var exception = assertThrows(RuntimeException.class, () ->
                 handler.handleCommonExceptions("requesting", unexpectedException));
 
-        assertThat(exception.getMessage()).contains("not-responding");
+        assertThat(exception).isEqualTo(unexpectedException);
     }
 
     @NotNull

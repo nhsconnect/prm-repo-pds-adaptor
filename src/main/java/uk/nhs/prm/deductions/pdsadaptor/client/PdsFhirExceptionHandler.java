@@ -33,7 +33,7 @@ public class PdsFhirExceptionHandler {
         }
 
         log.warn("Unexpected Exception", exception);
-        throw new RuntimeException(exception);
+        throw exception;
     }
 
     private static RuntimeException createClientException(HttpStatusCodeException exception) {
