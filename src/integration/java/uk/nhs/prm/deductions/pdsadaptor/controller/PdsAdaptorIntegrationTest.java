@@ -71,9 +71,6 @@ public class PdsAdaptorIntegrationTest {
 
     @Test
     public void shouldReturnValidDeceasedPatientResponseWhenPdsFhirResponseHasDeceasedDateTIme() {
-        stubFor(get(urlMatching("/Patient/9691927179"))
-                .willReturn(ResponseDefinitionBuilder.like(ResponseDefinition.notAuthorised())));
-
         stubFor(post(urlMatching("/access-token"))
                 .willReturn(aResponse().withBody(freshAccessToken())));
 
@@ -116,13 +113,21 @@ public class PdsAdaptorIntegrationTest {
 
     @Test
     public void shouldDoAQuickRetryOnNetworkFailure() {
+        final String SCENARIO = "network fail first time";
+        final String SCENARIO_STATE_AFTER_ERROR = "got network error";
+
         stubFor(post(urlMatching("/access-token"))
                 .willReturn(aResponse().withBody(freshAccessToken())));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
+                .inScenario(SCENARIO)
+                .whenScenarioStateIs(STARTED)
+                .willSetStateTo(SCENARIO_STATE_AFTER_ERROR)
                 .willReturn(aResponse().withFault(Fault.CONNECTION_RESET_BY_PEER)));
 
         stubFor(get(urlMatching("/Patient/9691927179"))
+                .inScenario(SCENARIO)
+                .whenScenarioStateIs(SCENARIO_STATE_AFTER_ERROR)
                 .willReturn(aValidPatientResponse()));
 
         var response = restTemplate.exchange(
