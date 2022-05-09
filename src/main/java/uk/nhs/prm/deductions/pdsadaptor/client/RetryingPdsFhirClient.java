@@ -24,25 +24,26 @@ public class RetryingPdsFhirClient {
     }
 
     public PdsFhirPatient requestPdsRecordByNhsNumber(String nhsNumber) {
-        return client.requestPdsRecordByNhsNumber(nhsNumber);
+        return requestWithRetries(() -> client.requestPdsRecordByNhsNumber(nhsNumber), maxUpdateTries);
     }
 
     public PdsFhirPatient updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         var sharedRequestIdAcrossRetries = UUID.randomUUID();
-        return processWithRetries(() -> client.updateManagingOrganisation(nhsNumber, updateRequest, sharedRequestIdAcrossRetries), maxUpdateTries
+        return requestWithRetries(() ->
+                client.updateManagingOrganisation(nhsNumber, updateRequest, sharedRequestIdAcrossRetries), maxUpdateTries
         );
     }
 
-    private PdsFhirPatient processWithRetries(Supplier<PdsFhirPatient> updateProcess, int triesLeft) {
+    private PdsFhirPatient requestWithRetries(Supplier<PdsFhirPatient> requestProcess, int triesLeft) {
         try {
-            return updateProcess.get();
+            return requestProcess.get();
         }
         catch (PdsFhirServiceUnavailableException serverUnavailableException) {
             if (triesLeft > 1) {
-                log.error("Retrying server update, tries remaining: " + (triesLeft - 1));
-                return processWithRetries(updateProcess, triesLeft - 1);
+                log.error("Retrying server request, tries remaining: " + (triesLeft - 1));
+                return requestWithRetries(requestProcess, triesLeft - 1);
             }
-            log.error("Got server error after " + maxUpdateTries + " attempts.");
+            log.error("Giving up on server error after " + maxUpdateTries + " attempts.");
             throw serverUnavailableException;
         }
     }

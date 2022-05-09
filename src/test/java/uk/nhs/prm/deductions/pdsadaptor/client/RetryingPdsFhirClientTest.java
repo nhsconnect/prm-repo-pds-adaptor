@@ -41,7 +41,7 @@ class RetryingPdsFhirClientTest {
     }
 
     @Test
-    void shouldGetPatientyWithoutRetry() {
+    void shouldGetPatient() {
         var pdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
 
         when(oneShotClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(pdsResponse);
@@ -52,11 +52,27 @@ class RetryingPdsFhirClientTest {
     }
 
     @Test
-    void shouldRetryUpdateIfPdsFhirServiceUnavailableWithSameRequestIdEachTime() {
-        var initialException = new PdsFhirServiceUnavailableException(aServerException());
+    void shouldImmediatelyRetryGetPatientIfServerUnavailable() {
+        var pdsResponse = buildPdsSuspendedResponse(NHS_NUMBER, "MOF12", null);
+
+        when(oneShotClient.requestPdsRecordByNhsNumber(NHS_NUMBER))
+                .thenThrow(new PdsFhirServiceUnavailableException(aServerException()))
+                .thenReturn(pdsResponse);
+
+        var actualResponse = retryingClient.requestPdsRecordByNhsNumber(NHS_NUMBER);
+
+        verify(oneShotClient, times(2)).requestPdsRecordByNhsNumber(NHS_NUMBER);
+
+        assertThat(actualResponse).isEqualTo(pdsResponse);
+    }
+
+    @Test
+    void shouldRetryUpdateIfPdsFhirServiceUnavailable_Critically_WithSameRequestIdForEachTrySoThatAnyInterruptedProcessingIsNotDuplicatedInPds() {
+        var exception = new PdsFhirServiceUnavailableException(aServerException());
         var updateRequest = anUpdateRequest();
 
-        when(oneShotClient.updateManagingOrganisation(any(), any(), any())).thenThrow(initialException);
+        when(oneShotClient.updateManagingOrganisation(any(), any(), any()))
+                .thenThrow(exception);
 
         assertThrows(Exception.class, () -> {
             retryingClient.updateManagingOrganisation(NHS_NUMBER, updateRequest);

@@ -37,6 +37,8 @@ public class PdsFhirExceptionHandler {
 
     private static RuntimeException createClientException(HttpStatusCodeException exception) {
         if (exception.getStatusCode().equals(HttpStatus.FORBIDDEN) || exception.getStatusCode().equals(HttpStatus.UNAUTHORIZED)) {
+            // this has drifted into misleading as non-authorisation of main PDS FHIR request gets categorised as a failure on the
+            // access token request to authentication server
             return new AccessTokenRequestException(exception);
         }
         if (exception.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
