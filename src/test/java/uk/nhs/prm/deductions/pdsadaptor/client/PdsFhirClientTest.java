@@ -43,7 +43,7 @@ class PdsFhirClientTest {
     private PdsFhirPatchRejectionInterpreter patchRejectionInterpreter;
 
     @Mock
-    private PdsFhirExceptionHandler clientExceptionHandler;
+    private PdsFhirExceptionHandler exceptionHandler;
 
     private static final String PDS_FHIR_ENDPOINT = "http://pds-fhir.com/";
 
@@ -62,7 +62,7 @@ class PdsFhirClientTest {
 
     @BeforeEach
     void setUp() {
-        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, clientExceptionHandler, PDS_FHIR_ENDPOINT);
+        pdsFhirClient = new PdsFhirClient(httpClient, patchRejectionInterpreter, exceptionHandler, PDS_FHIR_ENDPOINT);
     }
 
     @Nested
@@ -102,7 +102,7 @@ class PdsFhirClientTest {
             var exceptionFromHandler = new RuntimeException("kabooey");
 
             when(httpClient.get(any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("requesting", causingException))
+            when(exceptionHandler.handleCommonExceptions("requesting", causingException))
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber("123"));
@@ -117,7 +117,7 @@ class PdsFhirClientTest {
             var exceptionFromHandler = new RuntimeException("kabooey");
 
             when(httpClient.get(eq(URL_PATH), any(), eq(PdsFhirPatient.class))).thenThrow(unknownResponseException);
-            when(clientExceptionHandler.handleCommonExceptions("requesting", unknownResponseException))
+            when(exceptionHandler.handleCommonExceptions("requesting", unknownResponseException))
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER));
@@ -204,7 +204,7 @@ class PdsFhirClientTest {
 
             when(patchRejectionInterpreter.isRejectionDueToNotMakingChanges(causingException)).thenReturn(false);
             when(httpClient.patch(any(), any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
+            when(exceptionHandler.handleCommonExceptions("updating", causingException))
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.updateManagingOrganisation(
@@ -219,7 +219,7 @@ class PdsFhirClientTest {
             var exceptionFromHandler = new RuntimeException("kabowza");
 
             when(httpClient.patch(any(), any(), any(), any())).thenThrow(causingException);
-            when(clientExceptionHandler.handleCommonExceptions("updating", causingException))
+            when(exceptionHandler.handleCommonExceptions("updating", causingException))
                     .thenThrow(exceptionFromHandler);
 
             var resultingException = assertThrows(RuntimeException.class, () -> pdsFhirClient.updateManagingOrganisation(
