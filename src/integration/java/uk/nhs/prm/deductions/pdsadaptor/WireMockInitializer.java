@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.controller;
+package uk.nhs.prm.deductions.pdsadaptor;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import org.springframework.boot.test.util.TestPropertyValues;
@@ -11,7 +11,6 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options
 import java.util.Map;
 
 public class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
     @Override
     public void initialize(ConfigurableApplicationContext configurableApplicationContext) {
         WireMockServer wireMockServer = new WireMockServer(options().gzipDisabled(true).port(8080));

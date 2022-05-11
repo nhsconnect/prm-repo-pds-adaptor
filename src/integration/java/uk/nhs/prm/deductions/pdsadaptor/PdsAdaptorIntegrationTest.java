@@ -1,4 +1,4 @@
-package uk.nhs.prm.deductions.pdsadaptor.controller;
+package uk.nhs.prm.deductions.pdsadaptor;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
@@ -41,7 +41,8 @@ public class PdsAdaptorIntegrationTest {
         wireMockServer.resetAll();
     }
 
-    // i'm not sure this always tests exactly what it states, dependent on ordering
+    // currently this will only exercise the unauthorised path if first test, dependent on ordering,
+    // because prior access token will be cached in application
     @Test
     public void shouldCallGetCurrentTokenAndGetAccessTokenWhenUnauthorized() {
         stubFor(get(urlMatching("/Patient/9691927179"))
