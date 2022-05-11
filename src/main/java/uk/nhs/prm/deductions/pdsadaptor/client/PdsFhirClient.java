@@ -5,9 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpStatusCodeException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.PdsFhirPatchSpecifiesNoChangesException;
-import uk.nhs.prm.deductions.pdsadaptor.logging.JsonLogger;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
@@ -51,7 +49,6 @@ public class PdsFhirClient {
                 return addEtagToResponseObject(response);
             }
             catch (RuntimeException exception) {
-                logErrorResponseJson(exception);
                 throw exceptionHandler.handleCommonExceptions("requesting", exception);
             }
         });
@@ -70,7 +67,6 @@ public class PdsFhirClient {
                 return addEtagToResponseObject(response);
             }
             catch (RuntimeException exception) {
-                logErrorResponseJson(exception);
                 if (patchRejectionInterpreter.isRejectionDueToNotMakingChanges(exception)) {
                     log.error("Received 4xx HTTP Error from PDS FHIR when updating PDS Record");
                     throw new PdsFhirPatchSpecifiesNoChangesException();
@@ -78,13 +74,6 @@ public class PdsFhirClient {
                 throw exceptionHandler.handleCommonExceptions("updating", exception);
             }
         });
-    }
-
-    private void logErrorResponseJson(RuntimeException exception) {
-        if (exception instanceof HttpStatusCodeException) {
-            var errorResponseBody = ((HttpStatusCodeException) exception).getResponseBodyAsString();
-            JsonLogger.logInfoWithJson(log, "PDS FHIR returned error", "error_response", errorResponseBody);
-        }
     }
 
     private HttpHeaders createUpdateHeaders(String recordETag, UUID requestId) {
