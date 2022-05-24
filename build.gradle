@@ -1,10 +1,10 @@
 plugins {
-    id 'org.springframework.boot' version '2.6.7'
+    id 'org.springframework.boot' version '2.7.0'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
     id 'jacoco'
     id 'com.github.spotbugs' version '4.6.0'
-    id 'org.owasp.dependencycheck' version '6.2.2'
+    id 'org.owasp.dependencycheck' version '7.1.0.1'
 }
 
 group = 'uk.nhs.prm.deductions'
