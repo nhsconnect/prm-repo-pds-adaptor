@@ -27,4 +27,12 @@
       <cpe>cpe:/a:pivotal_software:spring_framework</cpe>
       <cpe>cpe:/a:vmware:spring_framework</cpe>
   </suppress>
+  <suppress>
+     <notes><![CDATA[
+     Suppress incorrect assignment of CVE-2020-5408 to more recent version, spring-security-crypto is @ v5.7.1
+     at time of suppression, latest know vulnerable version 5.3.x
+     ]]></notes>
+     <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-crypto@.*$</packageUrl>
+     <vulnerabilityName>CVE-2020-5408</vulnerabilityName>
+  </suppress>
 </suppressions>
