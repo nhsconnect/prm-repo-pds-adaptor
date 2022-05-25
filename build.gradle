@@ -30,7 +30,7 @@ jar {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springdoc:springdoc-openapi-ui:1.5.10'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.8'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.68'
     implementation 'com.nimbusds:nimbus-jose-jwt:9.12.1'
