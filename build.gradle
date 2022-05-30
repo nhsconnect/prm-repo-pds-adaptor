@@ -155,7 +155,6 @@ dependencyCheck {
     suppressionFile = './dependency-checks-suppression.xml'
     analyzers {
           assemblyEnabled = false
-          ossIndexEnabled = false
     }
 }
 
