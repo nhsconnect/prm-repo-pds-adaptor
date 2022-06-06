@@ -259,7 +259,7 @@ case "${command}" in
     ./gradlew bootRun
     ;;
   _dep)
-      gradle dependencyCheckAnalyze --debug
+      gradle dependencyCheckAnalyze
       ;;
   dep)
       dojo "./tasks _dep"
