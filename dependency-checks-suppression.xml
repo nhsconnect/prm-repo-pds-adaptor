@@ -35,4 +35,15 @@
      <packageUrl regex="true">^pkg:maven/org\.springframework\.security/spring\-security\-crypto@.*$</packageUrl>
      <vulnerabilityName>CVE-2020-5408</vulnerabilityName>
   </suppress>
+  <suppress>
+     <notes><![CDATA[
+     file name: spring-boot-starter-security-2.7.0.jar
+
+     suppressing misidentification of spring boot starter security as as vmware packages
+     at point of suppression leading to false positive on CVE-2022-22978
+     ]]></notes>
+     <packageUrl regex="true">^pkg:maven/org\.springframework\.boot/spring\-boot\-starter\-security@.*$</packageUrl>
+     <cpe>cpe:/a:vmware:spring_security</cpe>
+     <cpe>cpe:/a:vmware:spring_boot</cpe>
+   </suppress>
 </suppressions>
