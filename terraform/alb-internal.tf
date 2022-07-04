@@ -33,7 +33,8 @@ resource "aws_security_group" "pds_adaptor_alb" {
     from_port       = 443
     to_port         = 443
     security_groups = [
-      data.aws_ssm_parameter.suspension-service-ecs-sg-id.value
+      data.aws_ssm_parameter.suspension-service-ecs-sg-id.value,
+      data.aws_ssm_parameter.re-registration-ecs-sg-id.value
     ]
   }
 
