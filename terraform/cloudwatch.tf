@@ -38,6 +38,7 @@ resource "aws_cloudwatch_metric_alarm" "error_log_alarm" {
   treat_missing_data        = "notBreaching"
   actions_enabled           = "true"
   alarm_actions             = [data.aws_sns_topic.alarm_notifications.arn]
+  ok_actions                = [data.aws_sns_topic.alarm_notifications.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_http_errors" {
@@ -55,6 +56,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_http_errors" {
     LoadBalancer = aws_alb.alb-internal.arn_suffix
   }
   alarm_actions             = [data.aws_sns_topic.alarm_notifications.arn]
+  ok_actions                = [data.aws_sns_topic.alarm_notifications.arn]
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_service_down_errors" {
@@ -74,6 +76,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_service_down_errors" {
     LoadBalancer = aws_alb.alb-internal.arn_suffix
   }
   alarm_actions             = [data.aws_sns_topic.alarm_notifications.arn]
+  ok_actions                = [data.aws_sns_topic.alarm_notifications.arn]
 }
 
 
