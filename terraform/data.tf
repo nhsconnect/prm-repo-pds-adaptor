@@ -40,6 +40,10 @@ data "aws_ssm_parameter" "suspension-service-ecs-sg-id" {
   name = "/repo/${var.environment}/output/suspension-service/ecs-sg-id"
 }
 
+data "aws_ssm_parameter" "end-for-transfer-service-ecs-sg-id" {
+  name = "/repo/${var.environment}/output/end-of-transfer-service/ecs-sg-id"
+}
+
 data "aws_ssm_parameter" "re-registration-ecs-sg-id" {
   name = "/repo/${var.environment}/output/re-registration-service/ecs-sg-id"
 }

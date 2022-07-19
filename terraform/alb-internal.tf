@@ -28,12 +28,13 @@ resource "aws_security_group" "pds_adaptor_alb" {
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
 
   ingress {
-    description     = "Allow traffic from suspension service to ALB"
+    description     = "Allow traffic from clients to ALB"
     protocol        = "tcp"
     from_port       = 443
     to_port         = 443
     security_groups = [
       data.aws_ssm_parameter.suspension-service-ecs-sg-id.value,
+      data.aws_ssm_parameter.end-for-transfer-service-ecs-sg-id.value,
       data.aws_ssm_parameter.re-registration-ecs-sg-id.value
     ]
   }
