@@ -47,6 +47,10 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
     implementation 'org.apache.logging.log4j:log4j-to-slf4j:2.17.1'
 
+    // CVE-2022-25857 fix. We can remove it when springframework.boot and fasterxml libs
+    // (which depend on it) cover this update
+    implementation 'org.yaml:snakeyaml:1.31'
+
     compileOnly 'org.projectlombok:lombok:1.18.20'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -54,7 +58,7 @@ dependencies {
     testImplementation 'com.github.tomakehurst:wiremock-jre8:2.31.0'
 
     // CVE-2020-36518...
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.2.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
     // including workaround for bom mismatch which should be retired with full jackson-databind release
     components {
         withModule("com.fasterxml.jackson.core:jackson-databind") {
