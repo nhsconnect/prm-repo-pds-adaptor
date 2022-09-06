@@ -75,14 +75,14 @@ pipelines:
                 command: sleep
                 arguments:
                   - 20
-      - prepare.pre-prod:
+      - prepare.prod:
           clean_workspace: true
           tasks:
             - exec:
                 command: sleep
                 arguments:
                   - 5
-      - deploy.pre-prod:
+      - deploy.prod:
           approval:
             type: manual
             allow_only_on_success: true
