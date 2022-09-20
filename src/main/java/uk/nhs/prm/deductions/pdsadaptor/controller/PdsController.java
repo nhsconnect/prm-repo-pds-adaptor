@@ -41,7 +41,7 @@ public class PdsController {
                                                      @RequestBody UpdateManagingOrganisationRequest updateRequest,
                                                      @RequestHeader(value = "traceId", required = false) String traceId, Principal principal) {
         tracer.setTraceId(traceId);
-        log.info("Update request for pds record received by {}", principal.getName());
+        log.info("Update request for pds record received from {}", principal.getName());
         return pdsService.updatePatientManagingOrganisation(nhsNumber, updateRequest);
     }
 }

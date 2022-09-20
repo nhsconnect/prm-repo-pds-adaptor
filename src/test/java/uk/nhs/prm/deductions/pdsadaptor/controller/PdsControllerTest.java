@@ -27,10 +27,7 @@ import java.security.Principal;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -61,8 +58,8 @@ class PdsControllerTest {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("fake-user");
 
         String contentAsString = mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                 .header("traceId", "fake-trace-id")
@@ -82,7 +79,7 @@ class PdsControllerTest {
     }
 
     @Test
-    void shouldCallPdsServiceWithNhsNumberAndUpdateRequest() throws Exception {
+    void shouldCallPdsFhirApiWithNhsNumberAndUpdateRequest() throws Exception {
         TestLogAppender testLogAppender = TestLogAppender.addTestLogAppender();
         UpdateManagingOrganisationRequest updateRequest = new UpdateManagingOrganisationRequest("A1234", "W/\"2\"");
         ObjectMapper objectMapper = new ObjectMapper();
@@ -91,12 +88,12 @@ class PdsControllerTest {
         when(pdsService.updatePatientManagingOrganisation(NHS_NUMBER, updateRequest)).thenReturn(actualSuspendedPatientStatus);
         doCallRealMethod().when(tracer).setTraceId("fake-trace-id");
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        var principal = mock(Principal.class);
+        when(principal.getName()).thenReturn("fake-user");
 
-        String contentAsString = mockMvc.perform(put("/suspended-patient-status/" + NHS_NUMBER)
+        var contentAsString = mockMvc.perform(put("/suspended-patient-status/" + NHS_NUMBER)
                 .header("traceId", "fake-trace-id")
-                .principal(mockPrincipal)
+                .principal(principal)
                 .contentType(MediaType.APPLICATION_JSON)
                 .characterEncoding("utf-8")
                 .content(json(update -> update
@@ -107,22 +104,22 @@ class PdsControllerTest {
             .andReturn().getResponse().getContentAsString();
 
         verify(pdsService).updatePatientManagingOrganisation(NHS_NUMBER, updateRequest);
-        SuspendedPatientStatus suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
+        var suspendedPatientStatus = objectMapper.readValue(contentAsString, SuspendedPatientStatus.class);
 
         assertThat(suspendedPatientStatus).isEqualTo(actualSuspendedPatientStatus);
 
         ILoggingEvent lastLoggedEvent = testLogAppender.getLastLoggedEvent();
         assertNotNull(lastLoggedEvent);
         assertTrue(lastLoggedEvent.getMDCPropertyMap().containsKey("traceId"));
-        assertThat(lastLoggedEvent.getFormattedMessage()).isEqualTo("Update request for pds record received by fake-user");
+        assertThat(lastLoggedEvent.getFormattedMessage()).isEqualTo("Update request for pds record received from fake-user");
     }
 
     @Test
     void shouldReturn400ResponseWhenPDSReturnsANonAuthNonRateLimit4xxResponse() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(BadRequestException.class);
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("fake-user");
 
         mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                         .header("traceId", "fake-trace-id")
@@ -136,8 +133,8 @@ class PdsControllerTest {
     void shouldReturn503ResponseWhenPdsRequestReturnsAccessTokenRequestException() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(AccessTokenRequestException.class);
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("fake-user");
 
         mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                         .header("traceId", "fake-trace-id")
@@ -151,8 +148,8 @@ class PdsControllerTest {
     void shouldReturn503ResponseWhenPdsRequestReturnsTooManyRequestsException() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(TooManyRequestsException.class);
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("fake-user");
 
         mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                         .header("traceId", "fake-trace-id")
@@ -166,8 +163,8 @@ class PdsControllerTest {
     void shouldReturn503ResponseWhenPdsRequestReturnsAServerException() throws Exception {
         when(pdsService.getPatientGpStatus(NHS_NUMBER)).thenThrow(RetryableRequestException.class);
 
-        Principal mockPrincipal = Mockito.mock(Principal.class);
-        Mockito.when(mockPrincipal.getName()).thenReturn("fake-user");
+        Principal mockPrincipal = mock(Principal.class);
+        when(mockPrincipal.getName()).thenReturn("fake-user");
 
         mockMvc.perform(get("/suspended-patient-status/" + NHS_NUMBER)
                         .header("traceId", "fake-trace-id")
