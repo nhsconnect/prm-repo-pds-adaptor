@@ -113,7 +113,7 @@ public class PdsFhirClient {
             return pdsRequestProcess.get();
         }
         finally {
-            log.info("PDS-FHIR " + description + " took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
+            log.info("PDS-FHIR " + description + " call took " + Duration.between(startTime, Instant.now()).toMillis() + "ms");
         }
     }
 }
