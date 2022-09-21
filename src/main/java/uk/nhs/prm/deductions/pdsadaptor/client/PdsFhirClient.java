@@ -63,6 +63,11 @@ public class PdsFhirClient {
         return timeRequest("update", () -> {
             try {
                 //Testing MOF update failure
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 var response = httpClient.patch("Patient/" + nhsNumber, requestHeaders, patchRequest, PdsFhirPatient.class);
                 log.info("Successfully updated managing organisation on pds record.");
                 return addEtagToResponseObject(response);
