@@ -62,8 +62,7 @@ public class PdsFhirClient {
 
         return timeRequest("update", () -> {
             try {
-                //Testing MOF update failure
-                var response = httpClient.patch("Patient/" + nhsNumber, requestHeaders, patchRequest, PdsFhirPatient.class);
+                var response = httpClient.patch(patientUrl(nhsNumber), requestHeaders, patchRequest, PdsFhirPatient.class);
                 log.info("Successfully updated managing organisation on pds record.");
                 return addEtagToResponseObject(response);
             }
