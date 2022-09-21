@@ -1,6 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.client;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -133,6 +134,7 @@ class PdsFhirClientTest {
         @Captor
         private ArgumentCaptor<Object> patchCaptor;
 
+        @Disabled("Test MOF update failure")
         @Test
         void shouldSetHeadersCorrectlyOnRequestForPatch() {
             var pdsResponse = buildPdsResponse(NHS_NUMBER, "A1234", LocalDate.now().minusYears(1), null, null);
@@ -149,6 +151,7 @@ class PdsFhirClientTest {
             assertThat(headersCaptor.getValue().getFirst("If-Match")).isEqualTo(RECORD_E_TAG);
         }
 
+        @Disabled("Test MOF update failure")
         @Test
         void shouldReturnPdsResponseWithEtagFromHeadersAddedToItAfterSuccessfulUpdate() {
             var tagVersion = "W/\"2\"";
