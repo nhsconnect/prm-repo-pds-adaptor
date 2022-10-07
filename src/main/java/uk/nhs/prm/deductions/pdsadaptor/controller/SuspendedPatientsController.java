@@ -19,7 +19,7 @@ import java.security.Principal;
 @RequestMapping("suspended-patient-status")
 @RequiredArgsConstructor
 @Slf4j
-public class PdsController {
+public class SuspendedPatientsController {
 
     private final PdsService pdsService;
     private final Tracer tracer;

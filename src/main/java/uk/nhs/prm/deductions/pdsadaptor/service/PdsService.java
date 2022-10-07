@@ -55,4 +55,7 @@ public class PdsService {
        }
        return null;
     }
+
+    public void getPatientDetails(String nhsNumber) {
+    }
 }
