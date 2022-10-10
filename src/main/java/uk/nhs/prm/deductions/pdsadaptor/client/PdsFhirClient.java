@@ -11,7 +11,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatch;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchIdentifier;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdspatchrequest.PdsPatchValue;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -40,11 +40,11 @@ public class PdsFhirClient {
         this.pdsFhirEndpoint = pdsFhirEndpoint;
     }
 
-    public PdsFhirPatient requestPdsRecordByNhsNumber(String nhsNumber) {
+    public PdsFhirGetPatientResponse requestPdsRecordByNhsNumber(String nhsNumber) {
         log.info("Making GET request for pds record from pds fhir");
         return timeRequest("retrieval", () -> {
             try {
-                var response = httpClient.get(patientUrl(nhsNumber), createRequestHeaders(UUID.randomUUID(), APPLICATION_JSON.toString()), PdsFhirPatient.class);
+                var response = httpClient.get(patientUrl(nhsNumber), createRequestHeaders(UUID.randomUUID(), APPLICATION_JSON.toString()), PdsFhirGetPatientResponse.class);
                 log.info("Successfully requested pds record");
                 return addEtagToResponseObject(response);
             }
@@ -54,7 +54,7 @@ public class PdsFhirClient {
         });
     }
 
-    public PdsFhirPatient updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId) {
+    public PdsFhirGetPatientResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest, UUID requestId) {
         log.info("Making PATCH request to update managing organisation via pds fhir");
 
         var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
@@ -62,7 +62,7 @@ public class PdsFhirClient {
 
         return timeRequest("update", () -> {
             try {
-                var response = httpClient.patch(patientUrl(nhsNumber), requestHeaders, patchRequest, PdsFhirPatient.class);
+                var response = httpClient.patch(patientUrl(nhsNumber), requestHeaders, patchRequest, PdsFhirGetPatientResponse.class);
                 log.info("Successfully updated managing organisation on pds record.");
                 return addEtagToResponseObject(response);
             }
@@ -96,8 +96,8 @@ public class PdsFhirClient {
         return new PdsPatchRequest(singletonList(patch));
     }
 
-    private PdsFhirPatient addEtagToResponseObject(ResponseEntity<PdsFhirPatient> response) {
-        PdsFhirPatient pdsResponse = response.getBody();
+    private PdsFhirGetPatientResponse addEtagToResponseObject(ResponseEntity<PdsFhirGetPatientResponse> response) {
+        PdsFhirGetPatientResponse pdsResponse = response.getBody();
         String eTag = response.getHeaders().getETag();
         pdsResponse.setETag(eTag);
         return pdsResponse;
@@ -107,7 +107,7 @@ public class PdsFhirClient {
         return pdsFhirEndpoint + "Patient/" + nhsNumber;
     }
 
-    private PdsFhirPatient timeRequest(final String description, final Supplier<PdsFhirPatient> pdsRequestProcess) {
+    private PdsFhirGetPatientResponse timeRequest(final String description, final Supplier<PdsFhirGetPatientResponse> pdsRequestProcess) {
         var startTime = Instant.now();
         try {
             return pdsRequestProcess.get();

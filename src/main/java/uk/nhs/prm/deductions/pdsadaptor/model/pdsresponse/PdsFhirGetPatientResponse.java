@@ -1,22 +1,23 @@
 package uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Builder(toBuilder = true)
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@RequiredArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PdsFhirPatient {
+public class PdsFhirGetPatientResponse {
     private String id;
     private List<GeneralPractitioner> generalPractitioner;
     private ManagingOrganization managingOrganization;
     private String eTag;
     private String deceasedDateTime;
+    private List<String> givenName;
+    private String familyName;
+    private String birthdate;
+    private String postalCode;
 }

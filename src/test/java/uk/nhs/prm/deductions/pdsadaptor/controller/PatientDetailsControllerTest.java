@@ -38,6 +38,6 @@ class PatientDetailsControllerTest {
                 .principal(mockPrincipal))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        verify(pdsService).getPatientDetails(NHS_NUMBER);
+        verify(pdsService).getPatientTraceInformation(NHS_NUMBER);
     }
 }
