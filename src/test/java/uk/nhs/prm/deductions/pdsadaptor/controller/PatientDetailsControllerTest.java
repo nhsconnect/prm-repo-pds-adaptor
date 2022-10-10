@@ -34,7 +34,7 @@ class PatientDetailsControllerTest {
         Principal mockPrincipal = mock(Principal.class);
         when(mockPrincipal.getName()).thenReturn("fake-user");
 
-        mockMvc.perform(get("/patient-details/" + NHS_NUMBER)
+        mockMvc.perform(get("/patient-trace-information/" + NHS_NUMBER)
                 .principal(mockPrincipal))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();

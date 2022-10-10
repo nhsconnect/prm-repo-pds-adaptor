@@ -11,7 +11,7 @@ import javax.validation.constraints.Size;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/patient-details")
+@RequestMapping("/patient-trace-information")
 @AllArgsConstructor
 @Slf4j
 public class PatientDetailsController {
@@ -21,7 +21,7 @@ public class PatientDetailsController {
     @GetMapping("{nhsNumber}")
     @ResponseStatus(HttpStatus.OK)
     public String getPatientDetails(@PathVariable("nhsNumber") @NotBlank @Size(max = 10, min = 10) String nhsNumber, Principal principal){
-        log.info("Request for get patient details received from {}", principal.getName());
+        log.info("Request for patient trace information received from {}", principal.getName());
         pdsService.getPatientTraceInformation(nhsNumber);
         return null;
     }
