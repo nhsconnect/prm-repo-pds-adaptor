@@ -7,7 +7,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PatientTraceInformation;
+import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.testing.PdsFhirTestData;

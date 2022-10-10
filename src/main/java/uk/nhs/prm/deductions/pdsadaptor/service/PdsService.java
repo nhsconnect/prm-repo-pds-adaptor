@@ -6,7 +6,7 @@ import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PatientTraceInformation;
+import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
 
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;

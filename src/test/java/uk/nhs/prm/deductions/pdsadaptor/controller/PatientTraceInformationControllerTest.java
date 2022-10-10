@@ -1,5 +1,6 @@
 package uk.nhs.prm.deductions.pdsadaptor.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -8,18 +9,21 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
+import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.service.PdsService;
 
 import java.security.Principal;
+import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
-@WebMvcTest(PatientDetailsController.class)
+@WebMvcTest(PatientTraceInformationController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class PatientDetailsControllerTest {
+class PatientTraceInformationControllerTest {
 
     private static final String NHS_NUMBER = "1234567890";
 
@@ -34,10 +38,18 @@ class PatientDetailsControllerTest {
         Principal mockPrincipal = mock(Principal.class);
         when(mockPrincipal.getName()).thenReturn("fake-user");
 
-        mockMvc.perform(get("/patient-trace-information/" + NHS_NUMBER)
+        PatientTraceInformation response = new PatientTraceInformation("0123456789",
+                Arrays.asList("Bob","bob"),
+                "bob bob", "some birthdate", "post code");
+        when(pdsService.getPatientTraceInformation(NHS_NUMBER)).thenReturn(response);
+
+        String contentAsString = mockMvc.perform(get("/patient-trace-information/" + NHS_NUMBER)
                 .principal(mockPrincipal))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
+        var patientTraceInformation = new ObjectMapper().readValue(contentAsString, PatientTraceInformation.class);
         verify(pdsService).getPatientTraceInformation(NHS_NUMBER);
+        assertEquals("0123456789",patientTraceInformation.getNhsNumber());
+        assertEquals("bob",patientTraceInformation.getGivenName().get(1));
     }
 }
