@@ -122,13 +122,13 @@ class PdsServiceTest {
     void shouldCallPdsFhirClientAndReturnResponseWithPatientTraceInformation() {
         PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponse(NHS_NUMBER);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
-        PatientTraceInformation expected = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
-        assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
-        assertThat(expected.getGivenName().get(0)).isEqualTo("bob");
-        assertThat(expected.getFamilyName()).isEqualTo("family name");
-        assertThat(expected.getBirthdate()).isEqualTo("DateOfBirth");
-        assertThat(expected.getPostalCode()).isEqualTo("postal code");
+        assertThat(result.getNhsNumber()).isEqualTo("1234567890");
+        assertThat(result.getGivenName().get(0)).isEqualTo("bob");
+        assertThat(result.getFamilyName()).isEqualTo("family name");
+        assertThat(result.getBirthdate()).isEqualTo("DateOfBirth");
+        assertThat(result.getPostalCode()).isEqualTo("postal code");
     }
 
     @Test
