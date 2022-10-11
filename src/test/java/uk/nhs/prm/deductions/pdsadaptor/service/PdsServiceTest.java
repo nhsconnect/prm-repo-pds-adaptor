@@ -131,4 +131,12 @@ class PdsServiceTest {
         assertThat(expected.getPostalCode()).isEqualTo("postal code");
     }
 
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseIncludingOnlyCurrentHomeAddress() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleHomeAddresses(NHS_NUMBER);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
+        assertThat(result.getPostalCode()).isEqualTo("current home postal code");
+    }
 }

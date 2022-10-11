@@ -29,12 +29,37 @@ public class PdsFhirTestData {
         List<Name> names = new ArrayList<>();
         names.add(new Name(Arrays.asList("bob"), "family name"));
         List<Address> address = new ArrayList<>();
-        address.add(new Address("postal code"));
-        return new PdsFhirGetPatientResponse(nhsNumber,null,null,null, null, "DateOfBirth", address, names);
+        address.add(new Address(new Period(LocalDate.now().minusYears(1), null), "postal code", "home"));
+        return new PdsFhirGetPatientResponse(nhsNumber, null, null, null, null, "DateOfBirth", address, names);
+    }
+
+    public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithMultipleHomeAddresses(String nhsNumber) {
+        List<Name> names = new ArrayList<>();
+        names.add(new Name(Arrays.asList("bob"), "family name"));
+        List<Address> addresses = new ArrayList<>();
+        addresses.add(new Address(new Period(LocalDate.now().minusYears(1), null), "temp postal code", "temp"));
+        addresses.add(new Address(new Period(
+                LocalDate.now().minusYears(2),
+                LocalDate.now().minusYears(1)
+        ),"previous home postal code", "home"));
+        addresses.add(new Address(new Period(
+                LocalDate.now().minusYears(1),
+                null
+        ), "current home postal code", "home"));
+        return new PdsFhirGetPatientResponse(
+                nhsNumber,
+                null,
+                null,
+                null,
+                null,
+                "DateOfBirth",
+                addresses,
+                names
+        );
     }
 
     private static GeneralPractitioner createGeneralPractitioner(String odsCode, LocalDate start) {
-        IdentifierPeriod gpTimePeriod = new IdentifierPeriod(start, null);
+        Period gpTimePeriod = new Period(start, null);
         Identifier identifier = new Identifier(odsCode, gpTimePeriod);
         return new GeneralPractitioner(identifier);
     }

@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Identifier {
     private String value;
-    private IdentifierPeriod period;
+    private Period period;
 }

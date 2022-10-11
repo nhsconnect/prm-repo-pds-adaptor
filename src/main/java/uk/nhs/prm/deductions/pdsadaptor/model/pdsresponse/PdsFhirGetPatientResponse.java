@@ -17,6 +17,6 @@ public class PdsFhirGetPatientResponse {
     private String eTag;
     private String deceasedDateTime;
     private String birthDate;
-    private List<Address> address;
+    private List<Address> addresses;
     private List<Name> name;
 }

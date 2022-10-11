@@ -5,12 +5,15 @@ import org.springframework.stereotype.Service;
 import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Address;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
 import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Name;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 
@@ -67,16 +70,20 @@ public class PdsService {
     }
 
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
-        return new PatientTraceInformation(response.getId(), getGivenName(response), response.getName().get(0).getFamily(), response.getBirthDate(), response.getAddress().get(0).getPostalCode());
+        return new PatientTraceInformation(response.getId(), getGivenName(response), response.getName().get(0).getFamily(), response.getBirthDate(), getPostalCode(response));
     }
 
     private boolean hasAddress(PdsFhirGetPatientResponse pdsResponse) {
-        return pdsResponse.getAddress() != null && pdsResponse.getAddress().size() != 0;
+        return pdsResponse.getAddresses() != null && pdsResponse.getAddresses().size() != 0;
     }
 
     private String getPostalCode(PdsFhirGetPatientResponse response) {
         if (hasAddress(response)) {
-            return response.getAddress().get(0).getPostalCode();
+            var homeAddress = response.getAddresses().stream().filter(
+                    (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
+            ).findFirst();
+
+            return homeAddress.map(Address::getPostalCode).orElse(null);
         }
         return null;
     }

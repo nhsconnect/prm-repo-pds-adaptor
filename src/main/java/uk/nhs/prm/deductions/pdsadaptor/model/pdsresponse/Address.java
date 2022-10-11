@@ -10,5 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Address {
-    private  String postalCode;
+    private Period period;
+    private String postalCode;
+    private String use;
 }
