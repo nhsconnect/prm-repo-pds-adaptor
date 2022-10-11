@@ -125,7 +125,10 @@ class PdsServiceTest {
         PatientTraceInformation expected = pdsService.getPatientTraceInformation(NHS_NUMBER);
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
         assertThat(expected.getNhsNumber()).isEqualTo("1234567890");
-        assertThat(expected.getGivenName().get(0)).isEqualTo("Bob");
+        assertThat(expected.getGivenName().get(0)).isEqualTo("bob");
+        assertThat(expected.getFamilyName()).isEqualTo("family name");
+        assertThat(expected.getBirthdate()).isEqualTo("DateOfBirth");
+        assertThat(expected.getPostalCode()).isEqualTo("postal code");
     }
 
 }

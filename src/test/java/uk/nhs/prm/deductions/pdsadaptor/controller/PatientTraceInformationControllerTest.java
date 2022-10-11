@@ -39,8 +39,8 @@ class PatientTraceInformationControllerTest {
         when(mockPrincipal.getName()).thenReturn("fake-user");
 
         PatientTraceInformation response = new PatientTraceInformation("0123456789",
-                Arrays.asList("Bob","bob"),
-                "bob bob", "some birthdate", "post code");
+                Arrays.asList("given name"),
+                "family name", "some birthdate", "post code");
         when(pdsService.getPatientTraceInformation(NHS_NUMBER)).thenReturn(response);
 
         String contentAsString = mockMvc.perform(get("/patient-trace-information/" + NHS_NUMBER)
@@ -50,6 +50,10 @@ class PatientTraceInformationControllerTest {
         var patientTraceInformation = new ObjectMapper().readValue(contentAsString, PatientTraceInformation.class);
         verify(pdsService).getPatientTraceInformation(NHS_NUMBER);
         assertEquals("0123456789",patientTraceInformation.getNhsNumber());
-        assertEquals("bob",patientTraceInformation.getGivenName().get(1));
+        assertEquals("given name",patientTraceInformation.getGivenName().get(0));
+        assertEquals("family name",patientTraceInformation.getFamilyName());
+        assertEquals("some birthdate",patientTraceInformation.getBirthdate());
+        assertEquals("post code",patientTraceInformation.getPostalCode());
+
     }
 }
