@@ -13,6 +13,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.testing.PdsFhirTestData;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
@@ -125,7 +126,7 @@ class PdsServiceTest {
         PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
         assertThat(result.getNhsNumber()).isEqualTo("1234567890");
-        assertThat(result.getGivenName().get(0)).isEqualTo("bob");
+        assertThat(result.getGivenName().get(0)).isEqualTo("given name");
         assertThat(result.getFamilyName()).isEqualTo("family name");
         assertThat(result.getBirthdate()).isEqualTo("DateOfBirth");
         assertThat(result.getPostalCode()).isEqualTo("postal code");
@@ -139,4 +140,24 @@ class PdsServiceTest {
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
         assertThat(result.getPostalCode()).isEqualTo("current home postal code");
     }
+
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseIncludingOnlyUsualName() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleNames(NHS_NUMBER);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
+        assertThat(result.getGivenName()).isEqualTo(List.of("given name2"));
+        assertThat(result.getFamilyName()).isEqualTo("family name2");
+    }
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseWhenThereIsNoUsualName() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithNoNames(NHS_NUMBER);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
+        assertThat(result.getGivenName()).isEqualTo(null);
+        assertThat(result.getFamilyName()).isEqualTo(null);
+    }
+
 }

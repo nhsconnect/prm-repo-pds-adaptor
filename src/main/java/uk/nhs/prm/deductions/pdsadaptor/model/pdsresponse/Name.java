@@ -12,6 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Name {
+    private String use;
     private List<String> given;
     private String family;
+
 }

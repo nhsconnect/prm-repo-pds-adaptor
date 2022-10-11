@@ -11,9 +11,9 @@ import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Name;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 
@@ -70,7 +70,10 @@ public class PdsService {
     }
 
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
-        return new PatientTraceInformation(response.getId(), getGivenName(response), response.getName().get(0).getFamily(), response.getBirthDate(), getPostalCode(response));
+        Optional<Name> usualName = getUsualName(response);
+        List<String> givenName = usualName.map(Name::getGiven).orElse(null);
+        String familyName = usualName.map(Name::getFamily).orElse(null);
+        return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), getPostalCode(response));
     }
 
     private boolean hasAddress(PdsFhirGetPatientResponse pdsResponse) {
@@ -92,21 +95,13 @@ public class PdsService {
         return pdsResponse.getName() != null && pdsResponse.getName().size() != 0;
     }
 
-    private String getFamilyName(PdsFhirGetPatientResponse response) {
-        if (hasName(response)) {
-            return response.getName().get(0).getFamily();
+    private Optional<Name> getUsualName(PdsFhirGetPatientResponse pdsResponse) {
+        if (hasName(pdsResponse)) {
+            return
+                    pdsResponse.getName().stream().filter(name ->
+                            name.getUse().equalsIgnoreCase("Usual")
+                    ).findFirst();
         }
-        return null;
-    }
-
-    private boolean hasGivenName(Name name) {
-        return name.getGiven() != null && name.getGiven().size() != 0;
-    }
-
-    private List<String> getGivenName(PdsFhirGetPatientResponse response) {
-        if (hasName(response) && hasGivenName(response.getName().get(0))) {
-            return response.getName().get(0).getGiven();
-        }
-        return null;
+        return Optional.empty();
     }
 }
