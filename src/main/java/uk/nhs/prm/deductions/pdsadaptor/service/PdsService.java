@@ -1,6 +1,7 @@
 package uk.nhs.prm.deductions.pdsadaptor.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
@@ -18,6 +19,7 @@ import java.util.Optional;
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PdsService {
 
@@ -70,9 +72,13 @@ public class PdsService {
     }
 
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
-        Optional<Name> usualName = getUsualName(response);
-        List<String> givenName = usualName.map(Name::getGiven).orElse(null);
-        String familyName = usualName.map(Name::getFamily).orElse(null);
+        Optional<Name> nameOfTypeUsual = getNameOfTypeUsual(response);
+        if(nameOfTypeUsual.isEmpty()){
+            log.warn("PDS-FHIR response has no 'name' of type 'usual' for the patient");
+            return new PatientTraceInformation(response.getId(), null, null, response.getBirthDate(), getPostalCode(response));
+        }
+        List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
+        String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
         return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), getPostalCode(response));
     }
 
@@ -94,14 +100,14 @@ public class PdsService {
     private boolean hasName(PdsFhirGetPatientResponse pdsResponse) {
         return pdsResponse.getName() != null && pdsResponse.getName().size() != 0;
     }
-
-    private Optional<Name> getUsualName(PdsFhirGetPatientResponse pdsResponse) {
+    private Optional<Name> getNameOfTypeUsual(PdsFhirGetPatientResponse pdsResponse) {
         if (hasName(pdsResponse)) {
-            return
-                    pdsResponse.getName().stream().filter(name ->
-                            name.getUse().equalsIgnoreCase("Usual")
-                    ).findFirst();
+            return pdsResponse.getName().stream().filter(name ->
+                    name.getUse().equalsIgnoreCase("Usual")
+            ).findFirst();
         }
-        return Optional.empty();
-    }
+            log.warn("PDS-FHIR response has no 'name' for the patient");
+            return Optional.empty();
+        }
+
 }

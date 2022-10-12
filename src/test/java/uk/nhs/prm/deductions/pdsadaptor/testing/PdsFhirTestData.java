@@ -57,7 +57,7 @@ public class PdsFhirTestData {
                 names
         );
     }
-    public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithMultipleNames(String nhsNumber) {
+    public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithMultipleNameTypes(String nhsNumber) {
         List<Name> names = new ArrayList<>();
         names.add(new Name("nickname", Arrays.asList("given name1"), "family name1"));
         names.add(new Name("usual",Arrays.asList("given name2"), "family name2"));
@@ -105,5 +105,25 @@ public class PdsFhirTestData {
     private static ManagingOrganization createManagingOrganization(String managingOrganisationOdsCode) {
         Identifier identifier = new Identifier(managingOrganisationOdsCode, null);
         return new ManagingOrganization(identifier);
+    }
+
+    public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithNoNameOfTypeUsual(String nhsNumber) {
+        List<Name> names = new ArrayList<>();
+        names.add(new Name("nickname", Arrays.asList("given name1"), "family name1"));
+        List<Address> addresses = new ArrayList<>();
+        addresses.add(new Address(new Period(
+                LocalDate.now().minusYears(1),
+                null
+        ), "current home postal code", "home"));
+        return new PdsFhirGetPatientResponse(
+                nhsNumber,
+                null,
+                null,
+                null,
+                null,
+                "DateOfBirth",
+                addresses,
+                names
+        );
     }
 }

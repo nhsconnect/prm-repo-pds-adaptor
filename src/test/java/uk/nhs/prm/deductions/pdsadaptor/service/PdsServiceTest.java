@@ -142,8 +142,8 @@ class PdsServiceTest {
     }
 
     @Test
-    void shouldCallPdsFhirClientAndReturnResponseIncludingOnlyUsualName() {
-        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleNames(NHS_NUMBER);
+    void shouldCallPdsFhirClientAndReturnResponseWithGivenAndFamilyNameOfTypeUsualWhenWhenThereAreMultipleNameTypes() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleNameTypes(NHS_NUMBER);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
         PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
@@ -151,13 +151,22 @@ class PdsServiceTest {
         assertThat(result.getFamilyName()).isEqualTo("family name2");
     }
     @Test
-    void shouldCallPdsFhirClientAndReturnResponseWhenThereIsNoUsualName() {
+    void shouldCallPdsFhirClientAndReturnResponseWithGivenAndFamilyNameAsNullWhenThereIsNoNameOfTypeUsual() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithNoNameOfTypeUsual(NHS_NUMBER);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
+        assertThat(result.getGivenName()).isNull();
+        assertThat(result.getFamilyName()).isNull();
+    }
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseWithGivenAndFamilyNameAsNullWhenThereIsNoName() {
         PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithNoNames(NHS_NUMBER);
         when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
         PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
-        assertThat(result.getGivenName()).isEqualTo(null);
-        assertThat(result.getFamilyName()).isEqualTo(null);
+        assertThat(result.getGivenName()).isNull();
+        assertThat(result.getFamilyName()).isNull();
     }
 
 }
