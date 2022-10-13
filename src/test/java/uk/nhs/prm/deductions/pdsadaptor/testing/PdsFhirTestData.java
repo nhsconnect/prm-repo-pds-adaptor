@@ -27,7 +27,9 @@ public class PdsFhirTestData {
 
     public static PdsFhirGetPatientResponse buildPatientDetailsResponse(String nhsNumber) {
         List<Name> names = new ArrayList<>();
-        names.add(new Name("usual", Arrays.asList("given name"), "family name"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(1),
+                null),"usual", Arrays.asList("given name"), "family name"));
         List<Address> address = new ArrayList<>();
         address.add(new Address(new Period(LocalDate.now().minusYears(1), null), "postal code", "home"));
         return new PdsFhirGetPatientResponse(nhsNumber, null, null, null, null, "DateOfBirth", address, names);
@@ -35,7 +37,9 @@ public class PdsFhirTestData {
 
     public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithMultipleHomeAddresses(String nhsNumber) {
         List<Name> names = new ArrayList<>();
-        names.add(new Name("usual",Arrays.asList("given name"), "family name"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(1),
+                null),"usual",Arrays.asList("given name"), "family name"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(LocalDate.now().minusYears(1), null), "temp postal code", "temp"));
         addresses.add(new Address(new Period(
@@ -59,8 +63,15 @@ public class PdsFhirTestData {
     }
     public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithMultipleNameTypes(String nhsNumber) {
         List<Name> names = new ArrayList<>();
-        names.add(new Name("nickname", Arrays.asList("given name1"), "family name1"));
-        names.add(new Name("usual",Arrays.asList("given name2"), "family name2"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(1),
+                null),"nickname", Arrays.asList("given name1"), "family name1"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(2),
+                LocalDate.now().minusYears(1)),"usual",Arrays.asList("given name2"), "family name2"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(1),
+                null),"usual",Arrays.asList("given name3"), "family name3"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(
                 LocalDate.now().minusYears(1),
@@ -109,7 +120,9 @@ public class PdsFhirTestData {
 
     public static PdsFhirGetPatientResponse buildPatientDetailsResponseWithNoNameOfTypeUsual(String nhsNumber) {
         List<Name> names = new ArrayList<>();
-        names.add(new Name("nickname", Arrays.asList("given name1"), "family name1"));
+        names.add(new Name(new Period(
+                LocalDate.now().minusYears(1),
+                null),"nickname", Arrays.asList("given name1"), "family name1"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(
                 LocalDate.now().minusYears(1),

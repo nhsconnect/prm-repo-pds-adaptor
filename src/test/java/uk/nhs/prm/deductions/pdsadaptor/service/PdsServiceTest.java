@@ -140,16 +140,6 @@ class PdsServiceTest {
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
         assertThat(result.getPostalCode()).isEqualTo("current home postal code");
     }
-
-    @Test
-    void shouldCallPdsFhirClientAndReturnResponseWithGivenAndFamilyNameOfTypeUsualWhenWhenThereAreMultipleNameTypes() {
-        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleNameTypes(NHS_NUMBER);
-        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
-        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
-        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
-        assertThat(result.getGivenName()).isEqualTo(List.of("given name2"));
-        assertThat(result.getFamilyName()).isEqualTo("family name2");
-    }
     @Test
     void shouldCallPdsFhirClientAndReturnResponseWithGivenAndFamilyNameAsNullWhenThereIsNoNameOfTypeUsual() {
         PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithNoNameOfTypeUsual(NHS_NUMBER);
@@ -167,6 +157,16 @@ class PdsServiceTest {
         verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
         assertThat(result.getGivenName()).isNull();
         assertThat(result.getFamilyName()).isNull();
+    }
+    @Test
+    void shouldCallPdsFhirClientAndReturnResponseIncludingOnlyCurrentNameOfTypeUsual() {
+        PdsFhirGetPatientResponse patientDetails = PdsFhirTestData.buildPatientDetailsResponseWithMultipleNameTypes(NHS_NUMBER);
+        when(pdsFhirClient.requestPdsRecordByNhsNumber(NHS_NUMBER)).thenReturn(patientDetails);
+        PatientTraceInformation result = pdsService.getPatientTraceInformation(NHS_NUMBER);
+        verify(pdsFhirClient).requestPdsRecordByNhsNumber(NHS_NUMBER);
+        assertThat(result.getGivenName()).isEqualTo(List.of("given name3"));
+        assertThat(result.getFamilyName()).isEqualTo("family name3");
+
     }
 
 }

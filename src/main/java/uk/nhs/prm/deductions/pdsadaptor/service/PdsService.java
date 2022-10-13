@@ -103,7 +103,7 @@ public class PdsService {
     private Optional<Name> getNameOfTypeUsual(PdsFhirGetPatientResponse pdsResponse) {
         if (hasName(pdsResponse)) {
             return pdsResponse.getName().stream().filter(name ->
-                    name.getUse().equalsIgnoreCase("Usual")
+                    name.getUse().equalsIgnoreCase("Usual") && name.getPeriod().isCurrent()
             ).findFirst();
         }
             log.warn("PDS-FHIR response has no 'name' for the patient");
