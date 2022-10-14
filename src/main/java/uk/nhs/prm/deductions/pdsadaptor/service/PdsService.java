@@ -73,28 +73,31 @@ public class PdsService {
 
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
         Optional<Name> nameOfTypeUsual = getNameOfTypeUsual(response);
+        Optional<Address> addressOfTypeHome = getAddress(response);
         if(nameOfTypeUsual.isEmpty()){
             log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
-            return new PatientTraceInformation(response.getId(), null, null, response.getBirthDate(), getPostalCode(response));
+        }
+        if(addressOfTypeHome.isEmpty()) {
+            log.warn("PDS-FHIR response has no current 'address' of type 'home' for the patient");
         }
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
         String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
-        return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), getPostalCode(response));
+        String postalCode = addressOfTypeHome.map(Address::getPostalCode).orElse(null);
+        return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), postalCode);
     }
 
     private boolean hasAddress(PdsFhirGetPatientResponse pdsResponse) {
         return pdsResponse.getAddresses() != null && pdsResponse.getAddresses().size() != 0;
     }
 
-    private String getPostalCode(PdsFhirGetPatientResponse response) {
+    private Optional<Address> getAddress(PdsFhirGetPatientResponse response) {
         if (hasAddress(response)) {
-            var homeAddress = response.getAddresses().stream().filter(
+            return response.getAddresses().stream().filter(
                     (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
             ).findFirst();
-
-            return homeAddress.map(Address::getPostalCode).orElse(null);
         }
-        return null;
+        log.warn("PDS-FHIR response does not include an address");
+        return Optional.empty();
     }
 
     private boolean hasName(PdsFhirGetPatientResponse pdsResponse) {
