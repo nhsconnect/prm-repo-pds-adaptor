@@ -15,7 +15,7 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Slf4j
 public class Patient {
-    private String nhsNumber;
+    private String id;
     private List<GeneralPractitioner> generalPractitioner;
     private ManagingOrganization managingOrganization;
     private String eTag;
