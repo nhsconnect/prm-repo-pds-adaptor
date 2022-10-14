@@ -5,6 +5,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class PdsFhirTestData {
@@ -29,7 +30,7 @@ public class PdsFhirTestData {
         List<Name> names = new ArrayList<>();
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(1),
-                null),"usual", Arrays.asList("given name"), "family name"));
+                null),"usual", List.of("given name"), "family name"));
         List<Address> address = new ArrayList<>();
         address.add(new Address(new Period(LocalDate.now().minusYears(1), null), "postal code", "home"));
         return new PdsFhirGetPatientResponse(nhsNumber, null, null, null, null, "DateOfBirth", address, names);
@@ -39,7 +40,7 @@ public class PdsFhirTestData {
         List<Name> names = new ArrayList<>();
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(1),
-                null),"usual",Arrays.asList("given name"), "family name"));
+                null),"usual",List.of("given name"), "family name"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(LocalDate.now().minusYears(1), null), "temp postal code", "temp"));
         addresses.add(new Address(new Period(
@@ -65,13 +66,13 @@ public class PdsFhirTestData {
         List<Name> names = new ArrayList<>();
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(1),
-                null),"nickname", Arrays.asList("given name1"), "family name1"));
+                null),"nickname", List.of("given name1"), "family name1"));
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(2),
-                LocalDate.now().minusYears(1)),"usual",Arrays.asList("given name2"), "family name2"));
+                LocalDate.now().minusYears(1)),"usual", List.of("given name2"), "family name2"));
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(1),
-                null),"usual",Arrays.asList("given name3"), "family name3"));
+                null),"usual", List.of("given name3"), "family name3"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(
                 LocalDate.now().minusYears(1),
@@ -122,7 +123,7 @@ public class PdsFhirTestData {
         List<Name> names = new ArrayList<>();
         names.add(new Name(new Period(
                 LocalDate.now().minusYears(1),
-                null),"nickname", Arrays.asList("given name1"), "family name1"));
+                null),"nickname", List.of("given name1"), "family name1"));
         List<Address> addresses = new ArrayList<>();
         addresses.add(new Address(new Period(
                 LocalDate.now().minusYears(1),
