@@ -37,12 +37,12 @@ public class PdsService {
 
     private SuspendedPatientStatus convertToPatientStatusObject(Patient pdsResponse) {
         if (hasDeceasedDateAndTime(pdsResponse)) {
-            return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
+            return deceasedPatientStatus(pdsResponse.getNhsNumber(), pdsResponse.getETag());
         }
         if (hasGeneralPractitioner(pdsResponse)) {
-            return nonSuspendedPatientStatus(pdsResponse.getId(), getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
+            return nonSuspendedPatientStatus(pdsResponse.getNhsNumber(), getOdsCode(pdsResponse), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
         }
-        return suspendedPatientStatus(pdsResponse.getId(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
+        return suspendedPatientStatus(pdsResponse.getNhsNumber(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
     }
 
     private String getOdsCode(Patient pdsResponse) {
@@ -76,7 +76,7 @@ public class PdsService {
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
         String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
         String postalCode = getAddress(patient).map(Address::getPostalCode).orElse(null);
-        return new PatientTraceInformation(patient.getId(), givenName, familyName, patient.getBirthDate(), postalCode);
+        return new PatientTraceInformation(patient.getNhsNumber(), givenName, familyName, patient.getBirthDate(), postalCode);
     }
 
     private boolean hasAddress(Patient pdsResponse) {
