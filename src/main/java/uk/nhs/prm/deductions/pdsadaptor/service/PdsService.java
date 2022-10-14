@@ -73,16 +73,9 @@ public class PdsService {
 
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
         Optional<Name> nameOfTypeUsual = getNameOfTypeUsual(response);
-        Optional<Address> addressOfTypeHome = getAddress(response);
-        if(nameOfTypeUsual.isEmpty()){
-            log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
-        }
-        if(addressOfTypeHome.isEmpty()) {
-            log.warn("PDS-FHIR response has no current 'address' of type 'home' for the patient");
-        }
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
         String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
-        String postalCode = addressOfTypeHome.map(Address::getPostalCode).orElse(null);
+        String postalCode = getAddress(response).map(Address::getPostalCode).orElse(null);
         return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), postalCode);
     }
 
@@ -92,9 +85,13 @@ public class PdsService {
 
     private Optional<Address> getAddress(PdsFhirGetPatientResponse response) {
         if (hasAddress(response)) {
-            return response.getAddresses().stream().filter(
+            Optional<Address> addressOfTypeHome = response.getAddresses().stream().filter(
                     (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
             ).findFirst();
+            if (addressOfTypeHome.isEmpty()) {
+                log.warn("PDS-FHIR response has no current 'address' of type 'home' for the patient");
+            }
+            return addressOfTypeHome;
         }
         log.warn("PDS-FHIR response does not include an address");
         return Optional.empty();
@@ -105,12 +102,16 @@ public class PdsService {
     }
     private Optional<Name> getNameOfTypeUsual(PdsFhirGetPatientResponse pdsResponse) {
         if (hasName(pdsResponse)) {
-            return pdsResponse.getName().stream().filter(name ->
+            var nameOfTypeUsual = pdsResponse.getName().stream().filter(name ->
                     name.getUse().equalsIgnoreCase("Usual") && name.getPeriod().isCurrent()
             ).findFirst();
+            if (nameOfTypeUsual.isEmpty()){
+                log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
+            }
+            return nameOfTypeUsual;
         }
-            log.warn("PDS-FHIR response has no 'name' for the patient");
-            return Optional.empty();
-        }
+        log.warn("PDS-FHIR response has no 'name' for the patient");
+        return Optional.empty();
+    }
 
 }
