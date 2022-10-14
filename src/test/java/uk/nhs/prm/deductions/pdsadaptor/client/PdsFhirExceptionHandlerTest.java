@@ -12,7 +12,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.UnknownContentTypeException;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.*;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Patient;
 
 import java.util.HashMap;
 
@@ -132,7 +132,7 @@ class PdsFhirExceptionHandlerTest {
 
     @Test
     void shouldThrowRuntimeExceptionWhenClientCannotParseSeeminglySuccessfulResponse____feelsLikeImplementationDetailLowerDownShouldMoveIntoHttpClient() {
-        var unparseableResponseException = new UnknownContentTypeException(PdsFhirGetPatientResponse.class, APPLICATION_JSON, 200,
+        var unparseableResponseException = new UnknownContentTypeException(Patient.class, APPLICATION_JSON, 200,
                 "ok", new HttpHeaders(), new byte[0]);
 
         var exception = assertThrows(RuntimeException.class, () ->

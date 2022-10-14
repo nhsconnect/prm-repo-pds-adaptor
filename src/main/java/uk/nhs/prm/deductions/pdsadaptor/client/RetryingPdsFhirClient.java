@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import uk.nhs.prm.deductions.pdsadaptor.client.exceptions.RetryableRequestException;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Patient;
 
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -23,18 +23,18 @@ public class RetryingPdsFhirClient {
         this.maxUpdateTries = maxUpdateTries;
     }
 
-    public PdsFhirGetPatientResponse requestPdsRecordByNhsNumber(String nhsNumber) {
+    public Patient requestPdsRecordByNhsNumber(String nhsNumber) {
         return requestWithRetries(() -> client.requestPdsRecordByNhsNumber(nhsNumber), maxUpdateTries);
     }
 
-    public PdsFhirGetPatientResponse updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
+    public Patient updateManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
         var sharedRequestIdAcrossRetries = UUID.randomUUID();
         return requestWithRetries(() ->
                 client.updateManagingOrganisation(nhsNumber, updateRequest, sharedRequestIdAcrossRetries), maxUpdateTries
         );
     }
 
-    private PdsFhirGetPatientResponse requestWithRetries(Supplier<PdsFhirGetPatientResponse> requestProcess, int triesLeft) {
+    private Patient requestWithRetries(Supplier<Patient> requestProcess, int triesLeft) {
         try {
             return requestProcess.get();
         }

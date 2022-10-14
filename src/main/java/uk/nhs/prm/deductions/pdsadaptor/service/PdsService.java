@@ -10,7 +10,7 @@ import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Address;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
 import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Name;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirGetPatientResponse;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Patient;
 
 import java.util.List;
 import java.util.Objects;
@@ -26,16 +26,16 @@ public class PdsService {
     private final RetryingPdsFhirClient pdsFhirClient;
 
     public SuspendedPatientStatus getPatientGpStatus(String nhsNumber) {
-        PdsFhirGetPatientResponse pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+        Patient pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
         return convertToPatientStatusObject(pdsResponse);
     }
 
     public SuspendedPatientStatus updatePatientManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        PdsFhirGetPatientResponse pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
+        Patient pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
         return convertToPatientStatusObject(pdsResponse);
     }
 
-    private SuspendedPatientStatus convertToPatientStatusObject(PdsFhirGetPatientResponse pdsResponse) {
+    private SuspendedPatientStatus convertToPatientStatusObject(Patient pdsResponse) {
         if (hasDeceasedDateAndTime(pdsResponse)) {
             return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
         }
@@ -45,21 +45,21 @@ public class PdsService {
         return suspendedPatientStatus(pdsResponse.getId(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
     }
 
-    private String getOdsCode(PdsFhirGetPatientResponse pdsResponse) {
+    private String getOdsCode(Patient pdsResponse) {
         GeneralPractitioner generalPractitioner = pdsResponse.getGeneralPractitioner().get(0);
         return generalPractitioner.getIdentifier().getValue();
     }
 
-    private boolean hasGeneralPractitioner(PdsFhirGetPatientResponse pdsResponse) {
+    private boolean hasGeneralPractitioner(Patient pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
     }
 
 
-    private boolean hasDeceasedDateAndTime(PdsFhirGetPatientResponse pdsResponse) {
+    private boolean hasDeceasedDateAndTime(Patient pdsResponse) {
         return pdsResponse.getDeceasedDateTime() != null;
     }
 
-    private String getManagingOrganisation(PdsFhirGetPatientResponse pdsResponse) {
+    private String getManagingOrganisation(Patient pdsResponse) {
         if (pdsResponse.getManagingOrganization() != null) {
             return pdsResponse.getManagingOrganization().getIdentifier().getValue();
         }
@@ -71,19 +71,19 @@ public class PdsService {
         return convertToPatientTraceInformationObject(response);
     }
 
-    private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
-        Optional<Name> nameOfTypeUsual = getNameOfTypeUsual(response);
+    private PatientTraceInformation convertToPatientTraceInformationObject(Patient patient) {
+        Optional<Name> nameOfTypeUsual = patient.getCurrentUsualName();
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
         String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
-        String postalCode = getAddress(response).map(Address::getPostalCode).orElse(null);
-        return new PatientTraceInformation(response.getId(), givenName, familyName, response.getBirthDate(), postalCode);
+        String postalCode = getAddress(patient).map(Address::getPostalCode).orElse(null);
+        return new PatientTraceInformation(patient.getId(), givenName, familyName, patient.getBirthDate(), postalCode);
     }
 
-    private boolean hasAddress(PdsFhirGetPatientResponse pdsResponse) {
+    private boolean hasAddress(Patient pdsResponse) {
         return pdsResponse.getAddresses() != null && pdsResponse.getAddresses().size() != 0;
     }
 
-    private Optional<Address> getAddress(PdsFhirGetPatientResponse response) {
+    private Optional<Address> getAddress(Patient response) {
         if (hasAddress(response)) {
             Optional<Address> addressOfTypeHome = response.getAddresses().stream().filter(
                     (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
@@ -96,22 +96,4 @@ public class PdsService {
         log.warn("PDS-FHIR response does not include an address");
         return Optional.empty();
     }
-
-    private boolean hasName(PdsFhirGetPatientResponse pdsResponse) {
-        return pdsResponse.getName() != null && pdsResponse.getName().size() != 0;
-    }
-    private Optional<Name> getNameOfTypeUsual(PdsFhirGetPatientResponse pdsResponse) {
-        if (hasName(pdsResponse)) {
-            var nameOfTypeUsual = pdsResponse.getName().stream().filter(name ->
-                    name.getUse().equalsIgnoreCase("Usual") && name.getPeriod().isCurrent()
-            ).findFirst();
-            if (nameOfTypeUsual.isEmpty()){
-                log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
-            }
-            return nameOfTypeUsual;
-        }
-        log.warn("PDS-FHIR response has no 'name' for the patient");
-        return Optional.empty();
-    }
-
 }
