@@ -75,25 +75,7 @@ public class PdsService {
         Optional<Name> nameOfTypeUsual = patient.getCurrentUsualName();
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
         String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
-        String postalCode = getAddress(patient).map(Address::getPostalCode).orElse(null);
+        String postalCode = patient.getCurrentHomeAddress().map(Address::getPostalCode).orElse(null);
         return new PatientTraceInformation(patient.getNhsNumber(), givenName, familyName, patient.getBirthDate(), postalCode);
-    }
-
-    private boolean hasAddress(Patient pdsResponse) {
-        return pdsResponse.getAddresses() != null && pdsResponse.getAddresses().size() != 0;
-    }
-
-    private Optional<Address> getAddress(Patient response) {
-        if (hasAddress(response)) {
-            Optional<Address> addressOfTypeHome = response.getAddresses().stream().filter(
-                    (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
-            ).findFirst();
-            if (addressOfTypeHome.isEmpty()) {
-                log.warn("PDS-FHIR response has no current 'address' of type 'home' for the patient");
-            }
-            return addressOfTypeHome;
-        }
-        log.warn("PDS-FHIR response does not include an address");
-        return Optional.empty();
     }
 }

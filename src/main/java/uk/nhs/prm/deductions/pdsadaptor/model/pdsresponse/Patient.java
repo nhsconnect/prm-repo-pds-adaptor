@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Builder(toBuilder = true)
@@ -37,5 +38,21 @@ public class Patient {
             log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
         }
         return nameOfTypeUsual;
+    }
+
+    public Optional<Address> getCurrentHomeAddress() {
+        var addresses = getAddresses();
+
+        if (addresses == null) {
+            return Optional.empty();
+        }
+
+        Optional<Address> addressOfTypeHome = addresses.stream().filter(
+                (address) -> Objects.equals(address.getUse(), "home") && address.getPeriod().isCurrent()
+        ).findFirst();
+        if (addressOfTypeHome.isEmpty()) {
+            log.warn("PDS-FHIR response has no current 'address' of type 'home' for the patient");
+        }
+        return addressOfTypeHome;
     }
 }

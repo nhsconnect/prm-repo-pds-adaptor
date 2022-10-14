@@ -34,33 +34,6 @@ public class PdsFhirTestData {
         return new Patient(nhsNumber, null, null, null, null, "DateOfBirth", address, names);
     }
 
-    public static Patient buildPatientDetailsResponseWithMultipleHomeAddresses(String nhsNumber) {
-        List<Name> names = new ArrayList<>();
-        names.add(new Name(new Period(
-                LocalDate.now().minusYears(1),
-                null),"usual",List.of("given name"), "family name"));
-        List<Address> addresses = new ArrayList<>();
-        addresses.add(new Address(new Period(LocalDate.now().minusYears(1), null), "temp postal code", "temp"));
-        addresses.add(new Address(new Period(
-                LocalDate.now().minusYears(2),
-                LocalDate.now().minusYears(1)
-        ),"previous home postal code", "home"));
-        addresses.add(new Address(new Period(
-                LocalDate.now().minusYears(1),
-                null
-        ), "current home postal code", "home"));
-        return new Patient(
-                nhsNumber,
-                null,
-                null,
-                null,
-                null,
-                "DateOfBirth",
-                addresses,
-                names
-        );
-    }
-
     private static GeneralPractitioner createGeneralPractitioner(String odsCode, LocalDate start) {
         Period gpTimePeriod = new Period(start, null);
         Identifier identifier = new Identifier(odsCode, gpTimePeriod);

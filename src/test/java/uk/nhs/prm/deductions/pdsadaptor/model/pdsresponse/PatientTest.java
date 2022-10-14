@@ -62,4 +62,62 @@ public class PatientTest {
         Patient patient = new Patient("testId", null, null, null, null, null, null, List.of(oldName));
         assertThat(patient.getCurrentUsualName().isEmpty()).isTrue();
     }
+
+    @Test
+    public void getCurrentHomeAddressReturnsAMatchingAddress() {
+        var currentHomeAddress = new Address(
+                new Period(
+                        LocalDate.now().minusYears(1),
+                        null
+                ),
+                "POSTAL_CODE",
+                "home"
+        );
+
+        Patient patient = new Patient("testId", null, null, null, null, null, List.of(currentHomeAddress), null);
+        assertThat(patient.getCurrentHomeAddress().isPresent()).isTrue();
+        assertThat(patient.getCurrentHomeAddress().get()).isEqualTo(currentHomeAddress);
+    }
+
+    @Test
+    public void getCurrentHomeAddressReturnsEmptyWhenAddressesIsNull() {
+        Patient patient = new Patient("testId", null, null, null, null, null, null, null);
+        assertThat(patient.getCurrentHomeAddress().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getCurrentHomeAddressReturnsEmptyWhenAddressesIsEmpty() {
+        Patient patient = new Patient("testId", null, null, null, null, null, List.of(), null);
+        assertThat(patient.getCurrentHomeAddress().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getCurrentHomeAddressReturnsEmptyWhenNoHomeAddress() {
+        var currentBillingAddress = new Address(
+                new Period(
+                        LocalDate.now().minusYears(1),
+                        null
+                ),
+                "POSTAL_CODE",
+                "billing"
+        );
+
+        Patient patient = new Patient("testId", null, null, null, null, null, List.of(currentBillingAddress), null);
+        assertThat(patient.getCurrentHomeAddress().isEmpty()).isTrue();
+    }
+
+    @Test
+    public void getCurrentHomeAddressReturnsEmptyWhenNoCurrentAddress() {
+        var currentBillingAddress = new Address(
+                new Period(
+                        LocalDate.now().minusYears(2),
+                        LocalDate.now().minusYears(1)
+                ),
+                "POSTAL_CODE",
+                "home"
+        );
+
+        Patient patient = new Patient("testId", null, null, null, null, null, List.of(currentBillingAddress), null);
+        assertThat(patient.getCurrentHomeAddress().isEmpty()).isTrue();
+    }
 }
