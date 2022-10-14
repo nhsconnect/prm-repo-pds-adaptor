@@ -74,7 +74,7 @@ public class PdsService {
     private PatientTraceInformation convertToPatientTraceInformationObject(PdsFhirGetPatientResponse response) {
         Optional<Name> nameOfTypeUsual = getNameOfTypeUsual(response);
         if(nameOfTypeUsual.isEmpty()){
-            log.warn("PDS-FHIR response has no 'name' of type 'usual' for the patient");
+            log.warn("PDS-FHIR response has no current 'name' of type 'usual' for the patient");
             return new PatientTraceInformation(response.getId(), null, null, response.getBirthDate(), getPostalCode(response));
         }
         List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
