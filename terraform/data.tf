@@ -47,3 +47,7 @@ data "aws_ssm_parameter" "end-for-transfer-service-ecs-sg-id" {
 data "aws_ssm_parameter" "re-registration-ecs-sg-id" {
   name = "/repo/${var.environment}/output/re-registration-service/ecs-sg-id"
 }
+
+data "aws_ssm_parameter" "paperless-record-service-aws-account-id" {
+  name = "/repo/${var.environment}/user-input/external/paperless-record-service-aws-account-id"
+}
