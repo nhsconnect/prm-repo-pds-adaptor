@@ -52,7 +52,7 @@ resource "aws_lb_listener" "pds-nlb-listener" {
 resource "aws_vpc_endpoint_service" "pds-service-endpoint" {
   acceptance_required        = false
   network_load_balancer_arns = [aws_lb.nlb.arn]
-  private_dns_name = "prs-endpoint.${var.dns_name}.${var.environment}.non-prod.patient-deductions.nhs.uk"
+  private_dns_name = "${var.dns_name}.${var.environment}.non-prod.patient-deductions.nhs.uk"
 
   tags = {
     Name = "${var.environment}-${var.component_name}-prs-service-endpoint"
@@ -61,9 +61,10 @@ resource "aws_vpc_endpoint_service" "pds-service-endpoint" {
   }
 }
 
+# Place DNS verification TXT record in public zone as per https://aws.amazon.com/premiumsupport/knowledge-center/vpc-private-dns-name-endpoint-service/
 resource "aws_route53_record" "pds-service-domain-verification-record" {
-  zone_id = data.aws_ssm_parameter.environment_private_zone_id.value
-  name    = "${aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].name}.prs-endpoint.${var.dns_name}"
+  zone_id = data.aws_ssm_parameter.environment_public_zone_id.value
+  name    = "${aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].name}.${var.dns_name}"
   type    = "TXT"
   ttl     = 60
   records = [aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].value]
