@@ -13,7 +13,7 @@ resource "aws_lb" "nlb" {
 }
 
 resource "aws_lb_target_group" "pds-alb-target-group" {
-  name        = "${var.environment}-${var.component_name}-alb-target-group"
+  name        = "${var.environment}-${var.component_name}-alb-tg"
   target_type = "alb"
   port        = 443
   protocol    = "TCP"
