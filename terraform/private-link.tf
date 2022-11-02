@@ -26,7 +26,7 @@ resource "aws_lb_target_group" "pds-nlb-target-group" {
   }
 }
 
-resource "aws_lb_target_group_attachment" "pds-alb-target-group-attachment" {
+resource "aws_lb_target_group_attachment" "pds-nlb-target-group-attachment" {
   target_group_arn = aws_lb_target_group.pds-nlb-target-group.arn
   target_id        = aws_alb.alb-internal.id
   port             = 443
@@ -63,7 +63,7 @@ resource "aws_vpc_endpoint_service" "pds-service-endpoint" {
 
 resource "aws_route53_record" "pds-service-domain-verification-record" {
   zone_id = data.aws_ssm_parameter.environment_private_zone_id.value
-  name    = "prs-endpoint.${var.dns_name}"
+  name    = "${aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].name}.prs-endpoint.${var.dns_name}"
   type    = "TXT"
   ttl     = 60
   records = [aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].value]
