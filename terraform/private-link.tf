@@ -12,22 +12,22 @@ resource "aws_lb" "nlb" {
   }
 }
 
-resource "aws_lb_target_group" "pds-alb-target-group" {
-  name        = "${var.environment}-${var.component_name}-alb-tg"
+resource "aws_lb_target_group" "pds-nlb-target-group" {
+  name        = "${var.environment}-${var.component_name}-nlb-tg"
   target_type = "alb"
   port        = 443
   protocol    = "TCP"
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
 
   tags = {
-    Name = "${var.environment}-${var.component_name}-alb-target-group"
+    Name = "${var.environment}-${var.component_name}-nlb-target-group"
     CreatedBy   = var.repo_name
     Environment = var.environment
   }
 }
 
 resource "aws_lb_target_group_attachment" "pds-alb-target-group-attachment" {
-  target_group_arn = aws_lb_target_group.pds-alb-target-group.arn
+  target_group_arn = aws_lb_target_group.pds-nlb-target-group.arn
   target_id        = aws_alb.alb-internal.id
   port             = 443
 }
@@ -39,7 +39,7 @@ resource "aws_lb_listener" "pds-nlb-listener" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.pds-alb-target-group.arn
+    target_group_arn = aws_lb_target_group.pds-nlb-target-group.arn
   }
 
   tags = {
