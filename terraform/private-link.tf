@@ -52,7 +52,21 @@ resource "aws_lb_listener" "pds-nlb-listener" {
 resource "aws_vpc_endpoint_service" "pds-service-endpoint" {
   acceptance_required        = false
   network_load_balancer_arns = [aws_lb.nlb.arn]
-  private_dns_name = "${var.dns_name}.${var.environment}.non-prod.patient-deductions.nhs.uk"
+  private_dns_name = "prs-endpoint.${var.dns_name}.${var.environment}.non-prod.patient-deductions.nhs.uk"
+
+  tags = {
+    Name = "${var.environment}-${var.component_name}-prs-service-endpoint"
+    CreatedBy   = var.repo_name
+    Environment = var.environment
+  }
+}
+
+resource "aws_route53_record" "pds-service-domain-verification-record" {
+  zone_id = data.aws_ssm_parameter.environment_private_zone_id.value
+  name    = "prs-endpoint.${var.dns_name}"
+  type    = "TXT"
+  ttl     = 60
+  records = [aws_vpc_endpoint_service.pds-service-endpoint.private_dns_name_configuration[0].value]
 }
 
 resource "aws_vpc_endpoint_service_allowed_principal" "allow_paperless_record_service_access" {
