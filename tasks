@@ -81,6 +81,8 @@ function tf_init {
   check_env
   cd terraform
 
+  terraform -version
+
   terraform init -reconfigure \
     -backend-config key="${NHS_SERVICE}-${NHS_ENVIRONMENT}/terraform.tfstate" \
     -backend-config bucket="prm-deductions-${NHS_ENVIRONMENT}-terraform-state" \

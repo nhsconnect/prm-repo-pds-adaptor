@@ -2,7 +2,7 @@ resource "aws_lb" "nlb" {
   name               = "${var.environment}-${var.component_name}-nlb"
   internal           = true
   load_balancer_type = "network"
-  subnets            = data.aws_ssm_parameter.deductions_private_private_subnets
+  subnets            = split(",", data.aws_ssm_parameter.deductions_private_private_subnets.value)
   enable_deletion_protection = true
 
   tags = {
@@ -13,14 +13,14 @@ resource "aws_lb" "nlb" {
 }
 
 resource "aws_lb_target_group" "pds-alb-target-group" {
-  name        = "${var.environment}-${var.component_name}-nlb-pds-alb-target-group"
+  name        = "${var.environment}-${var.component_name}-alb-target-group"
   target_type = "alb"
   port        = 443
   protocol    = "TCP"
   vpc_id      = data.aws_ssm_parameter.deductions_private_vpc_id.value
 
   tags = {
-    Name = "${var.environment}-${var.component_name}-nlb-target-group"
+    Name = "${var.environment}-${var.component_name}-alb-target-group"
     CreatedBy   = var.repo_name
     Environment = var.environment
   }
