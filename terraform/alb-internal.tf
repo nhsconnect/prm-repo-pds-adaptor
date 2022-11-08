@@ -15,6 +15,7 @@ resource "aws_alb" "alb-internal" {
   internal        = true
   drop_invalid_header_fields = true
   idle_timeout = 300
+  enable_deletion_protection = true
 
   tags = {
     CreatedBy   = var.repo_name
