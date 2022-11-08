@@ -1,41 +1,34 @@
 package uk.nhs.prm.deductions.pdsadaptor.testing;
 
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.*;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Identifier;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.IdentifierPeriod;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.ManagingOrganization;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 public class PdsFhirTestData {
 
-    public static Patient buildPdsResponse(String nhsNumber, String odsCode, LocalDate start,
-                                           String managingOrganisationOdsCode, String eTag) {
+    public static PdsFhirPatient buildPdsResponse(String nhsNumber, String odsCode, LocalDate start,
+                                                  String managingOrganisationOdsCode, String eTag) {
         GeneralPractitioner generalPractitioner = createGeneralPractitioner(odsCode, start);
         ManagingOrganization managingOrganization = createManagingOrganization(managingOrganisationOdsCode);
-        return new Patient(nhsNumber, List.of(generalPractitioner), managingOrganization, eTag, null, null, null, null);
+        return new PdsFhirPatient(nhsNumber, List.of(generalPractitioner), managingOrganization, eTag,null);
     }
 
-    public static Patient buildPdsSuspendedResponse(String nhsNumber, String managingOrganisationOdsCode, String eTag) {
+    public static PdsFhirPatient buildPdsSuspendedResponse(String nhsNumber, String managingOrganisationOdsCode, String eTag) {
         ManagingOrganization managingOrganization = createManagingOrganization(managingOrganisationOdsCode);
-        return new Patient(nhsNumber, null, managingOrganization, eTag, null, null, null, null);
+        return new PdsFhirPatient(nhsNumber, null, managingOrganization, eTag, null);
     }
 
-    public static Patient buildPdsDeceasedResponse(String nhsNumber, String eTag) {
-        return new Patient(nhsNumber, null, null, eTag, "\"2013-05-23T00:00:00+00:00\"", null, null, null);
-    }
-
-    public static Patient buildPatientDetailsResponse(String nhsNumber) {
-        List<Name> names = new ArrayList<>();
-        names.add(new Name(new Period(
-                LocalDate.now().minusYears(1),
-                null),"usual", List.of("given name"), "family name"));
-        List<Address> address = new ArrayList<>();
-        address.add(new Address(new Period(LocalDate.now().minusYears(1), null), "postal code", "home"));
-        return new Patient(nhsNumber, null, null, null, null, "DateOfBirth", address, names);
+    public static PdsFhirPatient buildPdsDeceasedResponse(String nhsNumber, String eTag) {
+        return new PdsFhirPatient(nhsNumber,null, null, eTag,"\"2013-05-23T00:00:00+00:00\"");
     }
 
     private static GeneralPractitioner createGeneralPractitioner(String odsCode, LocalDate start) {
-        Period gpTimePeriod = new Period(start, null);
+        IdentifierPeriod gpTimePeriod = new IdentifierPeriod(start, null);
         Identifier identifier = new Identifier(odsCode, gpTimePeriod);
         return new GeneralPractitioner(identifier);
     }

@@ -1,41 +1,32 @@
 package uk.nhs.prm.deductions.pdsadaptor.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import uk.nhs.prm.deductions.pdsadaptor.client.RetryingPdsFhirClient;
 import uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus;
 import uk.nhs.prm.deductions.pdsadaptor.model.UpdateManagingOrganisationRequest;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Address;
 import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.GeneralPractitioner;
-import uk.nhs.prm.deductions.pdsadaptor.model.PatientTraceInformation;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Name;
-import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.Patient;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import uk.nhs.prm.deductions.pdsadaptor.model.pdsresponse.PdsFhirPatient;
 
 import static uk.nhs.prm.deductions.pdsadaptor.model.SuspendedPatientStatus.*;
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class PdsService {
 
     private final RetryingPdsFhirClient pdsFhirClient;
 
     public SuspendedPatientStatus getPatientGpStatus(String nhsNumber) {
-        Patient pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
+        PdsFhirPatient pdsResponse = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
         return convertToPatientStatusObject(pdsResponse);
     }
 
     public SuspendedPatientStatus updatePatientManagingOrganisation(String nhsNumber, UpdateManagingOrganisationRequest updateRequest) {
-        Patient pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
+        PdsFhirPatient pdsResponse = pdsFhirClient.updateManagingOrganisation(nhsNumber, updateRequest);
         return convertToPatientStatusObject(pdsResponse);
     }
 
-    private SuspendedPatientStatus convertToPatientStatusObject(Patient pdsResponse) {
+    private SuspendedPatientStatus convertToPatientStatusObject(PdsFhirPatient pdsResponse) {
         if (hasDeceasedDateAndTime(pdsResponse)) {
             return deceasedPatientStatus(pdsResponse.getId(), pdsResponse.getETag());
         }
@@ -45,37 +36,23 @@ public class PdsService {
         return suspendedPatientStatus(pdsResponse.getId(), getManagingOrganisation(pdsResponse), pdsResponse.getETag());
     }
 
-    private String getOdsCode(Patient pdsResponse) {
+    private String getOdsCode(PdsFhirPatient pdsResponse) {
         GeneralPractitioner generalPractitioner = pdsResponse.getGeneralPractitioner().get(0);
         return generalPractitioner.getIdentifier().getValue();
     }
 
-    private boolean hasGeneralPractitioner(Patient pdsResponse) {
+    private boolean hasGeneralPractitioner(PdsFhirPatient pdsResponse) {
         return pdsResponse.getGeneralPractitioner() != null && pdsResponse.getGeneralPractitioner().size() != 0;
     }
 
-
-    private boolean hasDeceasedDateAndTime(Patient pdsResponse) {
+    private boolean hasDeceasedDateAndTime(PdsFhirPatient pdsResponse) {
         return pdsResponse.getDeceasedDateTime() != null;
     }
 
-    private String getManagingOrganisation(Patient pdsResponse) {
-        if (pdsResponse.getManagingOrganization() != null) {
-            return pdsResponse.getManagingOrganization().getIdentifier().getValue();
-        }
-        return null;
-    }
-
-    public PatientTraceInformation getPatientTraceInformation(String nhsNumber) {
-        var response = pdsFhirClient.requestPdsRecordByNhsNumber(nhsNumber);
-        return convertToPatientTraceInformationObject(response);
-    }
-
-    private PatientTraceInformation convertToPatientTraceInformationObject(Patient patient) {
-        Optional<Name> nameOfTypeUsual = patient.getCurrentUsualName();
-        List<String> givenName = nameOfTypeUsual.map(Name::getGiven).orElse(null);
-        String familyName = nameOfTypeUsual.map(Name::getFamily).orElse(null);
-        String postalCode = patient.getCurrentHomeAddress().map(Address::getPostalCode).orElse(null);
-        return new PatientTraceInformation(patient.getId(), givenName, familyName, patient.getBirthDate(), postalCode);
+    private String getManagingOrganisation(PdsFhirPatient pdsResponse) {
+       if (pdsResponse.getManagingOrganization() != null) {
+           return pdsResponse.getManagingOrganization().getIdentifier().getValue();
+       }
+       return null;
     }
 }

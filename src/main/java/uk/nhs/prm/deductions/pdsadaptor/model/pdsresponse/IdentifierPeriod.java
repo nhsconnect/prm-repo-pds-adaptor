@@ -9,11 +9,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Period {
+public class IdentifierPeriod {
     private LocalDate start;
     private LocalDate end;
-
-    public boolean isCurrent() {
-        return getStart().isBefore(LocalDate.now()) && (getEnd() == null || getEnd().isAfter(LocalDate.now()));
-    }
 }

@@ -4,6 +4,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,9 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static uk.nhs.prm.deductions.pdsadaptor.testing.MapBuilder.json;
 
 @ExtendWith(MockitoExtension.class)
-@WebMvcTest(SuspendedPatientsController.class)
+@WebMvcTest(PdsController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class SuspendedPatientsControllerTest {
+class PdsControllerTest {
 
     private static final String NHS_NUMBER = "1234567890";
 
