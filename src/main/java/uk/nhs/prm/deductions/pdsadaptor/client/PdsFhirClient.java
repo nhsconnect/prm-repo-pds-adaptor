@@ -60,6 +60,10 @@ public class PdsFhirClient {
         var patchRequest = createPatchRequest(updateRequest.getPreviousGp());
         var requestHeaders = createUpdateHeaders(updateRequest.getRecordETag(), requestId);
 
+        log.info("PATCH REQUEST BODY: " + patchRequest.getPatches().get(0).toString());
+        log.info("PATCH HEADERS: " + requestHeaders);
+        log.info("URL: " + patientUrl(nhsNumber));
+
         return timeRequest("update", () -> {
             try {
                 var response = httpClient.patch(patientUrl(nhsNumber), requestHeaders, patchRequest, PdsFhirPatient.class);
