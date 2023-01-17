@@ -196,6 +196,12 @@ case "${command}" in
       echo "Pushing the Docker image... $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG"
       docker push $REPOSITORY_URI:$IMAGE_TAG
       ;;
+  build_docker_local)
+      configure_local_envs
+      fetch_redaction_utils
+      export REPOSITORY_URI=$IMAGE_REPO_NAME
+      build_docker_image
+      ;;
   _build)
       rm -rf build/
       gradle assemble
