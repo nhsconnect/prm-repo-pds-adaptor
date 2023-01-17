@@ -34,7 +34,7 @@ dependencies {
     // https://github.com/spring-projects/spring-boot/issues/33457
     implementation 'org.yaml:snakeyaml:1.33'
 
-    implementation 'org.springdoc:springdoc-openapi-ui:1.6.8'
+    implementation 'org.springdoc:springdoc-openapi-ui:1.6.14'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.68'
     implementation 'com.nimbusds:nimbus-jose-jwt:9.12.1'
@@ -59,7 +59,7 @@ dependencies {
 
     implementation 'software.amazon.awssdk:ssm'
 
-    compileOnly 'org.projectlombok:lombok:1.18.20'
+    compileOnly 'org.projectlombok:lombok:1.18.24'
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-aop'
