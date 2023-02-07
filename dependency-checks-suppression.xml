@@ -121,4 +121,12 @@
         <packageUrl regex="true">^pkg:maven/software\.amazon\.awssdk/utils@.*$</packageUrl>
         <cve>CVE-2021-4277</cve>
     </suppress>
+    <suppress>
+	<notes><![CDATA[
+         false positive CVE refers specifically to hutool not this generic json package
+         file name: json-20211205.jar
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.json/json@.*$</packageUrl>
+        <vulnerabilityName>CVE-2022-45688</vulnerabilityName>
+    </suppress>
 </suppressions>
