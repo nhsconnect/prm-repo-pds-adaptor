@@ -2,6 +2,10 @@ locals {
   domain = trimsuffix("${var.dns_name}.${data.aws_route53_zone.environment_public_zone.name}", ".")
 }
 
+data "aws_ssm_parameter" "alb_access_logs_bucket" {
+  name = "/repo/${var.environment}/output/prm-deductions-infra/alb-access-logs-s3-bucket-id"
+}
+
 resource "aws_alb" "alb-internal" {
   name            = "${var.environment}-${var.component_name}-alb-int"
   subnets         = local.private_subnets
@@ -16,6 +20,12 @@ resource "aws_alb" "alb-internal" {
   drop_invalid_header_fields = true
   idle_timeout = 300
   enable_deletion_protection = true
+
+  access_logs {
+    bucket = data.aws_ssm_parameter.alb_access_logs_bucket.value
+    enabled = true
+    prefix = "ehr-repository"
+  }
 
   tags = {
     CreatedBy   = var.repo_name
