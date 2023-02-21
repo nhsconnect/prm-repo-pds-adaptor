@@ -79,7 +79,7 @@ resource "aws_alb_listener" "int-alb-listener-https" {
   protocol          = "HTTPS"
 
   ssl_policy      = "ELBSecurityPolicy-TLS-1-2-Ext-2018-06"
-  certificate_arn = aws_acm_certificate_validation.pds-adaptor-cert-validation.certificate_arn
+  certificate_arn = aws_acm_certificate_validation.pds_adaptor_cert_validation.certificate_arn
 
   default_action {
     type = "fixed-response"
@@ -154,7 +154,7 @@ resource "aws_alb_listener_rule" "int-alb-https-listener-rule" {
 
 resource "aws_lb_listener_certificate" "pds-adaptor-int-listener-cert" {
   listener_arn    = aws_alb_listener.int-alb-listener-https.arn
-  certificate_arn = aws_acm_certificate_validation.pds-adaptor-cert-validation.certificate_arn
+  certificate_arn = aws_acm_certificate_validation.pds_adaptor_cert_validation.certificate_arn
 }
 
 resource "aws_security_group" "alb_to_pds_adaptor_ecs" {

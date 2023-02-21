@@ -1,7 +1,4 @@
 environment    = "pre-prod"
-component_name = "pds-adaptor"
-dns_name       = "pds-adaptor"
-repo_name      = "prm-deductions-pds-adaptor"
 
 task_cpu    = 256
 task_memory = 512
