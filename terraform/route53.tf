@@ -22,8 +22,13 @@ resource "aws_route53_record" "pds_adaptor" {
   records = [aws_alb.alb-internal.dns_name]
 }
 
+moved {
+  from = aws_acm_certificate.pds-adaptor-cert
+  to   = aws_acm_certificate.pds_adaptor_cert
+}
+
 resource "aws_acm_certificate" "pds_adaptor_cert" {
-  domain_name       = "${var.dns_name}.${data.aws_route53_zone.environment_public_zone.name}"
+  domain_name = "${var.dns_name}.${data.aws_route53_zone.environment_public_zone.name}"
 
   validation_method = "DNS"
 
@@ -51,6 +56,6 @@ resource "aws_route53_record" "pds_adaptor_cert_validation_record" {
 }
 
 resource "aws_acm_certificate_validation" "pds_adaptor_cert_validation" {
-  certificate_arn = aws_acm_certificate.pds_adaptor_cert.arn
+  certificate_arn         = aws_acm_certificate.pds_adaptor_cert.arn
   validation_record_fqdns = [for record in aws_route53_record.pds_adaptor_cert_validation_record : record.fqdn]
 }
