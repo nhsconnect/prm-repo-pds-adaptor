@@ -119,7 +119,7 @@ common:
 
 pipelines:
   pds-adaptor:
-    group: linear-spike
+    group: continuity-service
     label_template: '${COUNT}-${git[:8]}'
     materials:
       git:
