@@ -1,4 +1,122 @@
 format_version: 4
+common:
+  build: &build
+    clean_workspace: true
+    jobs:
+      test_unit:
+        resources:
+          - docker
+        artifacts:
+          - build:
+              source: build
+        tabs:
+          TestReport: build/reports/tests/test/index.html
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks test_unit
+      test_integration:
+        resources:
+          - docker
+        artifacts:
+          - build:
+              source: build/reports/tests
+        tabs:
+          TestReport: tests/integration/index.html
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks test_integration
+      test_coverage:
+        artifacts:
+          - build:
+              source: build/reports/jacoco
+          - build:
+              source: build/reports/tests
+        tabs:
+          TestReport: tests/test/index.html
+          Coverage: jacoco/test/html/index.html
+        resources:
+          - docker
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks test_coverage
+      code_quality:
+        artifacts:
+          - build:
+              source: build/reports/spotbugs
+        tabs:
+          MainSpotbugs: spotbugs/main/spotbugs.html
+          IntTSpotbugs: spotbugs/integration/spotbugs.html
+        resources:
+          - docker
+        tasks:
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks code_quality
+  docker: &docker
+    clean_workspace: true
+    jobs:
+      build:
+        resources:
+          - docker
+        tasks:
+          - fetch:
+              stage: build
+              job: test_unit
+              source: build
+          - exec:
+              command: /bin/bash
+              arguments:
+                - -c
+                - ./tasks build_docker
+  approval: &manual_approval
+    type: manual
+    allow_only_on_success: true
+  promote: &promote
+    clean_workspace: true
+    resources:
+      - docker
+    tasks:
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks promote_docker_image
+  deploy: &deploy
+    clean_workspace: true
+    resources:
+      - docker
+    artifacts:
+      - build:
+          source: terraform/nhs_deployment.tfplan
+          destination: terraform/
+    tasks:
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks tf_plan create
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks tf_apply
+      - exec:
+          command: /bin/bash
+          arguments:
+            - -c
+            - ./tasks wait_ecs
+
 pipelines:
   pds-adaptor:
     group: linear-spike
@@ -9,86 +127,40 @@ pipelines:
         ignore:
           - src/performance/**/*.*
     stages:
-      - build:
-          clean_workspace: true
-          jobs:
-            test:
-              tasks:
-                - exec:
-                    command: sleep
-                    arguments:
-                      - 10
-      - docker:
-          clean_workspace: true
-          jobs:
-            build:
-              tasks:
-                - exec:
-                    command: sleep
-                    arguments:
-                      - 10
-      - prepare.dev:
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 5
+      - build: *build
+      - docker: *docker
+      - promote.dev:
+          <<: *promote
+          environment_variables:
+            NHS_ENVIRONMENT: dev
       - deploy.dev:
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 20
-      - prepare.test:
-          approval:
-            type: manual
-            allow_only_on_success: true
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 5
+          <<: *deploy
+          environment_variables:
+            NHS_ENVIRONMENT: dev
+      - promote.test:
+          <<: *promote
+          approval: *manual_approval
+          environment_variables:
+            NHS_ENVIRONMENT: test
       - deploy.test:
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 20
-      - prepare.pre-prod:
-          approval:
-            type: manual
-            allow_only_on_success: true
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 5
+          <<: *deploy
+          environment_variables:
+            NHS_ENVIRONMENT: test
+      - promote.pre-prod:
+          <<: *promote
+          approval: *manual_approval
+          environment_variables:
+            NHS_ENVIRONMENT: pre-prod
       - deploy.pre-prod:
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 20
-      - prepare.prod:
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 5
+          <<: *deploy
+          environment_variables:
+            NHS_ENVIRONMENT: pre-prod
+      - promote.prod:
+          <<: *promote
+          approval: *manual_approval
+          environment_variables:
+            NHS_ENVIRONMENT: prod
       - deploy.prod:
-          approval:
-            type: manual
-            allow_only_on_success: true
-          clean_workspace: true
-          tasks:
-            - exec:
-                command: sleep
-                arguments:
-                  - 20
+          <<: *deploy
+          environment_variables:
+            NHS_ENVIRONMENT: prod
