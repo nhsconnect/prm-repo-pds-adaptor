@@ -82,36 +82,6 @@ common:
           deploy: *deploy_job
 
 pipelines:
-  pds-adaptor-perf-dev:
-    <<: *perf-run-pipeline-template
-    timer:
-      spec: 0 0 22 ? * MON,TUE,WED,THU,FRI *
-    environment_variables:
-      NHS_ENVIRONMENT: dev
-      RUN_TIME: 120s
-      USERS: 10
-      MIN_WAIT_SECONDS: 4
-      MAX_WAIT_SECONDS: 5
-  pds-adaptor-perf-test:
-    <<: *perf-run-pipeline-template
-    timer:
-      spec: 0 0 23 ? * MON,TUE,WED,THU,FRI *
-    environment_variables:
-      NHS_ENVIRONMENT: test
-      RUN_TIME: 60s
-      USERS: 10
-      MIN_WAIT_SECONDS: 4
-      MAX_WAIT_SECONDS: 5
-  pds-adaptor-perf-pre-prod:
-    <<: *perf-run-pipeline-template
-    timer:
-      spec: 0 0 0 ? * MON,TUE,WED,THU,FRI *
-    environment_variables:
-      NHS_ENVIRONMENT: pre-prod
-      RUN_TIME: 60s
-      USERS: 10
-      MIN_WAIT_SECONDS: 4
-      MAX_WAIT_SECONDS: 5
   pds-adaptor.perf:
     group: performance
     label_template: '${COUNT}-${git[:8]}'
