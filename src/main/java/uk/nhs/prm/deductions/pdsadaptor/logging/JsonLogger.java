@@ -2,7 +2,7 @@ package uk.nhs.prm.deductions.pdsadaptor.logging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.shaded.json.JSONObject;
+import com.nimbusds.jose.util.JSONObjectUtils;
 import net.logstash.logback.marker.Markers;
 import org.slf4j.Logger;
 
@@ -17,7 +17,7 @@ public class JsonLogger {
         var mapper = new ObjectMapper();
         try {
             var data = mapper.readValue(json, HashMap.class);
-            return new JSONObject(data).toJSONString();
+            return JSONObjectUtils.toJSONString(data);
         }
         catch (JsonProcessingException e) {
             return json;
