@@ -57,6 +57,8 @@ dependencies {
     implementation('io.netty:netty-transport-classes-epoll') { version { strictly '4.1.86.Final' } }
     implementation('io.netty:netty-transport-native-unix-common') { version { strictly '4.1.86.Final' } }
 
+    implementation 'org.springframework:spring-expression:5.3.27'
+
     implementation 'software.amazon.awssdk:ssm'
 
     compileOnly 'org.projectlombok:lombok:1.18.24'
