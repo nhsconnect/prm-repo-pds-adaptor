@@ -1,5 +1,5 @@
 plugins {
-    id 'org.springframework.boot' version '2.7.+'
+    id 'org.springframework.boot' version '2.7.11'
     id 'io.spring.dependency-management' version '1.0.11.RELEASE'
     id 'java'
     id 'jacoco'
@@ -56,8 +56,6 @@ dependencies {
     implementation('io.netty:netty-transport') { version { strictly '4.1.86.Final' } }
     implementation('io.netty:netty-transport-classes-epoll') { version { strictly '4.1.86.Final' } }
     implementation('io.netty:netty-transport-native-unix-common') { version { strictly '4.1.86.Final' } }
-
-    implementation 'org.springframework:spring-expression:5.3.27'
 
     implementation 'software.amazon.awssdk:ssm'
 
