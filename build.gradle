@@ -44,7 +44,7 @@ dependencies {
 
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 
-    implementation platform('software.amazon.awssdk:bom:2.18.41')
+    implementation platform('software.amazon.awssdk:bom:2.20.78')
 
     implementation('io.netty:netty-buffer') { version { strictly '4.1.86.Final' } }
     implementation('io.netty:netty-codec') { version { strictly '4.1.86.Final' } }
