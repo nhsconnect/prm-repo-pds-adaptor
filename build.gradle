@@ -62,14 +62,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'com.github.tomakehurst:wiremock-jre8:2.35.1'
-
-    constraints {
-        implementation('com.h2database:h2') {
-            version {
-                strictly '2.2.224'
-            }
-        }
-    }
 }
 
 springBoot {
