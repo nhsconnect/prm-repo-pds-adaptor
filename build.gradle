@@ -30,6 +30,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-aop'
+
     implementation 'org.yaml:snakeyaml:2.2'
     implementation 'org.springdoc:springdoc-openapi-ui:1.6.14'
     implementation 'net.logstash.logback:logstash-logback-encoder:6.4'
@@ -40,16 +43,16 @@ dependencies {
     implementation 'org.json:json:20231013'
     implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 
-    implementation('io.netty:netty-buffer') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-codec') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-codec-http') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-codec-http2') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-common') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-handler') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-resolver') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-transport') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-transport-classes-epoll') { version { strictly '4.1.86.Final' } }
-    implementation('io.netty:netty-transport-native-unix-common') { version { strictly '4.1.86.Final' } }
+    implementation('io.netty:netty-buffer') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-codec') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-codec-http') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-codec-http2') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-common') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-handler') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-resolver') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-transport') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-transport-classes-epoll') { version { strictly '4.1.104.Final' } }
+    implementation('io.netty:netty-transport-native-unix-common') { version { strictly '4.1.104.Final' } }
 
     implementation platform('software.amazon.awssdk:bom:2.18.41')
     implementation 'software.amazon.awssdk:ssm'
@@ -58,8 +61,6 @@ dependencies {
 
     annotationProcessor 'org.projectlombok:lombok'
 
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.springframework.boot:spring-boot-starter-aop'
     testImplementation 'com.github.tomakehurst:wiremock-jre8:2.35.1'
 }
 
