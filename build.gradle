@@ -57,7 +57,7 @@ dependencies {
     implementation platform('software.amazon.awssdk:bom:2.18.41')
     implementation 'software.amazon.awssdk:ssm'
 
-    compileOnly 'org.projectlombok:lombok:1.18.24'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
 
     annotationProcessor 'org.projectlombok:lombok'
 
