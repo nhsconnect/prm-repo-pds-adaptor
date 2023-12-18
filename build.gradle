@@ -66,10 +66,8 @@ dependencies {
     constraints {
         implementation('com.h2database:h2') {
             version {
-                strictly ('[2.2, 3[')
-                prefer ('2.2.220')
+                strictly '2.2.224'
             }
-            because 'CVE-2022-45868'
         }
     }
 }
