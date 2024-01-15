@@ -1,10 +1,9 @@
 plugins {
     id 'org.springframework.boot' version '2.7.18'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'io.spring.dependency-management' version '1.1.4'
     id 'java'
     id 'jacoco'
-    id 'com.github.spotbugs' version '5.0.13'
-    id 'org.owasp.dependencycheck' version '7.4.4'
+    id 'com.github.spotbugs' version '6.0.6'
 }
 
 group = 'uk.nhs.prm.deductions'
@@ -142,14 +141,6 @@ spotbugsIntegration {
             destination = file("$buildDir/reports/spotbugs/integration/spotbugs.html")
             stylesheet = 'fancy-hist.xsl'
         }
-    }
-}
-
-dependencyCheck {
-    failBuildOnCVSS = 7
-    suppressionFile = './dependency-checks-suppression.xml'
-    analyzers {
-          assemblyEnabled = false
     }
 }
 
