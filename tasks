@@ -264,12 +264,6 @@ case "${command}" in
     configure_local_run_against_aws_env
     ./gradlew bootRun
     ;;
-  _dep)
-      gradle dependencyCheckAnalyze
-      ;;
-  dep)
-      dojo "./tasks _dep"
-      ;;
   tf)
       check_env
       dojo -c Dojofile-infra "./tasks _tf"
