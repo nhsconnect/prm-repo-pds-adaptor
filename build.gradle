@@ -60,7 +60,7 @@ dependencies {
 
     annotationProcessor 'org.projectlombok:lombok'
 
-    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.35.1'
+    testImplementation 'com.github.tomakehurst:wiremock-jre8:2.35.2'
 }
 
 springBoot {
